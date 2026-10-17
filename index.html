@@ -187,7 +187,12 @@ header.site{
   /* Tightened to match the landing nav's own reduced spacing (2026-10-
      17, per request - "narrower" there meant this thinner vertical
      band, applied site-wide now), was 22px 6vw. */
-  padding: 14px 6vw;
+  /* Asymmetric top/bottom (2026-10-17, was a flat 14px) matching
+     .hero-nav's own top/padding-bottom exactly - that's what actually
+     makes the logo land at the same y-coordinate on both pages, not
+     just a visually-similar one ("nav bar and logo position need to be
+     consistent across all pages", per request). */
+  padding: clamp(18px, 2.5vh, 32px) 6vw clamp(8px, 1.2vh, 14px);
   /* Same light-gray separator as the landing page's nav row. */
   border-bottom: 2px solid #CFCFCF;
 }
@@ -268,8 +273,13 @@ header.site{
   cursor: pointer;
   padding: 4px;
 }
-.top-bar-light{ position: absolute; top: 32px; right: 6vw; left: auto; }
-.masthead-logo{ position: absolute; top: 32px; left: 6vw; }
+/* top: clamp(18px, 2.5vh, 32px) (2026-10-17, was a flat 32px) - matches
+   .hero-nav's own tightened value, per request ("nav bar and logo
+   position need to be consistent across all pages") - this is the
+   About/FAQ/Feedback masthead used on the category and info pages,
+   which had been left at the original, untightened offset. */
+.top-bar-light{ position: absolute; top: clamp(18px, 2.5vh, 32px); right: 6vw; left: auto; }
+.masthead-logo{ position: absolute; top: clamp(18px, 2.5vh, 32px); left: 6vw; }
 /* Hidden on the About/FAQ/Feedback masthead per request - the back button
    is enough there. Still shown in the compact (directory) masthead above,
    where it's the click-to-go-home shortcut requested separately. */
@@ -709,10 +719,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    smaller, fixed internal padding instead - "reduce unnecessary
    horizontal padding" - since this container is what provides the
    actual page margin now. */
+/* Light beige outside the centered container, white inside it
+   (2026-10-17, per request) - makes the actual content (toolbar +
+   directory/profile) read as a distinct section against the page
+   rather than blending into it. */
+#view-listing{ background: #F3EEE1; }
 .listing-container{
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 clamp(16px, 3vw, 40px);
+  background: #fff;
 }
 /* Shared toolbar - search, all 5 filters, Clear all, Review & Submit -
    now spans the full page width above both panels (2026-10-17; was
@@ -1618,16 +1634,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .profile-section-divider{
   border-top: 1px solid var(--line);
   margin: 20px -28px;
-}
-/* Industry Expertise's primary value - plain text, not a pill (that's
-   what distinguishes it from Marketing Expertise/Ask me about). Not
-   bold, per request. */
-.alum-col-value{
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--ink);
-  line-height: 1.4;
 }
 /* "+N more" for an alum's other selected industries beyond the primary
    one shown - opens a small popover (not an inline expand) listing them
@@ -3363,27 +3369,16 @@ function primaryIndustryOrderedList(a){
 function profileThreeColumnsHtml(a, visibleTopics){
   const cols = [];
 
-  // Industry Expertise is plain text again (2026-10-15) - not pills like
-  // Marketing/Ask me about. Only the primary industry is shown as text;
-  // anything beyond it folds into a "+N more" pill (the only pill this
-  // column has) that opens a popover, same interaction as the filter
-  // dropdowns - this is a flat "show 1, count the rest" rule rather than
-  // the measured 1-line-collapse the pill rows use, since there's no
-  // per-item element here to measure against the column width.
-  const [primaryIndustry, ...otherIndustries] = primaryIndustryOrderedList(a);
-  if(primaryIndustry){
-    let industryValueHtml = `<div class="topic-tags"><span class="topic-tag">${primaryIndustry}</span>`;
-    if(otherIndustries.length){
-      industryValueHtml += `<span class="industry-more-wrap">
-        <button type="button" class="industry-more-btn" aria-expanded="false">+${otherIndustries.length} more</button>
-        <div class="industry-more-popover">
-          <div class="industry-more-popover-title">This alum has also worked in:</div>
-          <div class="industry-more-popover-list">${otherIndustries.map(v => `<div>${v}</div>`).join('')}</div>
-        </div>
-      </span>`;
-    }
-    industryValueHtml += `</div>`;
-    cols.push(`<div class="alum-col"><span class="field-label">Industry Expertise</span><div class="alum-col-value">${industryValueHtml}</div></div>`);
+  // Industry Expertise - pills, all of them (2026-10-17, per request;
+  // used to show only the primary one as plain text with a flat "+N
+  // more" for the rest). Same measured 1-line-collapse the Marketing/
+  // Ask Me About pill rows already use - see collapsePillRowOverflow,
+  // wired up for this row too in collapseAskMeAboutOverflow() - rather
+  // than a fixed "show 1" rule, so it only folds into "+N more" once the
+  // pills actually don't fit.
+  const allIndustries = primaryIndustryOrderedList(a);
+  if(allIndustries.length){
+    cols.push(`<div class="alum-col"><span class="field-label">Industry Expertise</span><div class="topic-tags industry-tags">${allIndustries.map(v => `<span class="topic-tag">${v}</span>`).join('')}</div></div>`);
   }
 
   const marketingParts = cardMarketingLineValues(a);
@@ -3845,6 +3840,7 @@ function collapsePillRowOverflow(containerSelector, popoverTitle){
 function collapseAskMeAboutOverflow(){
   collapsePillRowOverflow('.ask-me-about .topic-tags', 'Also ask about:');
   collapsePillRowOverflow('.marketing-tags', 'Also has expertise in:');
+  collapsePillRowOverflow('.industry-tags', 'Also worked in:');
 }
 let askMeAboutResizeTimer;
 window.addEventListener('resize', () => {
