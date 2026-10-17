@@ -128,7 +128,7 @@ header.site{
   z-index: 4;
   /* Separator line between the logo/nav row and the landing body. */
   padding-bottom: clamp(8px, 1.2vh, 14px);
-  border-bottom: 1px solid #CFCFCF;
+  border-bottom: 2px solid #CFCFCF;
 }
 /* Horizontal padding matches #heroSub.compact's own (the browsing
    page's masthead) exactly - plain 6vw, no max-width/auto-margin
@@ -184,9 +184,12 @@ header.site{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 22px 6vw;
+  /* Tightened to match the landing nav's own reduced spacing (2026-10-
+     17, per request - "narrower" there meant this thinner vertical
+     band, applied site-wide now), was 22px 6vw. */
+  padding: 14px 6vw;
   /* Same light-gray separator as the landing page's nav row. */
-  border-bottom: 1px solid #CFCFCF;
+  border-bottom: 2px solid #CFCFCF;
 }
 #heroSub.compact .back-btn,
 #heroSub.compact h2{ display: none; }
@@ -392,7 +395,7 @@ header.site{
   gap: 16px;
   margin-top: 32px;
   padding-top: 24px;
-  border-top: 1px solid var(--line);
+  border-top: 2px solid var(--line);
 }
 .review-back-btn{
   background: none;
@@ -465,7 +468,7 @@ header.site{
 
 .faq-item{
   padding: 68px 0;
-  border-top: 1px solid var(--line);
+  border-top: 2px solid var(--line);
 }
 .faq-item:first-child{ border-top: none; padding-top: 24px; }
 .faq-q{
@@ -677,7 +680,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   text-align: left;
   background: none;
   border: none;
-  border-top: 1px solid var(--line);
+  border-top: 2px solid var(--line);
   padding: 20px 0;
   font-family: 'Baskerville', 'Libre Baskerville', serif;
   font-size: 18px;
@@ -687,7 +690,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   text-wrap: balance;
 }
 .category-option:first-child{ border-top: none; padding-top: 0; }
-.category-option:last-child{ border-bottom: 1px solid var(--line); }
+.category-option:last-child{ border-bottom: 2px solid var(--line); }
 .category-option:hover{ color: var(--accent); }
 @media (max-width: 700px){
   .category-option{ font-size: 16px; }
@@ -708,7 +711,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   flex-direction: column;
   gap: 14px;
   padding: 18px 6vw;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 2px solid var(--line);
 }
 /* .search-box's own `flex: 1 1 280px` sets a WIDTH basis in its other
    context (a row-direction flex parent) - .directory-toolbar is
@@ -766,10 +769,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   min-width: 280px;
   display: flex;
   flex-direction: column;
+  /* Frames the alumni list so it feels nestled between two vertical
+     lines (2026-10-17, per request) rather than floating edge-to-edge -
+     present whether the profile panel is open or collapsed. */
+  border-left: 2px solid var(--line);
+  border-right: 2px solid var(--line);
 }
 .directory-list{
   flex: 1 1 auto;
   min-height: 0;
+  /* Buffer space after the last card (2026-10-17, per request) - without
+     it the list's scroll just stops flush against the last alum's own
+     row padding, which read as an abrupt cutoff. */
+  padding-bottom: 48px;
   overflow-y: auto;
 }
 /* Draggable divider - see initDirectoryResizer(). A 16px hit target
@@ -796,7 +808,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   top: 0;
   bottom: 0;
   left: 50%;
-  width: 1px;
+  width: 2px;
   background: var(--line);
   transform: translateX(-50%);
 }
@@ -847,7 +859,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 16px 6vw;
   cursor: pointer;
   border: none;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 2px solid var(--line);
   border-left: 3px solid transparent;
   background: none;
   width: 100%;
@@ -1033,7 +1045,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    the top horizontal", per request. */
 .profile-divider{
   margin: 28px -6vw 0;
-  border-top: 1px solid var(--line);
+  border-top: 2px solid var(--line);
 }
 .profile-sections .alum-columns{ margin-top: 0; }
 .search-box{
@@ -1211,7 +1223,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    padding (2026-10-17, per request) - runs this divider edge-to-edge
    across the dropdown instead of just the inset content width. */
 .location-region + .location-region{
-  border-top: 1px solid var(--line);
+  border-top: 2px solid var(--line);
   padding-top: 10px;
   margin-top: 6px;
   margin-left: -18px;
@@ -1274,7 +1286,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   font-weight: 600;
   padding-bottom: 8px;
   margin-bottom: 2px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 2px solid var(--line);
 }
 .filter-checkbox-option input[type="checkbox"]{
   appearance: none;
@@ -1559,7 +1571,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    vertical dividers themselves start - those still begin right at the
    row's top edge via align-items:stretch on .alum-columns. */
 .alum-col{ flex: 1 1 140px; min-width: 0; padding-top: 16px; }
-.alum-col-divider{ width: 1px; background: var(--line); flex-shrink: 0; }
+.alum-col-divider{ width: 2px; background: var(--line); flex-shrink: 0; }
 /* Industry Expertise's primary value - plain text, not a pill (that's
    what distinguishes it from Marketing Expertise/Ask me about). Not
    bold, per request. */
@@ -1814,8 +1826,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 22px 24px;
-  border-bottom: 1px solid var(--line);
+  /* Tightened to match the nav's own reduced spacing (2026-10-17, per
+     request), was 22px 24px. */
+  padding: 14px 24px;
+  border-bottom: 2px solid var(--line);
   flex-shrink: 0;
 }
 .pins-drawer-header h2{
@@ -1843,7 +1857,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .pins-drawer-footer{
   flex-shrink: 0;
   padding: 18px 24px;
-  border-top: 1px solid var(--line);
+  border-top: 2px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: space-between;
