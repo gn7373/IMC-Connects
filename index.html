@@ -130,10 +130,14 @@ header.site{
   padding-bottom: clamp(8px, 1.2vh, 14px);
   border-bottom: 1px solid #CFCFCF;
 }
+/* Horizontal padding matches #heroSub.compact's own (the browsing
+   page's masthead) exactly - plain 6vw, no max-width/auto-margin
+   centering - so the logo and nav links sit at the same x-coordinates
+   on both pages, per request (2026-10-17; this used to be a separate
+   max-width:1320px/clamp() formula, which drifted from the browsing
+   page's at wide viewports). */
 .hero-nav-inner{
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 0 clamp(24px, 5vw, 64px);
+  padding: 0 6vw;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -190,9 +194,12 @@ header.site{
 #heroSub.compact .top-bar-light{ position: static; }
 
 /* ---------- HERO COPY ---------- */
-/* Shares .hero-nav-inner's exact max-width/margin/padding-left formula
-   so the headline's left edge lines up with the logo above it at every
-   viewport width, instead of drifting apart via two separate clamps. */
+/* Used to share .hero-nav-inner's exact max-width/margin/padding-left
+   formula so the headline's left edge lined up with the logo above it -
+   .hero-nav-inner's own horizontal padding changed (2026-10-17, to match
+   the browsing page's masthead instead - see its own comment) and this
+   was deliberately left as-is per that request, so that alignment no
+   longer holds. */
 /* Vertically positioned in .hero-top (the 100vh hero section), so the
    whole text block (headline through the button) holds its tuned
    position regardless of viewport height. Horizontal placement
@@ -3760,23 +3767,32 @@ window.addEventListener('resize', () => {
   askMeAboutResizeTimer = setTimeout(collapseAskMeAboutOverflow, 150);
 });
 
-// Keeps the hero headline at its tuned position - 33.5% of the hero
-// section's height is what lines up "Northwestern"'s baseline with the
-// tower illustration's tip (see the comment on .hero-copy) - but never
-// lets it climb higher than a safe distance below the nav row's own
-// real rendered bottom edge. A flat CSS percentage alone (what this
-// used to be) pushes the text further up the *shorter* the viewport
-// gets, since the nav itself barely shrinks (its own top/padding are
-// clamp()-capped) - on a short enough window that collided with, or
-// even sat above, the nav and its divider line. Computed here instead,
-// measured against the nav's actual position, same "measure, don't
-// guess" approach as sizeTowerDecor below. Skipped under 768px, where
+// Keeps the hero headline at its tuned position, but never lets it
+// climb higher than a safe distance below the nav row's own real
+// rendered bottom edge. A flat CSS percentage alone (what this used to
+// be) pushes the text further up the *shorter* the viewport gets, since
+// the nav itself barely shrinks (its own top/padding are clamp()-
+// capped) - on a short enough window that collided with, or even sat
+// above, the nav and its divider line. Computed here instead, measured
+// against the nav's actual position, same "measure, don't guess"
+// approach as sizeTowerDecor below. Skipped under 768px, where
 // .hero-copy goes back to being laid out in normal flow (see the
 // max-width:767px block) and this inline override would only fight it.
+//
+// 33.5% of the hero section's height was originally hand-tuned so
+// "Northwestern" (the headline's 2nd line) lined up with the tower
+// illustration's tip. Per a later request (2026-10-17), the whole block
+// is now shifted one further line-height down from that - so "Build
+// your" (line 1) sits where "Northwestern" used to, and the tower-tip
+// alignment is no longer current. headingLineHeight is measured live
+// (h1's line-height:1, so it's just the h1's own rendered font-size,
+// itself a vw-based clamp) rather than hardcoded, since it scales with
+// viewport width.
 function positionHeroCopy(){
   const heroCopy = document.querySelector('.hero-copy');
   const nav = document.querySelector('.hero-nav');
-  if(!heroCopy || !nav) return;
+  const h1 = document.querySelector('.hero-copy h1');
+  if(!heroCopy || !nav || !h1) return;
   if(window.innerWidth < 768){ heroCopy.style.top = ''; return; }
   // `top` sets .hero-copy's own anchor point, but translateY(-50%) (see
   // the CSS) then shifts its actual rendered position up by half of its
@@ -3786,7 +3802,8 @@ function positionHeroCopy(){
   // written - the anchor looked clamped correctly, but the rendered
   // text was still flush against the nav).
   const minTop = nav.getBoundingClientRect().bottom + 24 + heroCopy.offsetHeight / 2;
-  const preferredTop = window.innerHeight * 0.335;
+  const headingLineHeight = parseFloat(getComputedStyle(h1).lineHeight) || 0;
+  const preferredTop = window.innerHeight * 0.335 + headingLineHeight;
   heroCopy.style.top = Math.max(preferredTop, minTop) + 'px';
 }
 positionHeroCopy();
