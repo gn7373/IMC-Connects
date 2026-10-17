@@ -1,0 +1,4245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alumni Coffee Chats</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%23D9C79A'/><text x='32' y='42' font-family='Arial, Helvetica, sans-serif' font-size='26' font-weight='900' letter-spacing='-1.5' fill='%231B1F14' text-anchor='middle'>IMC</text></svg>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:wght@600&family=DM+Serif+Display:ital@0;1&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   CONFIG IS IN THE <script> BLOCK AT THE BOTTOM OF THIS FILE.
+   Look for "ORGANIZER CONFIG" — that's the only part you need
+   to edit to point this at your own Sheet and Form.
+   ============================================================ */
+
+:root{
+  /* "Explore your path. Pin the people who interest you." design system.
+     Purple is the primary interaction color, not a wash - most of the
+     interface should still read as navy/white/lavender. --success and
+     --success-on-light are reused for the "pinned/selected" state (the
+     old cart-era name stuck) and map to the interactive violet, since
+     pinning is now the site's one selection signal. */
+  --paper: #F9F5FE;
+  /* Warm cream for the alumni directory's page background specifically -
+     kept distinct from --paper (the lavender used for the landing hero
+     and card fills) so cards read as their own surface against it. */
+  --cream: #FDFBF4;
+  --ink: #000000;
+  --accent: #401F68;
+  --accent-deep: #000000;
+  --accent-light: #DAD2F4;
+  --accent-tint: #EFEAFD;
+  --success: #401F68;
+  --success-on-light: #401F68;
+  --line: #E9E3FA;
+  --line-strong: #DAD2F4;
+  --muted: #5C5A82;
+  --warn: #E87518;
+  /* Secondary accents - used sparingly for pins/icons/small marks only,
+     never for large surfaces. */
+  --pin-blue: #168BC7;
+  --pin-pink: #C93478;
+  --pin-orange: #E87518;
+  --pin-violet: #6841E6;
+  --lavender-muted: #8D83BC;
+}
+*{ box-sizing: border-box; }
+body{
+  margin:0;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.15 0 0 0 0 0.15 0 0 0 0 0.4 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+#submitBtn:focus-visible{ outline-color: var(--success); }
+.add-btn:focus-visible{ outline-color: var(--success-on-light); }
+a{ color: var(--accent-light); }
+em, .ital{ font-style: italic; }
+
+.small-caps{
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* ---------- HERO ---------- */
+header.site{
+  background: #fff;
+  color: var(--ink);
+  position: relative;
+}
+.hero-top{
+  width: 100%;
+  box-sizing: border-box;
+  height: 100vh;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+/* Decorative Gothic tower illustration, anchored to the hero's bottom
+   corner - purely atmospheric, so it's hidden from screen readers and
+   dropped on mobile where there isn't room for it alongside the copy.
+   Its width is set by sizeTowerDecor() in the script below, not a CSS
+   clamp - after several rounds of guessing viewport-based clamp/media
+   thresholds that still read as "too small" on whatever window the
+   viewer actually had open, it's simpler and more reliable to measure
+   the real gap between the viewport top and the "Find alumni" button
+   at runtime and size the image to fill it, on load and on resize. This
+   clamp is just the pre-JS/no-JS fallback for the first paint. */
+.hero-tower-decor{
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: clamp(360px, min(62vw, 58vh), 1200px);
+  height: auto;
+  pointer-events: none;
+  z-index: 1;
+}
+@media (max-width: 767px){
+  .hero-tower-decor{ display: none; }
+}
+.hero-options{
+  display: contents;
+}
+.hero-nav{
+  position: absolute;
+  top: clamp(28px, 4vh, 48px);
+  left: 0;
+  right: 0;
+  z-index: 4;
+  /* Separator line between the logo/nav row and the landing body. */
+  padding-bottom: clamp(12px, 1.8vh, 18px);
+  border-bottom: 1px solid #CFCFCF;
+}
+.hero-nav-inner{
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 clamp(24px, 5vw, 64px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+}
+.hero-logo{
+  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.hero-logo-btn{
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.hero-logo-btn:hover{ opacity: 0.75; }
+.hero-logo .logo-cmi{ font-size: 2em; line-height: 1; color: var(--accent); }
+.hero-logo .logo-sep{
+  display: inline-block;
+  width: 1.5px;
+  height: 2em;
+  background: var(--muted);
+}
+.hero-logo .logo-connect{
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 1em;
+  letter-spacing: 0.06em;
+}
+/* The listing/category/info masthead's compact variant - just the logo
+   (left) and nav tabs (right) in the same positions the landing header
+   uses, with no page title or back button. Overrides the base #heroSub's
+   big centered-title layout (still used by category/info) down to a
+   slim, ordinary nav row. */
+#heroSub.compact{
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 6vw;
+  /* Same light-gray separator as the landing page's nav row. */
+  border-bottom: 1px solid #CFCFCF;
+}
+#heroSub.compact .back-btn,
+#heroSub.compact h2{ display: none; }
+#heroSub.compact .masthead-logo,
+#heroSub.compact .top-bar-light{ position: static; }
+
+/* ---------- HERO COPY ---------- */
+/* Shares .hero-nav-inner's exact max-width/margin/padding-left formula
+   so the headline's left edge lines up with the logo above it at every
+   viewport width, instead of drifting apart via two separate clamps. */
+/* Vertically centered in .hero-top (the 100vh hero section) rather than
+   pinned near the nav - per request, so the whole text block (headline
+   through the button) sits in the middle of the page regardless of
+   viewport height. Horizontal placement (margin: 0 auto within
+   left/right: 0) is unchanged from the old in-flow version. */
+.hero-copy{
+  position: absolute;
+  top: 38%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 3;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 clamp(24px, 5vw, 64px);
+  box-sizing: border-box;
+  opacity: 0;
+  animation: heroCopyIn 800ms cubic-bezier(.22,.8,.32,1) both;
+}
+@keyframes heroCopyIn{
+  from{ opacity: 0; transform: translate(-26px, -50%); }
+  to{ opacity: 1; transform: translate(0, -50%); }
+}
+/* Mobile's version of the same entrance - .hero-copy is back in normal
+   flow there (no top:50%/translateY to preserve), so this is just the
+   original horizontal-only slide-in. */
+@keyframes heroCopyInMobile{
+  from{ opacity: 0; transform: translateX(-26px); }
+  to{ opacity: 1; transform: translateX(0); }
+}
+.hero-copy > *{ max-width: 450px; }
+
+.top-bar{
+  position: absolute;
+  top: 32px;
+  left: 6vw;
+  right: 6vw;
+  display: flex;
+  justify-content: flex-end;
+}
+.top-tabs{
+  display: flex;
+  gap: 24px;
+}
+.hero-hamburger{
+  display: none;
+  background: none;
+  border: none;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 4px;
+}
+.top-bar-light{ position: absolute; top: 32px; right: 6vw; left: auto; }
+.masthead-logo{ position: absolute; top: 32px; left: 6vw; }
+/* Hidden on the About/FAQ/Feedback masthead per request - the back button
+   is enough there. Still shown in the compact (directory) masthead above,
+   where it's the click-to-go-home shortcut requested separately. */
+#heroSub:not(.compact) .masthead-logo{ display: none; }
+.tab-link-light{ color: var(--ink) !important; }
+.tab-link{
+  background: none;
+  border: none;
+  color: var(--ink);
+  font-size: 15px;
+  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  cursor: pointer;
+  padding: 4px 0;
+  border-bottom: 1px solid transparent;
+}
+/* .top-bar (landing) and .top-bar-light (masthead) share every value
+   here so the nav looks identical - same size, same gap, same
+   position - regardless of which screen you're on. */
+@media (max-width: 700px){
+  .top-bar{ top: 6px; }
+  .tab-link{ font-size: 14px; }
+}
+.tab-link:hover{ color: var(--accent); border-bottom-color: var(--accent); }
+
+.info-layout{
+  padding: 12px 6vw 60px;
+}
+
+/* ---------- REVIEW YOUR PINNED ALUMNI ---------- */
+.review-intro{
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 24px 0 28px;
+  text-wrap: pretty;
+}
+.review-list{ display: flex; flex-direction: column; gap: 16px; }
+/* No pin icon any more (2026-10-15, per request) - the card is just a
+   plain stack: remove button top-right (above everything else), then
+   name+spots-available, title, company, location/LinkedIn. */
+.review-card{
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  /* Extra top padding - the remove button sits in its own row above the
+     name/spots row (not beside it), per request, so the card needs room
+     above the name for the button's 30px height + 14px top offset. */
+  padding: 46px 24px 20px;
+  box-shadow: 0 6px 16px rgba(37,37,100,0.08);
+}
+.review-card-header{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.review-card-name{
+  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-weight: 500;
+  font-size: 19px;
+}
+.review-card-header .capacity-badge-wrap{ flex-shrink: 0; }
+.review-card-role{ font-size: 13.5px; color: var(--ink); margin-top: 2px; }
+.review-card-company{ font-size: 13px; font-style: italic; color: var(--muted); margin-top: 1px; }
+.review-card-contact{ margin-top: 10px; }
+.review-card-remove{
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: none;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.review-card-remove:hover{ border-color: var(--warn); color: var(--warn); }
+.review-empty{
+  color: var(--muted);
+  font-style: italic;
+  font-family: 'Inter', sans-serif;
+  padding: 40px 0;
+  text-align: center;
+}
+.review-empty a{ color: var(--accent); }
+.review-actions{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.review-back-btn{
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+}
+.review-back-btn:hover{ color: var(--ink); }
+@media (max-width: 700px){
+  .review-actions{ flex-direction: column-reverse; align-items: stretch; }
+  .review-actions .submit-btn{ justify-content: center; }
+}
+.info-panel{ display: none; }
+.info-panel.active{ display: block; }
+#feedbackText{
+  width: 100%;
+  min-height: 100px;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  font-size: 20.25px;
+  padding: 10px;
+  resize: vertical;
+}
+#feedbackText::placeholder{ color: var(--muted); }
+.feedback-error{
+  display: none;
+  color: var(--warn);
+  font-size: 11.5px;
+  margin-top: 6px;
+}
+.feedback-error.show{ display: block; }
+.feedback-send{
+  margin-top: 10px;
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 9px;
+  font-size: 20.25px;
+  cursor: pointer;
+}
+
+.about-body{
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 20.25px;
+  line-height: 1.7;
+  text-align: left;
+  margin: 0 0 20px;
+  text-wrap: pretty;
+}
+.about-body strong{
+  color: #453F3A;
+  text-decoration: underline;
+  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  display: inline-block;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 1px 8px;
+}
+.about-body:first-child{ margin-top: 24px; }
+#feedbackText{ margin-top: 24px; }
+.about-body:last-child{ margin-bottom: 0; }
+
+.faq-item{
+  padding: 68px 0;
+  border-top: 1px solid var(--line);
+}
+.faq-item:first-child{ border-top: none; padding-top: 24px; }
+.faq-q{
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 21px;
+  margin-bottom: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.faq-q::before{
+  content: '+';
+  color: var(--accent);
+  font-weight: 400;
+  font-size: 1.3em;
+}
+.faq-item.open .faq-q::before{ content: '\2212'; }
+.faq-a{
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 20.25px;
+  line-height: 1.6;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  text-wrap: pretty;
+}
+.faq-item.open .faq-a{ margin-top: 12px; }
+@media (max-width: 700px){
+  .about-body{ font-size: 16px; line-height: 1.6; }
+  .about-body:first-child{ margin-top: 16px; }
+  .about-mobile-break{ display: block; margin-top: 20px; }
+  #feedbackText{ margin-top: 16px; font-size: 16px; }
+  .feedback-send{ font-size: 15px; }
+  .faq-item{ padding: 24px 0; }
+  .faq-item:first-child{ padding-top: 16px; }
+  .faq-q{ font-size: 17px; }
+  .faq-a{ font-size: 16px; line-height: 1.55; }
+}
+
+#heroLanding{ display: block; }
+
+/* ---------- LANDING HERO: "explore your path" ---------- */
+header.site h1{
+  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: clamp(64px, 5vw, 82px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0 0 26px;
+}
+header.site h1 em{ font-style: italic; color: var(--accent); }
+.hero-lede{
+  font-family: 'Inter', sans-serif;
+  font-size: 19px;
+  line-height: 1.45;
+  color: var(--ink);
+  max-width: 450px;
+  margin: 0 0 28px;
+}
+.round-note{ display: none; }
+.landing-options{ display: flex; }
+.landing-option{
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  min-width: 140px;
+  height: 44px;
+  padding: 0 16px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.landing-option:hover{ filter: brightness(1.18); }
+.landing-option .arrow{ font-size: 16px; }
+
+/* The source photo is one red pushpin - hue-rotated per card instead of
+   using four separate photos. Its own photographed angle already leans
+   the cap to the right with the point aiming down-left, which is the
+   consistent "acute angle to the right" look across every pin. */
+.pin-btn-icon{ flex-shrink: 0; }
+.pin-violet img{ filter: drop-shadow(0 3px 2px rgba(37,37,100,0.35)) hue-rotate(255deg) saturate(1.3); }
+.pin-blue img{ filter: drop-shadow(0 3px 2px rgba(37,37,100,0.35)) hue-rotate(200deg) saturate(1.5); }
+.pin-orange img{ filter: drop-shadow(0 3px 2px rgba(37,37,100,0.35)) hue-rotate(15deg) saturate(1.1); }
+.pin-pink img{ filter: drop-shadow(0 3px 2px rgba(37,37,100,0.35)) hue-rotate(320deg) saturate(1.2); }
+@media (prefers-reduced-motion: reduce){
+  .hero-copy{ animation: none !important; opacity: 1; transform: translateY(-50%); }
+}
+@media (max-width: 767px) and (prefers-reduced-motion: reduce){
+  .hero-copy{ transform: none !important; }
+}
+@media (max-width: 767px){
+  .hero-top{ height: auto; min-height: auto; overflow: visible; padding-bottom: 0; }
+  .hero-nav{ position: static; padding-top: 20px; padding-bottom: 16px; }
+  .hero-hamburger{ display: block; }
+  .hero-nav-inner{ position: relative; }
+  .top-tabs{
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 20px;
+    margin-top: 8px;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 14px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 12px 28px rgba(37,37,100,0.16);
+    z-index: 5;
+  }
+  .top-tabs.open{ display: flex; }
+  /* Desktop centers .hero-copy with position:absolute/top:50% - mobile
+     drops that back to normal in-flow stacking below the nav (which is
+     itself static on mobile, see above), and swaps in a horizontal-only
+     entrance animation since there's no vertical offset to preserve. */
+  .hero-copy{
+    position: static;
+    margin: 20px 0 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    max-width: none;
+    animation: heroCopyInMobile 800ms cubic-bezier(.22,.8,.32,1) both;
+  }
+  .hero-copy > *{ max-width: none; }
+  header.site h1{ font-size: clamp(38px, 11vw, 54px); }
+  .hero-lede{ font-size: 16px; max-width: none; }
+  .landing-option{ width: 100%; }
+}
+
+.back-btn{
+  display: inline-flex;
+  align-items: center;
+  background:none;
+  border:none;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 4px;
+  position: absolute;
+  top: 32px;
+  left: 6vw;
+}
+@media (max-width: 700px){
+  .back-btn{ font-size: 14px; top: 6px; }
+  .top-bar-light{ top: 6px; }
+}
+#heroSub{
+  position: relative;
+  height: 290px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+}
+@media (max-width: 700px){
+  #heroSub{
+    /* 51.3vw = width / 1.947, the photo's own aspect ratio - matching
+       it exactly means "cover" no longer needs to crop the sides at
+       all, showing the full width including both towers. Only fits
+       safely now that .back-btn is also shrunk for mobile above,
+       freeing enough room for a 3-line-wrapped title. */
+    height: min(290px, 51.3vw);
+  }
+}
+#heroSub h2{
+  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-weight: 500;
+  font-size: clamp(29px, 4vw, 45px);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0;
+  color: var(--ink);
+  text-align: center;
+  line-height: 1.25;
+}
+@media (max-width: 700px){
+  #heroSub h2{
+    /* A fixed 26px only fixed the crowding at ~375px+ widths - a
+       320px-wide phone (still common) wrapped several long titles to
+       3-4 lines at that same size. Scales with viewport width instead
+       (6vw), floored at 19px so it doesn't shrink further below 320,
+       capped at 26px so it doesn't grow past what was already
+       verified safe near the 700px breakpoint. Re-verified: every
+       real marketing-area/industry title stays at 2 lines max, with a
+       26px+ gap to the back button, all the way down to 320px wide. */
+    font-size: clamp(19px, 6vw, 26px);
+  }
+}
+
+.category-list{
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px 6vw 40px;
+}
+.category-option{
+  display:block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--line);
+  padding: 20px 0;
+  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--ink);
+  cursor: pointer;
+  text-wrap: balance;
+}
+.category-option:first-child{ border-top: none; padding-top: 0; }
+.category-option:last-child{ border-bottom: 1px solid var(--line); }
+.category-option:hover{ color: var(--accent); }
+@media (max-width: 700px){
+  .category-option{ font-size: 16px; }
+}
+#view-listing{ background: #fff; }
+/* ---------- SPLIT-VIEW DIRECTORY (2026-10-16) ---------- */
+/* Height is set inline by sizeDirectorySplit() (measures the masthead's
+   real rendered height rather than guessing a fixed px value - same
+   "measure, don't assume" approach used for the hero tower sizing) so
+   the two panels fill exactly the space below the nav, no page-level
+   scroll. */
+/* Shared toolbar - search, all 5 filters, Clear all, Review & Submit -
+   now spans the full page width above both panels (2026-10-17; was
+   inside .directory-left, with Review & Submit a separate rotated edge
+   tab). */
+.directory-toolbar{
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--line);
+}
+.directory-toolbar .search-box{ flex: 1 1 240px; max-width: 360px; }
+.directory-toolbar .filter-bar{ flex: 2 1 auto; margin-top: 0; }
+.directory-list-header{
+  flex: 0 0 auto;
+  padding: 16px 28px 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.directory-split{
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  position: relative;
+}
+.directory-left{
+  /* Width is adjustable (sizeableLeftWidth(), set as an inline
+     flex-basis on this element) - 35% is just the starting point. */
+  flex: 0 0 35%;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+}
+.directory-list{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+/* Draggable divider - see initDirectoryResizer(). A 10px hit target
+   (easier to grab than the hairline it draws) with a small pill handle,
+   both highlighting on hover/drag. */
+.directory-resizer{
+  flex: 0 0 10px;
+  width: 10px;
+  cursor: col-resize;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.directory-resizer::before{
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: var(--line);
+  transform: translateX(-50%);
+}
+.directory-resizer:hover::before,
+.directory-resizer.dragging::before{ background: var(--accent); }
+.directory-resizer-handle{
+  width: 4px;
+  height: 32px;
+  border-radius: 3px;
+  background: var(--line-strong);
+  pointer-events: none;
+}
+.directory-resizer:hover .directory-resizer-handle,
+.directory-resizer.dragging .directory-resizer-handle{ background: var(--accent); }
+.directory-right{
+  flex: 1 1 auto;
+  min-width: 320px;
+  overflow-y: auto;
+  padding: 28px 40px 60px;
+}
+/* Collapsing the profile panel (2026-10-17): hides it and the resizer,
+   the directory expands to fill the width, and a floating "›" docks at
+   the right edge to reopen it. Selection and the stored panel width are
+   untouched by this - collapsing/expanding only toggles this class. */
+.directory-split.profile-collapsed .directory-right,
+.directory-split.profile-collapsed .directory-resizer{ display: none; }
+.directory-split.profile-collapsed .directory-left{ flex: 1 1 auto; max-width: none; }
+.directory-reopen-btn{
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 56px;
+  border-radius: 8px 0 0 8px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-right: none;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: -4px 0 12px rgba(37,37,100,0.1);
+}
+.directory-reopen-btn:hover{ color: var(--accent); border-color: var(--accent); }
+.directory-entry{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 28px;
+  cursor: pointer;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-left: 3px solid transparent;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+.directory-entry:hover{ background: var(--paper); }
+.directory-entry.selected{
+  background: var(--accent-tint);
+  border-left-color: var(--accent);
+}
+.directory-entry-info{ min-width: 0; }
+/* Natural wrapping, no truncation/ellipsis and no dynamic font shrink
+   for long names - per explicit request for this list. */
+.directory-entry-name{
+  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-weight: 400;
+  font-size: 19px;
+  line-height: 1.25;
+  color: var(--ink);
+}
+.directory-entry-location{
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+}
+.directory-entry-right{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.directory-entry-chevron{ color: var(--muted); flex-shrink: 0; }
+.directory-entry.selected .directory-entry-chevron{ color: var(--accent); }
+.directory-empty{
+  padding: 48px 28px;
+  color: var(--muted);
+  font-style: italic;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  text-align: center;
+}
+/* ---------- PROFILE PANEL (right side) ---------- */
+.profile-toolbar{
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+.profile-back-btn{
+  display: none; /* shown only below 1024px, see the max-width block */
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+}
+.profile-back-btn:hover{ color: var(--ink); }
+.profile-availability{ display: flex; align-items: center; gap: 12px; }
+/* Collapse control (2026-10-17) - hides the profile panel so the
+   directory can take the full width; .directory-reopen-btn (floating
+   "›" on the right edge) brings it back. Desktop-only, same as the
+   resizer - mobile already has its own full-screen pattern. */
+.profile-collapse-btn{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-strong);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.profile-collapse-btn:hover{ border-color: var(--accent); color: var(--accent); }
+@media (max-width: 1023px){
+  .profile-collapse-btn{ display: none; }
+}
+.profile-header{ display: flex; gap: 28px; align-items: flex-start; }
+/* Portrait + text stack vertically once the panel gets narrow (resized
+   small, or on a mobile detail view) - toggled by a ResizeObserver on
+   #directoryRight (watchProfilePanelWidth()) rather than a plain media
+   query, since the panel's width changes from dragging the divider, not
+   just from the viewport changing. */
+.directory-right.narrow .profile-header{ flex-direction: column; align-items: flex-start; }
+.directory-right.narrow .profile-portrait{ width: 140px; height: 175px; }
+.profile-portrait{
+  flex-shrink: 0;
+  width: 176px;
+  height: 220px;
+  border-radius: 8px;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--line-strong);
+}
+.profile-name{
+  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.profile-info .alum-role{ margin-top: 8px; font-size: 15px; }
+.profile-info .alum-company{ font-size: 18px; margin-top: 4px; }
+.profile-info .alum-meta{ margin-top: 16px; font-size: 14px; }
+.profile-divider{
+  margin: 28px 0;
+  border-top: 1px solid var(--line);
+}
+.profile-sections .alum-columns{ margin-top: 0; }
+.profile-sections .ask-me-about{ margin-top: 28px; }
+.search-box{
+  flex: 1 1 280px;
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: border-color 150ms ease;
+}
+.search-box:focus-within{ border-bottom-color: var(--accent); }
+.search-box input{
+  border:none; outline:none; background:transparent;
+  font-size: 16px; width:100%; font-family: 'Baskerville', 'Libre Baskerville', serif; font-style: italic;
+  color: var(--ink);
+}
+.search-box input::placeholder{ color: var(--muted); }
+.search-btn{
+  background:none; border:none; padding:0; cursor:pointer;
+  color: var(--muted); display:flex; flex-shrink:0;
+}
+.search-btn:hover{ color: var(--ink); }
+.search-btn:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+.clear-btn{
+  background:none;
+  border:none;
+  cursor:pointer;
+  font-size: 13.5px;
+  font-family: inherit;
+  padding: 0;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* A vertical tab docked to the right edge of the viewport, centered on
+   it - not part of the toolbar/search row any more (2026-10-15, per
+   request). Fixed positioning keeps it in place as the alumni grid
+   scrolls underneath it, "relative to the card scroll" rather than
+   scrolling away with the toolbar. */
+/* Sits at the far right of the shared toolbar (2026-10-17) - was a
+   fixed/rotated vertical tab on the viewport edge before. */
+.pins-toggle-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--accent);
+  border: 1.5px solid var(--accent);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  padding: 10px 20px;
+  color: #fff;
+  flex-shrink: 0;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.pins-toggle-btn:hover{ background: var(--accent-deep); border-color: var(--accent-deep); }
+.pins-toggle-btn.active{ background: var(--success-on-light); border-color: var(--success-on-light); color: #fff; }
+.pins-count{ color: rgba(255,255,255,0.8); }
+
+.result-line{
+  margin-top: 14px;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--muted);
+}
+.result-line strong{ color: var(--ink); font-style: normal; font-weight: 600; }
+
+/* ---------- FILTER DROPDOWNS ---------- */
+/* Replaces the old left sidebar of always-visible checkbox groups - one
+   pill button per filterable field, each opening its own small checkbox
+   popover, all in a single wrapping row under the search box (matching
+   the Concept Board's "Marketing Area / Industry / City" dropdown row). */
+.filter-bar{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+.filter-dropdowns{ display: flex; flex-wrap: wrap; gap: 10px; }
+.filter-dropdown{ position: relative; }
+.filter-dropdown-toggle{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  /* The pill buttons themselves (Industry, Marketing Area, Location...)
+     are Baskerville - the dropdown contents (checkboxes, region labels)
+     stay Inter, per request. */
+  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  padding: 8px 14px;
+  color: var(--ink);
+}
+.filter-dropdown-toggle:hover{ border-color: var(--accent); color: var(--accent); }
+.filter-dropdown-toggle svg{ transition: transform 150ms ease; flex-shrink: 0; }
+.filter-dropdown.open .filter-dropdown-toggle{ border-color: var(--accent); color: var(--accent); }
+.filter-dropdown.open .filter-dropdown-toggle svg{ transform: rotate(180deg); }
+.filter-dropdown-toggle .filter-dropdown-count{ color: var(--accent); font-weight: 600; }
+/* Once anything's checked inside it, the whole tab turns solid purple -
+   not just the small count badge - so an active filter is obvious at a
+   glance across the row. */
+.filter-dropdown-toggle.has-selection{
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.filter-dropdown-toggle.has-selection .filter-dropdown-count{ color: #fff; }
+.filter-dropdown.open .filter-dropdown-toggle.has-selection{ border-color: var(--accent-deep); background: var(--accent-deep); color: #fff; }
+.filter-dropdown-panel{
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 14px 32px rgba(37,37,100,0.16);
+  padding: 16px 18px;
+  min-width: 240px;
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 15;
+}
+.filter-dropdown.open .filter-dropdown-panel{ display: block; }
+/* "Other filters" holds several of the checkbox groups above stacked in
+   one popover, each under its own small heading. Its own open/closed
+   "display" must stay in the .open-scoped rule below, same as the plain
+   panel above - setting "display: flex" unscoped here would permanently
+   win over ".filter-dropdown-panel{ display: none }" (equal specificity,
+   later in the stylesheet) and the dropdown could never actually close. */
+/* overflow:visible (overriding the base panel's overflow-y:auto) so
+   Location's region flyouts (position:absolute, left:100%) aren't
+   clipped - an ancestor with overflow-y:auto also clips the x-axis per
+   the CSS overflow spec once either axis is non-visible, which cut the
+   flyouts off before this override. */
+.filter-dropdown-panel-grouped{ flex-direction: column; gap: 18px; min-width: 220px; overflow: visible; }
+.filter-dropdown.open .filter-dropdown-panel-grouped{ display: flex; }
+.filter-subgroup-label{
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+  margin-bottom: 9px;
+  font-weight: 500;
+}
+.filter-group-disclaimer{
+  font-family: 'Inter', sans-serif;
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--muted);
+  margin: -2px 0 9px;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+/* Location's 3 region headers (United States / Asia / Latin America) -
+   each a clickable row that reveals its own nested city list only once
+   clicked, per request. Each region's panel opens horizontally (flyout
+   to the right of that row), not stacked below it (2026-10-17) - the
+   closed-state chevron points right accordingly, rotating to point
+   down once open, signaling "opens sideways" rather than "expands
+   below". .location-region needs its own position:relative since the
+   flyout anchors to that specific row, not the dropdown panel's corner. */
+.location-regions{ display: flex; flex-direction: column; gap: 4px; min-width: 200px; }
+.location-region{ position: relative; }
+.location-region + .location-region{ border-top: 1px solid var(--line); padding-top: 10px; margin-top: 6px; }
+.location-region-toggle{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: left;
+}
+.location-region-toggle span:first-child{ flex: 1 1 auto; }
+.location-region-toggle .filter-dropdown-count{ color: var(--accent); font-weight: 600; }
+.location-region-toggle.has-selection{ color: var(--accent); }
+.location-region-toggle svg{ transition: transform 150ms ease; flex-shrink: 0; transform: rotate(-90deg); }
+.location-region.open .location-region-toggle svg{ transform: rotate(0deg); }
+.location-region-panel{
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: -10px;
+  margin-left: 10px;
+  min-width: 200px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 14px 32px rgba(37,37,100,0.16);
+  padding: 14px 16px;
+  z-index: 20;
+}
+.location-region.open .location-region-panel{ display: block; }
+.location-region-empty{
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--muted);
+}
+.filter-checkboxes{ display:flex; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 13.5px; text-align: left; white-space: nowrap; }
+.filter-checkbox-option{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--ink);
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+}
+.filter-select-all{
+  font-weight: 600;
+  padding-bottom: 8px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--line);
+}
+.filter-checkbox-option input[type="checkbox"]{
+  appearance: none;
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 2px;
+  background: var(--paper);
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.filter-checkbox-option input[type="checkbox"]:checked{
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.filter-checkbox-option input[type="checkbox"]:checked::after{
+  content: "\2713";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--paper);
+  pointer-events: none;
+}
+
+/* ---------- LISTING ---------- */
+/* Below 1024px the split view collapses to one column - the directory
+   list fills the screen, and selecting someone opens their profile as a
+   full-screen "page" over it (.mobile-detail-open) with a Back control,
+   rather than squeezing both panels side by side. */
+@media (max-width: 1023px){
+  .directory-split{ flex-direction: column; height: auto; }
+  .directory-left{ flex: 1 1 auto; max-width: none; }
+  /* Resize/collapse are desktop-only concepts - mobile already has its
+     own full-screen detail pattern below. */
+  .directory-resizer, .directory-reopen-btn{ display: none !important; }
+  /* The list's own height is auto here (.directory-split isn't given a
+     fixed height below 1024px - see sizeDirectorySplit), so it just
+     flows with the page instead of scrolling in its own box. The detail
+     view below can't rely on that same auto-height parent for its own
+     sizing though, which is why it's position:fixed against the
+     viewport instead of position:absolute against .directory-split. */
+  .directory-right{
+    display: none;
+    max-width: none;
+    position: fixed;
+    top: var(--content-top, 70px);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #fff;
+    overflow-y: auto;
+    padding: 20px 20px 40px;
+    z-index: 30;
+  }
+  .directory-split.mobile-detail-open .directory-left{ display: none; }
+  .directory-split.mobile-detail-open .directory-right{ display: block; }
+  .profile-back-btn{ display: inline-block; }
+  .profile-toolbar{ justify-content: space-between; }
+  .profile-portrait{ width: 120px; height: 150px; }
+  .profile-name{ font-size: 26px; }
+  .profile-header{ gap: 18px; }
+}
+
+.alum-row{
+  position: relative;
+  min-width: 0; /* lets long one-line names truncate instead of widening the card past the screen on phones */
+  z-index: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(32, 27, 29, 0.05);
+  padding: 28px;
+  animation: cardFadeIn 0.32s ease both;
+  animation-delay: var(--card-delay, 0ms);
+}
+@keyframes cardFadeIn{
+  from{ opacity: 0; transform: translateY(8px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce){
+  .alum-row{ animation: none; }
+}
+/* Card layout: a 2x2 grid (name/role/company top-left, location/
+   LinkedIn bottom-left, badge+plus+Industry/Marketing top-right, Ask
+   me about bottom-right), split by a vertical rule - per request. Grid
+   (not flex) specifically so the bottom row's height is shared across
+   both columns: location/LinkedIn is vertically centered against
+   "Ask me about" as a whole (header + pills), which only grid's
+   per-row sizing gives for free - with flex, two independent columns
+   have no shared notion of "this row's height" to center against.
+   Areas named so desktop/mobile can each place the same 5 children in
+   a completely different arrangement (2 columns vs 1) without caring
+   about DOM order - see the max-width:700px override below. */
+.alum-split{
+  display: grid;
+  grid-template-columns: 280px 1px 1fr;
+  grid-template-areas:
+    "info    divider top"
+    "contact divider bottom";
+  column-gap: 28px;
+  row-gap: 12px;
+  align-items: start;
+}
+.alum-info{ grid-area: info; }
+.alum-contact-line{ grid-area: contact; align-self: center; }
+.alum-divider{
+  grid-area: divider;
+  /* The grid container uses align-items:start (so each piece of content
+     sizes to itself rather than stretching), but the divider is empty -
+     it needs its own align-self:stretch to actually span the full
+     height of both rows it's placed across, instead of collapsing to
+     0 height. */
+  align-self: stretch;
+  width: 1px;
+  background: var(--line);
+}
+.alum-right-top{ grid-area: top; position: relative; }
+.ask-me-about{ grid-area: bottom; align-self: center; }
+/* Desktop: the "+" button floats in the top-right area's top corner so
+   it doesn't push content down, and Industry/Marketing Expertise starts
+   level with the role/title line on the left - now that the name always
+   reserves 2 lines (27px font, 1.2 line-height = ~65px for both lines)
+   plus the role's own 4px top margin, that's a fixed ~69px regardless of
+   name length, measured and confirmed via getBoundingClientRect rather
+   than assumed. */
+@media (min-width: 701px){
+  .alum-right-top .card-action{ position: absolute; top: -3px; left: 0; right: 0; z-index: 2; }
+  .alum-right-top > .alum-columns{ margin-top: 69px; }
+}
+/* Replaces the old dot-row indicator - a small colored badge stating the
+   spot count directly. Green while there's real room, orange at exactly
+   one spot left, and a neutral (not alarming red) gray once fully
+   booked, since being fully booked isn't an error state. */
+.capacity-badge-wrap{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.capacity-icon{ color: var(--ink); flex-shrink: 0; }
+.capacity-badge{
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+/* Colors sampled from the "spots available" reference screenshot
+   (2026-10-15) - muted sage/tan/gray instead of the brighter
+   green/orange/purple-tint this used before. */
+.capacity-badge-open{ background: #E2E5DA; color: #535C55; }
+.capacity-badge-low{ background: #EEE6DA; color: #7C6B5C; }
+.capacity-badge-full{ background: #E2DFDC; color: #747681; }
+/* In the review-card (My Pins drawer), the badge sits next to the name
+   (see .review-card-header). On the main grid card it's relocated into
+   .card-action, top-right, above the Pin button - see .card-action
+   below. */
+/* Spots-available badge lives in the card's left column, under the
+   location/LinkedIn line. */
+.alum-capacity{ margin-top: 12px; }
+
+.alum-name{
+  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-weight: 400;
+  font-size: 27px;
+  letter-spacing: -0.005em;
+  /* Every card reserves 2 lines for the name now (2026-10-15, reverts
+     the single-line/ellipsis version above this comment used to be) -
+     first name on line 1, everything else on line 2, split in the
+     template with an explicit <br> rather than left to wrap naturally,
+     so where the break falls doesn't depend on column width. */
+  line-height: 1.2;
+}
+/* Experimental (2026-10-15): drop-cap the first letter - floating it
+   left of the whole block naturally pushes line 2 to the right too,
+   not just line 1, since a float affects every line that follows it in
+   the same block. No hardcoded color, so it still follows the pinned
+   (white-text) state via currentColor. */
+.alum-name::first-letter{
+  float: left;
+  font-size: 1.9em;
+  line-height: 0.82;
+  padding-right: 5px;
+  padding-top: 2px;
+}
+.alum-role{
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--ink);
+  margin-top: 4px;
+}
+.alum-linkedin{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-strong);
+}
+.alum-linkedin:hover{ color: var(--accent); border-color: var(--accent); }
+.linkedin-icon{ flex-shrink: 0; }
+.alum-company{
+  font-family: 'Inter', sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 2px;
+}
+.alum-company-note{ display: block; font-size: 13.5px; margin-top: 1px; }
+.capacity-line{ font-size: 12px; margin-top: 8px; color: var(--muted); }
+.capacity-line strong{ color: var(--accent); font-weight: 600; }
+.capacity-line.full strong{ color: var(--warn); }
+
+/* One condensed, plain-text line per card - replaces what used to be a
+   separate colored-badge row for each of marketing area / industry /
+   type of experience / meeting format / also-meets-in / availability.
+   Same underlying data, just read as a single calm line instead of a
+   stack of labeled rows (matching the Concept Board's "Brand Marketing
+   · CPG" treatment). */
+.alum-meta{
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+  color: var(--muted);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.alum-meta .sep{ color: var(--muted); margin: 0 14px; }
+.format-value{ display: inline-flex; align-items: center; gap: 4px; }
+.format-icon{ flex-shrink: 0; position: relative; top: 0.5px; }
+.format-value .format-icon + .format-icon{ margin-left: -1px; }
+.alum-availability-line{ display: flex; align-items: flex-start; gap: 6px; }
+.alum-availability-line .format-icon{ margin-top: 2px; }
+/* Shared small-caps section label - Industry/Experience/Marketing
+   Expertise/Ask me about all use this same treatment, matching the
+   reference page's labeled-field look. */
+.field-label{
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.ask-me-about .field-label{ margin-bottom: 8px; }
+/* Industry Expertise + Marketing Expertise side by side as two columns
+   - "Ask me about" is a separate block rendered after this one, so it's
+   unaffected and stays full-width below. Back to row on request (2026-
+   10-15); an earlier pass had stacked these, see git history. */
+.alum-columns{
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  margin-top: 12px;
+}
+.alum-col{ flex: 1 1 140px; min-width: 0; }
+/* Industry Expertise's primary value - plain text, not a pill (that's
+   what distinguishes it from Marketing Expertise/Ask me about). Not
+   bold, per request. */
+.alum-col-value{
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.4;
+}
+/* "+N more" for an alum's other selected industries beyond the primary
+   one shown - opens a small popover (not an inline expand) listing them
+   under a headline, same interaction family as the filter dropdowns. */
+.industry-more-wrap{ position: relative; display: inline-block; }
+.industry-more-btn{
+  display: inline-block;
+  background: none;
+  border: 1px solid var(--line-strong);
+  border-radius: 20px;
+  padding: 3px 10px;
+  margin-left: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  cursor: pointer;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.industry-more-btn:hover{ color: var(--accent-deep); border-color: var(--accent); }
+.industry-more-popover{
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 14px 32px rgba(37,37,100,0.16);
+  padding: 14px 16px;
+  min-width: 200px;
+  max-width: 260px;
+  z-index: 20;
+  cursor: default;
+}
+.industry-more-wrap.open .industry-more-popover{ display: block; }
+.industry-more-popover-title{
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.industry-more-popover-list{
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.alum-labeled-line{ margin-top: 12px; }
+.topic-tags{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+/* Reserves space for 2 wrapped lines of pills (line height + padding/
+   border, times two, plus the one row gap between them) regardless of
+   how many pills an alum actually has, so cards line up in height
+   whether this area needs 1 line or 2. */
+.marketing-tags{ align-content: flex-start; }
+/* Light lavender fill per the reference image (2026-10-15) - was an
+   outlined/unfilled pill before. Reuses --accent-tint rather than a new
+   hardcoded hex, since it's already this site's light-lavender token. */
+.topic-tag{
+  display: inline-block;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--accent-tint);
+  border: none;
+  border-radius: 20px;
+  /* A long single value (e.g. a long industry name) in the narrower
+     2-column layout would otherwise wrap inside the pill itself,
+     ballooning it to 2 lines - truncate instead, so the row this sits
+     in always stays 1 line as intended. */
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+  padding: 3px 10px;
+  line-height: 1.4;
+}
+
+.card-action{
+  display: flex;
+  align-items: center;
+  /* Spots badge and "+" both cluster on the right, badge immediately
+     left of the button (2026-10-15 - was spread edge-to-edge with
+     justify-content:space-between, badge at the far left). */
+  justify-content: flex-end;
+  gap: 12px;
+}
+.add-btn{
+  border: 1px solid var(--ink);
+  border-radius: 20px;
+  background: none;
+  color: var(--ink);
+  padding: 9px 16px;
+  font-size: 13.5px;
+  font-family: 'Inter', sans-serif;
+  cursor:pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.add-btn svg{ flex-shrink: 0; }
+.add-btn.added{ background: var(--success-on-light); border-color: var(--success-on-light); color: #fff; }
+.add-btn.added .pin-btn-icon{ color: var(--accent); }
+.add-btn:hover{ border-color: var(--success-on-light); color: var(--success-on-light); }
+.add-btn.added:hover{ border-color: var(--success-on-light); color: #fff; }
+
+/* Card select control - a round "+" that becomes a white check once the
+   alum is selected, at which point the whole card turns purple (below). */
+.plus-btn{
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  justify-content: center;
+}
+.plus-btn svg{ width: 18px; height: 18px; }
+.plus-btn:hover{ border-color: var(--success-on-light); color: var(--success-on-light); background: var(--accent-tint); }
+.plus-btn.added{ background: #fff; border-color: #fff; color: var(--success-on-light); }
+.plus-btn.added:hover{ background: #fff; border-color: #fff; color: var(--success-on-light); opacity: 0.85; }
+.plus-btn:disabled{ opacity: 0.35; cursor: not-allowed; }
+.plus-btn:disabled:hover{ border-color: var(--ink); color: var(--ink); background: none; }
+.alum-row.pinned .plus-btn:focus-visible{ outline-color: #fff; }
+
+/* Selected card: the entire card turns purple, with its text, icons and
+   pills flipped to white so everything stays readable. Popovers inside
+   the card keep their own white panel and dark text. */
+.alum-row.pinned{
+  background: var(--success-on-light);
+  border-color: var(--success-on-light);
+  color: #fff;
+}
+.alum-row.pinned .alum-name,
+.alum-row.pinned .alum-role,
+.alum-row.pinned .alum-col-value,
+.alum-row.pinned .field-label{ color: #fff; }
+.alum-row.pinned .alum-company,
+.alum-row.pinned .alum-meta,
+.alum-row.pinned .alum-meta .sep{ color: rgba(255,255,255,0.85); }
+.alum-row.pinned .alum-linkedin{ color: rgba(255,255,255,0.9); border-bottom-color: rgba(255,255,255,0.45); }
+.alum-row.pinned .alum-linkedin:hover{ color: #fff; border-bottom-color: #fff; }
+.alum-row.pinned .format-icon,
+.alum-row.pinned .linkedin-icon{ fill: #fff; }
+.alum-row.pinned .capacity-icon{ color: #fff; }
+.alum-row.pinned .topic-tag{ color: #fff; background: rgba(255,255,255,0.18); }
+.alum-row.pinned .industry-more-btn{ color: #fff; border-color: rgba(255,255,255,0.6); }
+.alum-row.pinned .industry-more-btn:hover{ border-color: #fff; }
+.alum-row.pinned .alum-divider{ background: rgba(255,255,255,0.35); }
+
+/* The pin drop - the site's signature interaction. A small pin appears
+   stuck into the card's top edge and the card takes a slight, permanent
+   tilt, so a student's own selections read as personal/handled while
+   everything unpicked stays in a perfectly aligned grid. */
+.alum-row{ transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease, border-color 160ms ease; }
+.alum-row.pinned{
+  transform: rotate(var(--pin-rotate, -0.8deg));
+  box-shadow: 0 8px 20px rgba(37,37,100,0.14);
+}
+@media (max-width: 700px){
+  /* Same 5 grid areas, restacked into a single column in reading order
+     - name/role/company, location/LinkedIn, the divider (now a plain
+     horizontal rule), badge+plus+Industry/Marketing, then Ask me
+     about. No DOM reordering needed, just a different area map. */
+  .alum-split{
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "info"
+      "contact"
+      "divider"
+      "top"
+      "bottom";
+    row-gap: 16px;
+  }
+  .alum-right-top > .alum-columns{ margin-top: 12px; }
+  /* Two 140px-min columns side by side would cramp both pill rows into
+     "+N more" immediately on a narrow screen - stack those too. Also
+     reset .alum-col's flex-basis: 140px is a min-WIDTH for the side-by-
+     side desktop layout, but flex-basis applies to whichever axis is
+     the main axis - in column mode that's height, so without this
+     override each column was reserving 140px of vertical space it
+     didn't need. */
+  .alum-columns{ flex-direction: column; }
+  .alum-columns .alum-col{ flex: 1 1 auto; }
+  .alum-divider{ width: 100%; height: 1px; }
+}
+
+.empty-state{
+  text-align:center;
+  padding: 70px 20px;
+  color: var(--muted);
+  font-style: italic;
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+}
+
+.status-banner{
+  padding: 14px 6vw;
+  font-size: 13.5px;
+  font-style: italic;
+}
+.status-banner.error{ background: #F6E4E0; color: var(--warn); }
+.status-banner.loading{ background: var(--paper); color: var(--muted); }
+.status-banner.notice{ background: var(--accent-tint); color: var(--ink); }
+/* ---------- MY PINS DRAWER ---------- */
+/* A true overlay on top of the directory (never reflows/hides #view-listing
+   behind it), per the PRD: slides in from the right, dims the directory,
+   and hosts both the editable pins list and (as a second internal state,
+   not a separate page) the final review before handing off to the form. */
+.pins-drawer-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(37,37,100,0.28);
+  z-index: 40;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+.pins-drawer-backdrop.open{ opacity: 1; pointer-events: auto; }
+.pins-drawer{
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(400px, 100vw);
+  background: #fff;
+  box-shadow: -12px 0 32px rgba(37,37,100,0.18);
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 300ms cubic-bezier(.25,.8,.4,1);
+}
+.pins-drawer.open{ transform: translateX(0); }
+.pins-drawer-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.pins-drawer-header h2{
+  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-weight: 500;
+  font-size: 21px;
+  margin: 0;
+}
+.pins-drawer-count{ color: var(--muted); font-size: 15px; }
+.pins-drawer-close{
+  background: none;
+  border: none;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  flex-shrink: 0;
+}
+.pins-drawer-close:hover{ color: var(--accent); }
+.pins-drawer-body{
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+.pins-drawer-footer{
+  flex-shrink: 0;
+  padding: 18px 24px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.pins-drawer-footer .submit-btn{ width: 100%; justify-content: center; }
+.pins-drawer-continue-exploring{
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  width: 100%;
+  padding: 9px 0;
+}
+@media (max-width: 700px){
+  .pins-drawer{ width: 100vw; }
+}
+@media (prefers-reduced-motion: reduce){
+  .pins-drawer, .pins-drawer-backdrop{ transition: none; }
+}
+.submit-btn{
+  background: var(--success);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 9px 22px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.02em;
+  cursor:pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.submit-btn:disabled{ background: var(--line-strong); color: var(--muted); cursor:not-allowed; }
+.pin-cap-notice{
+  background: var(--accent-tint);
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  margin-top: 16px;
+}
+
+.toast{
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--warn);
+  color: #fff;
+  padding: 14px 26px;
+  font-size: 16px;
+  text-align: center;
+  z-index: 30;
+  display:none;
+}
+
+.resubmit-modal{
+  position: fixed;
+  inset: 0;
+  background: rgba(32, 27, 29, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 40;
+}
+.resubmit-modal-card{
+  background: var(--paper);
+  border-radius: 10px;
+  padding: 32px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(32, 27, 29, 0.2);
+}
+.resubmit-modal-text{
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 0 0 24px;
+}
+.resubmit-modal-actions{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.resubmit-modal-actions .submit-btn,
+.resubmit-modal-actions .add-btn{
+  width: 100%;
+  justify-content: center;
+}
+.resubmit-modal-cancel{
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 13.5px;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  margin-top: 16px;
+  padding: 0;
+}
+.toast.show{ display:block; }
+.toast.toast-success{ background: var(--success); white-space: nowrap; }
+
+.update-banner{
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 20px;
+  background: var(--accent-deep);
+  color: var(--paper);
+  font-size: 14px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(32, 27, 29, 0.2);
+}
+.update-banner.show{ display: flex; }
+.update-banner-btn{
+  background: var(--accent);
+  color: var(--accent-deep);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.update-banner-dismiss{
+  background: none;
+  border: none;
+  color: var(--paper);
+  opacity: 0.7;
+  font-size: 13px;
+  font-family: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+</style>
+</head>
+<body>
+
+<div class="update-banner" id="updateBanner">
+  <span>A newer version of this page is available.</span>
+  <button class="update-banner-btn" id="updateBannerRefresh">Refresh now</button>
+  <button class="update-banner-dismiss" id="updateBannerDismiss">Dismiss</button>
+</div>
+
+<header class="site">
+  <div id="heroLanding">
+    <div class="hero-top" id="heroTop">
+      <div class="hero-nav">
+        <div class="hero-nav-inner">
+          <button type="button" class="hero-logo hero-logo-btn" id="logoHomeBtnLanding" aria-label="IMC Connects home"><span class="logo-cmi">IMC</span><span class="logo-sep"></span><span class="logo-connect">CONNECTS</span></button>
+          <div class="top-tabs" id="topTabs">
+            <button class="tab-link" id="aboutLink" data-nav="about">About</button>
+            <button class="tab-link" id="faqLink" data-nav="faq">FAQ</button>
+            <button class="tab-link" id="feedbackLink" data-nav="feedback">Feedback</button>
+          </div>
+          <button class="hero-hamburger" id="heroHamburger" aria-label="Menu" aria-expanded="false" aria-controls="topTabs">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-copy">
+        <h1>Build your<br>Northwestern<br><em>network.</em></h1>
+        <p class="hero-lede">Explore alumni across industries, career paths and cities. Tell us who you'd like to grab coffee with along the way.</p>
+        <div class="hero-options" id="heroOptions">
+          <div class="landing-options" id="landingOptions">
+            <button class="landing-option" data-action="all">Find alumni</button>
+          </div>
+          <span class="round-note" id="roundNote">Loading round info…</span>
+        </div>
+      </div>
+
+      <img class="hero-tower-decor" src="Gothic%20University%20Tower%20Amidst%20Trees%20Extended.png" alt="" aria-hidden="true">
+    </div>
+  </div>
+
+  <div id="heroSub" style="display:none">
+    <button type="button" class="hero-logo hero-logo-btn masthead-logo" id="logoHomeBtnMasthead" aria-label="IMC Connects home"><span class="logo-cmi">IMC</span><span class="logo-sep"></span><span class="logo-connect">CONNECTS</span></button>
+    <div class="top-bar top-bar-light">
+      <div class="top-tabs">
+        <button class="tab-link tab-link-light" data-nav="about">About</button>
+        <button class="tab-link tab-link-light" data-nav="faq">FAQ</button>
+        <button class="tab-link tab-link-light" data-nav="feedback">Feedback</button>
+      </div>
+    </div>
+    <button class="back-btn" id="backBtn" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 3.2 2.6 11H5v9.5a1 1 0 0 0 1 1h4.5v-6h3v6H18a1 1 0 0 0 1-1V11h2.4z"/></svg></button>
+    <h2 id="subTitle"></h2>
+  </div>
+</header>
+
+<div id="view-category" style="display:none">
+  <div class="category-list" id="categoryList"></div>
+</div>
+
+<div id="view-info" style="display:none">
+  <div class="info-layout">
+    <div class="info-content">
+      <div class="info-panel" id="infoPanelAbout">
+        <p class="about-body">IMC Connects is a new offering by the Cause Marketing Initiative for the IMC program that aims to provide career-related programming to support our job search and career discernment as we gear up to graduate.</p>
+        <p class="about-body">For Phase II of IMC Connects, we are piloting a series of 1:1 coffee chats with Northwestern alumni to support you all during your job search this fall. <span class="about-mobile-break">On this website, you may pin <strong>up to 5 alumni</strong> you'd like to meet. We will use these preferences, as well as the responses you shared in the career interest survey this summer, to match you 1:1 with an alum and connect you both via email.</span></p>
+        <p class="about-body">Please note that these sessions are <strong>100% student-led</strong>, so it will be up to you to schedule your coffee chat once connected.</p>
+        <p class="about-body">To make this an inclusive experience, IMC Connects programming is <strong>open to all members of the IMC cohort.</strong></p>
+      </div>
+      <div class="info-panel" id="infoPanelFaq">
+        <div class="faq-item">
+          <div class="faq-q">How does matching actually work?</div>
+          <div class="faq-a">You pin up to 5 alumni you'd like to meet and submit your name and email address. We will use these preferences to introduce you to each alum via email. From there, it's up to you to coordinate the conversation.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Are these 1:1 coffee chats or group sessions?</div>
+          <div class="faq-a">1:1 only! We want these chats to be as free and helpful for your individual needs as possible.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">What if none of the alumni I want are available?</div>
+          <div class="faq-a">The availability you see on this site was given to us by the alums themselves, so we can't overcommit them to more coffee chats than they can handle. However, if your preferred alums are full, you're welcome to try connecting with them via LinkedIn.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Is this affiliated with Career Services?</div>
+          <div class="faq-a">Yes and no. This initiative started through CMI and has been folded into Career Services. However, it is still student-run. Please feel free to reach out to Career Services for more targeted career advising!</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">I'm nervous about coffee chatting. What can I do?</div>
+          <div class="faq-a">Prof. Jacqueline Babb has very kindly offered to host mock 1:1 coffee chats to anyone that feels uneasy about networking. Please shoot her an email and she'll be happy to help!</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">I already submitted. How do I change my pins?</div>
+          <div class="faq-a">Use the "Edit your response" link from the confirmation email you got when you first submitted. This site only accepts 1 response so if you try resubmitting here, your submission will get blocked as a duplicate.</div>
+        </div>
+      </div>
+      <div class="info-panel" id="infoPanelFeedback">
+        <textarea id="feedbackText" placeholder="In the spirit of customer centricity, please let us know what worked well, what could be better and what else you'd like to see!"></textarea>
+        <div class="feedback-error" id="feedbackError">Type something before sending.</div>
+        <button class="feedback-send" id="feedbackSend">Send feedback</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="view-listing" style="display:none">
+
+<!-- Shared toolbar (2026-10-17 redesign): search + all 5 filters +
+     Review & Submit now span the full page width, above both panels,
+     instead of living inside the left panel with Review & Submit as a
+     separate rotated edge tab. -->
+<div class="directory-toolbar">
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search by name, company, or keyword…">
+    <button class="search-btn" id="searchBtn" aria-label="Search">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </button>
+  </div>
+  <div class="filter-bar">
+    <div class="filter-dropdowns" id="filterPanel"></div>
+    <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
+  </div>
+  <button class="pins-toggle-btn" id="pinsToggleBtn">
+    Review &amp; Submit<span class="pins-count" id="pinsCount"></span>
+  </button>
+</div>
+<div id="statusArea"></div>
+<div class="pin-cap-notice" id="pinCapNotice" style="display:none">You've selected 5 of 5 alumni. Remove a pin to choose someone else.</div>
+
+<!-- Split-view directory: left panel is the scrollable alumni list;
+     right panel is the selected alumnus's full profile, resizable via
+     the drag handle between them and collapsible via the X on the
+     profile panel (reopen via the floating "›" that appears in its
+     place once collapsed). Below 1024px this collapses to a single
+     column - see the max-width:1023px block in the CSS - with the
+     right panel becoming a full-screen detail view
+     (.directory-split.mobile-detail-open) instead of a side-by-side
+     column; the resize/collapse controls are desktop-only. -->
+<div class="directory-split" id="directorySplit">
+  <div class="directory-left" id="directoryLeft">
+    <div class="directory-list-header">
+      <span id="directoryCount"></span>
+    </div>
+    <div class="directory-list" id="directoryList"></div>
+  </div>
+  <div class="directory-resizer" id="directoryResizer" role="separator" aria-orientation="vertical" aria-label="Resize directory and profile panels" tabindex="0">
+    <span class="directory-resizer-handle" aria-hidden="true"></span>
+  </div>
+  <div class="directory-right" id="directoryRight"></div>
+  <button class="directory-reopen-btn" id="directoryReopenBtn" aria-label="Show profile panel" style="display:none">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+  </button>
+</div>
+
+</div><!-- /view-listing -->
+
+<div class="pins-drawer-backdrop" id="pinsDrawerBackdrop"></div>
+<aside class="pins-drawer" id="pinsDrawer" role="dialog" aria-modal="true" aria-labelledby="pinsDrawerTitle" aria-hidden="true">
+  <div class="pins-drawer-header">
+    <h2 id="pinsDrawerTitle">Please rank your top 5 <span class="pins-drawer-count" id="pinsDrawerCount">(0/5)</span></h2>
+    <button class="pins-drawer-close" id="pinsDrawerClose" aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
+    </button>
+  </div>
+
+  <div class="pins-drawer-body" id="pinsDrawerListPane">
+    <div class="review-empty" id="pinsDrawerEmpty" style="display:none">No alumni pinned yet. Browse the directory to find people you'd like to meet.</div>
+    <div id="pinsDrawerList" class="review-list"></div>
+  </div>
+  <div class="pins-drawer-footer" id="pinsDrawerListFooter">
+    <button class="pins-drawer-continue-exploring" id="pinsDrawerContinueExploring" style="display:none">Continue exploring</button>
+    <button class="submit-btn" id="pinsDrawerContinueBtn" disabled>Review &amp; continue →</button>
+  </div>
+
+  <div class="pins-drawer-body" id="pinsDrawerReviewPane" style="display:none">
+    <p class="review-intro">These are the alumni you'd like to meet for a coffee chat. Pinning someone isn't a guaranteed match, but it's exactly what we'll use to try to pair you up.</p>
+    <div id="reviewList" class="review-list"></div>
+  </div>
+  <div class="pins-drawer-footer" id="pinsDrawerReviewFooter" style="display:none">
+    <button class="review-back-btn" id="pinsDrawerEditBtn">← Edit my pins</button>
+    <button class="submit-btn" id="reviewSubmitBtn">Continue to form →</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<div class="resubmit-modal" id="resubmitModal" style="display:none">
+  <div class="resubmit-modal-card">
+    <p class="resubmit-modal-text">You've already submitted picks from this browser. Would you like to populate the form with your new selections, or edit your original response yourself?</p>
+    <div class="resubmit-modal-actions">
+      <button class="submit-btn" id="resubmitNewPicks">Use my new picks</button>
+      <button class="add-btn" id="resubmitEditOriginal">Edit my response myself</button>
+    </div>
+    <button class="resubmit-modal-cancel" id="resubmitCancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Submits feedback straight into a Google Sheet, no email client
+     needed - posts to the Form's response endpoint and targets a
+     hidden iframe so the page never navigates away. -->
+<iframe name="feedbackTargetFrame" style="display:none"></iframe>
+<form id="feedbackFormPost"
+      action="https://docs.google.com/forms/d/e/1FAIpQLSc5dBZGKBXoF8V9zsRYp07uf4jBTsUl7rMC_LSjiUmX_3HocQ/formResponse"
+      method="POST" target="feedbackTargetFrame" style="display:none">
+  <input type="text" name="entry.650600712" id="feedbackEntryInput">
+</form>
+
+<script>
+// The browser's own scroll-position memory otherwise restores wherever the
+// page was scrolled to before a refresh, even though the app itself always
+// resets its view back to the landing state on load - the mismatch is what
+// made a refresh appear to land "at the bottom" of the hero. The app already
+// scrolls to the top itself on every view change, so this hand-off isn't
+// needed and actively fights that.
+if('scrollRestoration' in history) history.scrollRestoration = 'manual';
+window.scrollTo(0, 0);
+
+// Bump this string on every deploy (any distinct value works - a
+// timestamp is simplest). checkForNewVersion() below periodically
+// re-fetches this same page with caching disabled and compares its
+// BUILD_VERSION to this one; a mismatch means a newer version has been
+// pushed since this tab loaded, so it shows a small "refresh to update"
+// banner instead of leaving someone stuck on stale cached code with no
+// way to know a change even happened.
+const BUILD_VERSION = "2026-10-15-19";
+
+/* ============================================================
+   ORGANIZER CONFIG — edit this block for your own Sheet + Form.
+   Everything below this block is generic and shouldn't need touching.
+   ============================================================ */
+
+// 1. Your Google Sheet, published to web as CSV.
+//    Sheet > File > Share > Publish to web > select the alumni tab > CSV > Publish.
+//    Paste that URL here.
+// Points at the "For Launch" tab's gid (2026-10-17, was "For Pilot"'s
+// gid=1298862545 - see CMI Connect PRD.md §5.2 for why this needed the
+// user to supply the new gid rather than being guessed).
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzxeSvTj4rQrR9zgUJHcR6iWvXidfCJUTRhSdD2NfiyUj_gfH3uVr331McW6CJwWfgobE8WRvEO1Ws/pub?gid=1834383749&single=true&output=csv";
+
+// Bundled snapshot of the same sheet (same columns, already past the Phase
+// cutoff), used only as a fallback by loadData() below when SHEET_CSV_URL
+// can't be reached - see the comment there. Re-save alumni-data.csv from
+// the live sheet and bump the date below whenever this file is republished
+// as an Artifact, so the fallback doesn't drift too far from reality.
+const ALUMNI_SNAPSHOT_CSV_URL = "alumni-data.csv";
+const ALUMNI_SNAPSHOT_DATE = "2026-10-08";
+
+// 2. Map each field to the EXACT column header text from row 1 of your
+//    sheet (case-sensitive, must match your actual Google Form question
+//    wording exactly, since that's what becomes the column header).
+const COLUMNS = {
+  timestamp:     "Timestamp",
+  name:          "Name",
+  role:          "Current role. (If in between jobs, please state your most recent role and your incoming role.)",
+  company:       "Current company. (If in between jobs, please share the last company at which you worked.)",
+  format:        "Which of these networking formats are you able to facilitate?",
+  industries:    "In which of these industries do you have experience? (Select all that apply)",
+  marketingAreas:"In which of these marketing areas do you have expertise? (Select all that apply)",
+  brandAgency:   "Do you have experience in brand-side or agency-side marketing?",
+  topics:        "Which of these topics are you comfortable advising students on?",
+  availability:  "When would you be available to connect with students? (Select all that apply)",
+  capacity:      "How many coffee chats with students can you support this fall? (Please enter a number. If you are unsure of your bandwidth, you can give a conservative estimate.)",
+  notes:         "Is there anything else you'd like to share?",
+  linkedin:      "Your LinkedIn (optional)",
+  city:          "In which city are you located? (If outside the US, please include the country.)"
+};
+
+// 3. Some multi-select option texts contain a comma INSIDE the option
+//    itself (e.g. "Ongoing mentorship, not just a one-time conversation").
+//    Google Sheets stores all selected checkboxes for a question as one
+//    comma-joined string, so an internal comma would otherwise get
+//    misread as a boundary between two separate options. List ONLY the
+//    option strings that contain a comma here (exact text) - anything
+//    without a comma splits correctly on its own, no need to list it.
+const KNOWN_OPTIONS = {
+  industries: [],
+  marketingAreas: [
+    "Product (marketing, management or strategy)"
+  ],
+  // This is the FULL list of real checkbox options for "topics" (not just
+  // the comma-containing ones) - see TOPICS_IS_COMPLETE_LIST below. Having
+  // the complete list here lets the parser recognize a write-in "Other"
+  // answer by elimination, even when that write-in itself contains commas.
+  topics: [
+    "The day-to-day of your role or field",
+    "Insight into your specific company or organization",
+    "Insight into a specific industry or function, regardless of company",
+    "Advice on how to break into a competitive field or role",
+    "How you navigated a career pivot or took a non-traditional path",
+    "Perspective from someone with a similar background/identity to students",
+    "Ongoing mentorship, not just a one-time conversation",
+    "Experience as an international student",
+    "Having full-time professional experience before IMC and transitioning into a new role",
+    "Other"
+  ],
+  format: [],
+  availability: []
+};
+// Set to true only for fields where KNOWN_OPTIONS lists EVERY real checkbox
+// option (so an unrecognized chunk can safely be treated as one intact
+// "Other" write-in). Leave false for fields where the list above only
+// covers the rare comma-containing exceptions.
+const TOPICS_IS_COMPLETE_LIST = true;
+
+// The 3 real checkbox options for "format" - anything else in that field is
+// free-text ("Other").
+const CANONICAL_FORMAT_OPTIONS = [
+  "Virtual",
+  "In person (Evanston/Chicago)",
+  "Both in person (Evanston/Chicago) and virtual"
+];
+// The real "industries" checkbox options, seen in actual responses so far.
+// Anything not in this list is a free-text "Other" write-in (or, in one
+// case, a respondent who pasted a message into this field by mistake) and
+// gets dropped entirely per an explicit request to hide "Other" answers for
+// this field. A new checkbox option added to the Form later, or a real
+// category that just hasn't been picked by anyone yet, needs a manual
+// addition here to keep showing up.
+const CANONICAL_INDUSTRIES = [
+  "Automotive", "Beauty", "Consulting", "Consumer Packaged Goods (CPG)",
+  "Education", "Fashion & Luxury", "Financial Services", "Food & Beverage",
+  "Government", "Healthcare & Pharmaceuticals", "Law", "Media & Entertainment",
+  "Nonprofit/Social Impact", "Power & Gas", "Retail & E-commerce",
+  "Sports & Sports Marketing", "Startups", "Tech/SaaS", "Travel & Hospitality",
+  "Utilities"
+];
+// Unlike industries/format above, "Other" write-ins for marketing areas and
+// topics stay visible on each alum's own card - they're only excluded from
+// the filter checkbox lists below, via FILTER_ALLOW_LISTS. "Change
+// Management" and "Corporate management; legal marketing" are confirmed
+// write-ins, not real checkbox options, so they're left out here.
+const CANONICAL_MARKETING_AREAS = [
+  "Brand management / brand strategy", "Content marketing & copywriting",
+  "Customer experience (CX) / lifecycle marketing",
+  "Digital marketing & performance marketing", "Growth marketing",
+  "Market research & consumer insights", "Marketing analytics & data science",
+  "Media buying", "Product (marketing, management or strategy)",
+  "Public relations & communications", "Social media & influencer marketing",
+  "Strategy and consulting"
+];
+
+// Standardized, mixed-case display text for the marketing areas above -
+// shown in the category picker, the filter checkboxes, and each card's
+// "Marketing expertise" line. The raw value (left column) is still what's
+// stored and matched against filters; only the label changes. A write-in
+// isn't in this map and falls back to showing as stored.
+const MARKETING_AREA_DISPLAY_OVERRIDES = {
+  "Brand management / brand strategy": "Brand Management & Strategy",
+  "Content marketing & copywriting": "Content Marketing & Copywriting",
+  "Customer experience (CX) / lifecycle marketing": "Customer Experience (CX)",
+  "Digital marketing & performance marketing": "Digital & Performance Marketing",
+  "Growth marketing": "Growth Marketing",
+  "Market research & consumer insights": "Market Research & Consumer Insights",
+  "Marketing analytics & data science": "Marketing Analytics & Data Science",
+  "Media buying": "Media Buying",
+  "Product (marketing, management or strategy)": "Product",
+  "Public relations & communications": "PR & Communications",
+  "Social media & influencer marketing": "Social Media & Influencer Marketing",
+  "Strategy and consulting": "Strategy & Consulting"
+};
+
+function marketingAreaDisplayLabel(value){
+  return MARKETING_AREA_DISPLAY_OVERRIDES[value] || value;
+}
+
+// Shortenings that apply only to the masthead title shown after clicking a
+// category option - the category list itself and the filter checkboxes
+// still show the full name. Keyed by whatever's already been through the
+// category's own display-label step (e.g. marketingAreaDisplayLabel), so
+// use that transformed spelling here, not necessarily the raw value.
+const MASTHEAD_LABEL_OVERRIDES = {
+  "Consumer Packaged Goods (CPG)": "CPG",
+  "Brand Management & Strategy": "Brand"
+};
+const FILTER_ALLOW_LISTS = {
+  marketingAreas: CANONICAL_MARKETING_AREAS,
+  topics: KNOWN_OPTIONS.topics,
+  // "Both in person and virtual" cut from the filter checkboxes per
+  // request - someone who wants either can already just check both of
+  // the two specific options below instead of needing a third combined
+  // one. Each alum's own card is unaffected (cardFormatValues still
+  // collapses the raw trio of selections into "Both" for display there).
+  format: ["Virtual", "In person (Evanston/Chicago)"]
+};
+// 4. Round label shown at the top of the page. Purely cosmetic.
+const ROUND_LABEL = "Round opens now — claims close in one week";
+
+// 5. Your student sign-up Google Form, set up to accept a prefilled link.
+//    In your Form: ⋮ menu (top right) > "Get pre-filled link" > fill in
+//    sample text for each pinned-alum question > Get Link > copy the
+//    generated URL > read off the entry.NNNNNNN IDs from it.
+//    TODO before this goes live: pick5 below is a placeholder. The Form
+//    only had 4 name-capture fields (3 "picks" + the old wishlist field,
+//    now repurposed as pick4). Add a 5th short-answer field to the Form
+//    for the 5-pin cap, then swap in its real entry.NNNNNNN id here.
+const CLAIM_FORM = {
+  baseUrl: "https://docs.google.com/forms/d/e/1FAIpQLSdlRfzLUJYo2KfjEMDCBXB_edWw1T-Ph2vXjCpBUmNROvvvVA/viewform",
+  entryIds: {
+    pick1: "entry.1852338204",
+    pick2: "entry.489928546",
+    pick3: "entry.887053928",
+    pick4: "entry.632976243",
+    pick5: "entry.TODO_ADD_5TH_FORM_FIELD"
+  }
+};
+
+const MAX_PICKS = 5;
+
+// ------------------------------------------------------------
+// SAMPLE DATA — used automatically for previewing/design purposes
+// whenever SHEET_CSV_URL above is still the placeholder. Built from
+// the real survey option lists so filters look and behave like the
+// real thing. Delete or ignore this once SHEET_CSV_URL is set.
+// ------------------------------------------------------------
+const SAMPLE_ROWS = [
+  {
+    [COLUMNS.name]: "Priya Anand",
+    [COLUMNS.company]: "a global beauty company",
+    [COLUMNS.format]: "In person (Evanston/Chicago), Virtual",
+    [COLUMNS.industries]: "Beauty, Consumer Packaged Goods (CPG)",
+    [COLUMNS.marketingAreas]: "Brand management / brand strategy, Market research & consumer insights",
+    [COLUMNS.brandAgency]: "Brand-side (in-house at a company, e.g., marketing team at a tech company)",
+    [COLUMNS.topics]: "The day-to-day of your role or field, Advice on how to break into a competitive field or role",
+    [COLUMNS.availability]: "September, October, November",
+    [COLUMNS.capacity]: "3",
+    [COLUMNS.notes]: ""
+  },
+  {
+    [COLUMNS.name]: "Marcus Webb",
+    [COLUMNS.company]: "a Chicago media agency",
+    [COLUMNS.format]: "Virtual",
+    [COLUMNS.industries]: "Media & Entertainment, Sports & Sports Marketing",
+    [COLUMNS.marketingAreas]: "Media buying, Strategy and consulting",
+    [COLUMNS.brandAgency]: "Agency-side (working at an agency serving multiple clients)",
+    [COLUMNS.topics]: "Insight into a specific industry or function, regardless of company, How you navigated a career pivot or took a non-traditional path",
+    [COLUMNS.availability]: "October, November, December",
+    [COLUMNS.capacity]: "0",
+    [COLUMNS.notes]: ""
+  },
+  {
+    [COLUMNS.name]: "Elena Cho",
+    [COLUMNS.company]: "a DTC retail startup",
+    [COLUMNS.format]: "Both in person (Evanston/Chicago) and virtual",
+    [COLUMNS.industries]: "Retail & E-commerce, Startups, Tech/SaaS",
+    [COLUMNS.marketingAreas]: "Growth marketing, Digital marketing & performance marketing",
+    [COLUMNS.brandAgency]: "Both",
+    [COLUMNS.topics]: "Ongoing mentorship, not just a one-time conversation, Perspective from someone with a similar background/identity to students",
+    [COLUMNS.availability]: "September, Into 2027",
+    [COLUMNS.capacity]: "2",
+    [COLUMNS.notes]: ""
+  },
+  {
+    [COLUMNS.name]: "Jordan Fields",
+    [COLUMNS.company]: "a national nonprofit",
+    [COLUMNS.format]: "Virtual",
+    [COLUMNS.industries]: "Nonprofit/Social Impact, Education",
+    [COLUMNS.marketingAreas]: "Public relations & communications, Content marketing & copywriting",
+    [COLUMNS.brandAgency]: "Brand-side (in-house at a company, e.g., marketing team at a tech company)",
+    [COLUMNS.topics]: "Experience as an international student, The day-to-day of your role or field",
+    [COLUMNS.availability]: "November, December",
+    [COLUMNS.capacity]: "1",
+    [COLUMNS.notes]: ""
+  },
+  {
+    [COLUMNS.name]: "Sofia Reyes",
+    [COLUMNS.company]: "a CPG conglomerate",
+    [COLUMNS.format]: "In person (Evanston/Chicago)",
+    [COLUMNS.industries]: "Consumer Packaged Goods (CPG), Food & Beverage",
+    [COLUMNS.marketingAreas]: "Brand management / brand strategy, Strategy and consulting",
+    [COLUMNS.brandAgency]: "Brand-side (in-house at a company, e.g., marketing team at a tech company)",
+    [COLUMNS.topics]: "Insight into your specific company or organization, Having full-time professional experience before IMC and transitioning into a new role",
+    [COLUMNS.availability]: "September, October",
+    [COLUMNS.capacity]: "4",
+    [COLUMNS.notes]: ""
+  },
+  {
+    [COLUMNS.name]: "Daniel Kim",
+    [COLUMNS.company]: "a streaming media company",
+    [COLUMNS.format]: "Virtual",
+    [COLUMNS.industries]: "Media & Entertainment, Tech/SaaS",
+    [COLUMNS.marketingAreas]: "Marketing analytics & data science, Market research & consumer insights",
+    [COLUMNS.brandAgency]: "Brand-side (in-house at a company, e.g., marketing team at a tech company)",
+    [COLUMNS.topics]: "The day-to-day of your role or field",
+    [COLUMNS.availability]: "Into 2027",
+    [COLUMNS.capacity]: "2",
+    [COLUMNS.notes]: ""
+  },
+  {
+    [COLUMNS.name]: "Ava Thompson",
+    [COLUMNS.company]: "an independent ad agency",
+    [COLUMNS.format]: "Both in person (Evanston/Chicago) and virtual",
+    [COLUMNS.industries]: "Fashion & Luxury, Media & Entertainment",
+    [COLUMNS.marketingAreas]: "Content marketing & copywriting, Social media & influencer marketing",
+    [COLUMNS.brandAgency]: "Agency-side (working at an agency serving multiple clients)",
+    [COLUMNS.topics]: "How you navigated a career pivot or took a non-traditional path",
+    [COLUMNS.availability]: "September, October, November, December",
+    [COLUMNS.capacity]: "1",
+    [COLUMNS.notes]: ""
+  },
+  {
+    [COLUMNS.name]: "Noah Patel",
+    [COLUMNS.company]: "a luxury beauty house",
+    [COLUMNS.format]: "In person (Evanston/Chicago), Virtual",
+    [COLUMNS.industries]: "Beauty, Fashion & Luxury",
+    [COLUMNS.marketingAreas]: "Brand management / brand strategy, Product (marketing, management or strategy)",
+    [COLUMNS.brandAgency]: "Brand-side (in-house at a company, e.g., marketing team at a tech company)",
+    [COLUMNS.topics]: "Perspective from someone with a similar background/identity to students, Advice on how to break into a competitive field or role",
+    [COLUMNS.availability]: "October, November",
+    [COLUMNS.capacity]: "0",
+    [COLUMNS.notes]: ""
+  },
+  {
+    [COLUMNS.name]: "Grace Lindqvist",
+    [COLUMNS.company]: "a financial services firm",
+    [COLUMNS.format]: "Virtual",
+    [COLUMNS.industries]: "Financial Services",
+    [COLUMNS.marketingAreas]: "Marketing analytics & data science, Customer experience (CX) / lifecycle marketing",
+    [COLUMNS.brandAgency]: "Brand-side (in-house at a company, e.g., marketing team at a tech company)",
+    [COLUMNS.topics]: "Insight into a specific industry or function, regardless of company, Ongoing mentorship, not just a one-time conversation",
+    [COLUMNS.availability]: "September, October, November, December, Into 2027",
+    [COLUMNS.capacity]: "3",
+    [COLUMNS.notes]: ""
+  },
+  {
+    [COLUMNS.name]: "Ben Alvarez",
+    [COLUMNS.company]: "a travel & hospitality brand",
+    [COLUMNS.format]: "Both in person (Evanston/Chicago) and virtual",
+    [COLUMNS.industries]: "Travel & Hospitality, Startups",
+    [COLUMNS.marketingAreas]: "Growth marketing, Strategy and consulting",
+    [COLUMNS.brandAgency]: "Both",
+    [COLUMNS.topics]: "How you navigated a career pivot or took a non-traditional path, Having full-time professional experience before IMC and transitioning into a new role",
+    [COLUMNS.availability]: "November, December",
+    [COLUMNS.capacity]: "2",
+    [COLUMNS.notes]: ""
+  }
+];
+
+/* ============================================================
+   EVERYTHING BELOW IS GENERIC — no need to edit.
+   ============================================================ */
+
+let alumni = [];       // normalized alumni records
+let filterState = {};  // { categoryKey: Set of active filter values }
+let cart = [];         // unordered array of pinned alum ids (name held over from before pinning replaced the ranked-picks cart)
+let pinsDrawerOpen = false;
+let pinsDrawerMode = 'list';         // 'list' | 'review' - two states of the same drawer, not separate pages
+let pinsDrawerReturnFocusEl = null;  // element to restore focus to when the drawer closes
+
+// Standard location-pin glyph (same shape as the card's own location
+// icon, FORMAT_ICON_IN_PERSON) per request - replaces the old thumbtack
+// glyph. fill="currentColor" so it follows the button's own text color by
+// default, and turns purple specifically when pinned via the CSS rule on
+// .add-btn.added .pin-btn-icon below.
+const PIN_ICON_SVG = '<svg class="pin-btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0zM12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>';
+const PLUS_ICON_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+const CHECK_ICON_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5 12.5 10 17.5 19 7"/></svg>';
+const LINKEDIN_ICON_SVG = '<svg class="linkedin-icon" width="14" height="14" viewBox="0 0 24 24" fill="#0A66C2" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.446-2.136 2.94v5.666H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zM7.119 20.452H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>';
+
+// Tracks (per browser, not per person - there's no login system here) whether
+// this browser has already clicked Submit once, so a second submission can
+// offer to route through Google's own "edit your response" flow instead of
+// silently creating what looks like a duplicate.
+const HAS_SUBMITTED_KEY = "cmiConnectHasSubmittedPicks";
+function hasSubmittedBefore(){
+  try{ return localStorage.getItem(HAS_SUBMITTED_KEY) === "true"; }
+  catch(e){ return false; }
+}
+function markAsSubmitted(){
+  try{ localStorage.setItem(HAS_SUBMITTED_KEY, "true"); }
+  catch(e){ /* ignore - nothing we can do if storage is blocked */ }
+}
+
+const MULTI_FIELDS = ["format", "industries", "marketingAreas", "topics", "availability", "city"];
+const SINGLE_FIELDS = ["brandAgency"];
+// The four primary filter dropdowns (Industry, Marketing Area, Conversation
+// Topics, City) get their own top-level pill; the rest fold into one
+// "Other filters" dropdown. Both lists feed the same filterState/matching
+// logic below - this split only affects how buildFilterPanel() lays them
+// out, not what's filterable.
+const PRIMARY_FILTERABLE = ["industries", "marketingAreas", "topics", "city"];
+const OTHER_FILTERABLE = ["brandAgency"];
+const FILTERABLE = [...PRIMARY_FILTERABLE, ...OTHER_FILTERABLE];
+
+function smartSplit(value, knownOptions, isCompleteList){
+  if(!value) return [];
+  const trimmed = value.trim();
+  if(!trimmed) return [];
+  if(!knownOptions || knownOptions.length === 0){
+    return trimmed.split(",").map(s => s.trim()).filter(Boolean);
+  }
+  const sorted = [...knownOptions].sort((a, b) => b.length - a.length);
+  const result = [];
+  let pos = 0;
+  while(pos < trimmed.length){
+    while(trimmed[pos] === ',' || trimmed[pos] === ' ') pos++;
+    if(pos >= trimmed.length) break;
+    const rest = trimmed.slice(pos);
+    const match = sorted.find(opt => rest.startsWith(opt));
+    if(match){
+      result.push(match);
+      pos += match.length;
+    } else if(isCompleteList && !sorted.some(opt => rest.indexOf(opt) > 0)){
+      // knownOptions is the FULL set of real checkbox options for this
+      // field (not just the comma-containing ones), so a position that
+      // matches none of them - with none appearing later either - can only
+      // be the free-text "Other" write-in, which Google Forms always
+      // appends once, last. Keep it intact, commas and all, rather than
+      // chopping it up at them.
+      result.push(rest.trim());
+      pos = trimmed.length;
+    } else {
+      // knownOptions is only a partial list here (just the options whose
+      // own wording happens to contain a comma) - most values in the field
+      // simply aren't in it, so "no match" doesn't mean "Other text starts
+      // here." Fall back to the plain next-comma boundary, same as when no
+      // knownOptions are given at all.
+      const next = rest.indexOf(",");
+      if(next === -1){
+        result.push(rest.trim());
+        pos = trimmed.length;
+      } else {
+        result.push(rest.slice(0, next).trim());
+        pos += next;
+      }
+    }
+  }
+  return result.filter(Boolean);
+}
+
+// "In which city are you located?" is a free-text short answer, not a
+// checkbox field, so alumni wrote it every which way - typos ("San
+// Fransisco"), abbreviations ("NYC"), a neighborhood/metro name instead
+// of a city ("Chicagoland", "Bay Area"), or "City, State"/"City, Country"
+// with inconsistent punctuation. Exact-match aliases handle every raw
+// value seen in real responses so far; a new raw value not listed here
+// falls through to a best-effort generic cleanup (below) rather than
+// crashing or showing nothing.
+const CITY_ALIASES = {
+  "nyc": "New York",
+  "san fransisco": "San Francisco",
+  "san francisco, ca": "San Francisco",
+  "chicagoland": "Chicago",
+  "washington dc": "Washington, D.C.",
+  "deerfield, il": "Deerfield",
+  "jakarta, indonesia": "Jakarta, Indonesia",
+  "toronto, ontario canada": "Toronto, Canada",
+  "denver, co": "Denver",
+  "urbana il": "Urbana",
+  "london, uk": "London, UK"
+};
+// US state names/abbreviations to strip when they trail a city name -
+// per request, a US city doesn't need to say it's in the US.
+const US_STATE_TOKENS = [
+  "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
+  "KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ",
+  "NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT",
+  "VA","WA","WV","WI","WY"
+];
+function normalizeCityValue(raw){
+  const trimmed = (raw || "").trim().replace(/\s+/g, " ");
+  if(!trimmed) return [];
+  const aliased = CITY_ALIASES[trimmed.toLowerCase()];
+  if(aliased) return [aliased];
+
+  // Generic fallback for anything not in the alias list above: split off
+  // a trailing ", <state or country>" or a trailing bare state
+  // abbreviation, and drop it only if it's a recognized US state (so a
+  // real country name after the comma is kept, per the question's own
+  // "if outside the US, include the country" instruction).
+  const commaSplit = trimmed.split(",").map(s => s.trim()).filter(Boolean);
+  if(commaSplit.length >= 2){
+    const city = commaSplit[0];
+    const rest = commaSplit.slice(1).join(", ");
+    if(US_STATE_TOKENS.includes(rest.toUpperCase())) return [city];
+    return [`${city}, ${rest}`];
+  }
+  const tokens = trimmed.split(" ");
+  const last = tokens[tokens.length - 1];
+  if(tokens.length > 1 && US_STATE_TOKENS.includes(last.toUpperCase())){
+    return [tokens.slice(0, -1).join(" ")];
+  }
+  return [trimmed];
+}
+
+// Buckets every normalized city/location value under one of three
+// top-level Location filter options, per request. Classification is by
+// the trailing ", Country" normalizeCityValue leaves on non-US values
+// (ASIA_COUNTRIES / LATAM_COUNTRIES below), plus a short override list
+// for well-known non-US cities that are sometimes written bare (no
+// country suffix). Anything that doesn't match either - including a
+// bare US city (no comma) and any other country not called out below,
+// e.g. Canada/UK/Europe - defaults to "United States", since that's
+// this list's effective catch-all bucket, not a claim those places are
+// in the US. Revisit this default if alumni outside those three
+// regions become common enough to warrant a 4th option.
+const ASIA_COUNTRIES = [
+  "china", "japan", "south korea", "korea", "india", "singapore",
+  "indonesia", "malaysia", "thailand", "vietnam", "philippines",
+  "taiwan", "hong kong", "pakistan", "bangladesh", "sri lanka",
+  "nepal", "united arab emirates", "uae", "saudi arabia", "qatar",
+  "israel", "turkey"
+];
+const LATAM_COUNTRIES = [
+  "mexico", "brazil", "argentina", "chile", "colombia", "peru",
+  "ecuador", "venezuela", "uruguay", "paraguay", "bolivia",
+  "costa rica", "panama", "guatemala", "honduras", "el salvador",
+  "nicaragua", "dominican republic", "cuba"
+];
+// Bare (no-comma) city names known to be outside the US - without this,
+// a city like "Singapore" would hit the no-comma fallback and read as
+// a US city.
+const CITY_REGION_OVERRIDES = {
+  "singapore": "Asia", "hong kong": "Asia", "tokyo": "Asia", "seoul": "Asia",
+  "mumbai": "Asia", "delhi": "Asia", "bangalore": "Asia", "shanghai": "Asia",
+  "beijing": "Asia", "dubai": "Asia", "manila": "Asia", "bangkok": "Asia",
+  "mexico city": "Latin America", "sao paulo": "Latin America",
+  "são paulo": "Latin America", "bogota": "Latin America",
+  "bogotá": "Latin America", "buenos aires": "Latin America",
+  "santiago": "Latin America", "lima": "Latin America"
+};
+const LOCATION_REGIONS = ["United States", "Asia", "Latin America"];
+function regionForCity(value){
+  const trimmed = (value || "").trim();
+  const lower = trimmed.toLowerCase();
+  if(CITY_REGION_OVERRIDES[lower]) return CITY_REGION_OVERRIDES[lower];
+  const commaIdx = trimmed.lastIndexOf(",");
+  if(commaIdx !== -1){
+    const country = trimmed.slice(commaIdx + 1).trim().toLowerCase();
+    if(ASIA_COUNTRIES.includes(country)) return "Asia";
+    if(LATAM_COUNTRIES.includes(country)) return "Latin America";
+    const cityPart = trimmed.slice(0, commaIdx).trim().toLowerCase();
+    if(CITY_REGION_OVERRIDES[cityPart]) return CITY_REGION_OVERRIDES[cityPart];
+  }
+  return "United States";
+}
+
+// A name written into the Form with a parenthetical aside (e.g. a former
+// last name) - shown cleaned up here; the raw value is still what's in
+// the Sheet, untouched.
+const NAME_DISPLAY_OVERRIDES = {
+  "Shari Newman (formerly Diamond)": "Shari Newman"
+};
+function displayNameFor(rawName){
+  return NAME_DISPLAY_OVERRIDES[rawName] || rawName;
+}
+
+function normalizeRow(row, index){
+  const capacityRaw = row[COLUMNS.capacity];
+  const capacity = parseInt(capacityRaw, 10);
+  const rawFormat = smartSplit(row[COLUMNS.format], KNOWN_OPTIONS.format);
+  const rawIndustries = smartSplit(row[COLUMNS.industries], KNOWN_OPTIONS.industries);
+  return {
+    id: index,
+    timestamp: (row[COLUMNS.timestamp] || "").trim(),
+    name: displayNameFor((row[COLUMNS.name] || "").trim()),
+    role: (row[COLUMNS.role] || "").trim(),
+    company: (row[COLUMNS.company] || "").trim(),
+    // "Other" write-ins are dropped from this field per request.
+    format: rawFormat.filter(v => CANONICAL_FORMAT_OPTIONS.includes(v)),
+    // Free-text short answer, not a checkbox field - normalized below
+    // since alumni wrote it every which way ("NYC", "San Fransisco",
+    // "Chicagoland", "Toronto, Ontario Canada"...).
+    city: normalizeCityValue(row[COLUMNS.city]),
+    industries: rawIndustries.filter(v => CANONICAL_INDUSTRIES.includes(v)),
+    marketingAreas: smartSplit(row[COLUMNS.marketingAreas], KNOWN_OPTIONS.marketingAreas),
+    brandAgency: (row[COLUMNS.brandAgency] || "").trim(),
+    topics: smartSplit(row[COLUMNS.topics], KNOWN_OPTIONS.topics, TOPICS_IS_COMPLETE_LIST),
+    availability: smartSplit(row[COLUMNS.availability], KNOWN_OPTIONS.availability),
+    // Alumni who submitted before this question existed left it blank;
+    // treat that as an assumed capacity of 2 rather than 0, since 0 would
+    // read as "fully booked" for someone who was never actually asked.
+    capacity: isNaN(capacity) ? 2 : capacity,
+    capacityAssumed: isNaN(capacity),
+    notes: (row[COLUMNS.notes] || "").trim(),
+    linkedin: normalizeLinkedInUrl(row[COLUMNS.linkedin]),
+  };
+}
+
+function normalizeLinkedInUrl(raw){
+  const value = (raw || "").trim();
+  if(!value) return "";
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+}
+
+function fieldValues(alum, key){
+  return MULTI_FIELDS.includes(key) ? alum[key] : [alum[key]].filter(Boolean);
+}
+
+function collectFilterOptions(){
+  const options = {};
+  FILTERABLE.forEach(key => options[key] = new Set());
+  alumni.forEach(a => {
+    FILTERABLE.forEach(key => {
+      const allowList = FILTER_ALLOW_LISTS[key];
+      fieldValues(a, key).forEach(v => {
+        if(!v) return;
+        if(allowList && !allowList.includes(v)) return;
+        options[key].add(v);
+      });
+    });
+  });
+  return options;
+}
+
+const CATEGORY_LABELS = {
+  industries: "Industry",
+  marketingAreas: "Marketing Area",
+  topics: "Conversation Topics",
+  city: "Location",
+  availability: "Availability",
+  format: "Format",
+  brandAgency: "Brand vs Agency Work"
+};
+
+// Written out in full (rather than built from CATEGORY_LABELS with an
+// algorithmic "a"/"an") so grammar is always correct - e.g. "an industry",
+// not a guessed article.
+const CATEGORY_PROMPTS = {
+  industries: "Choose an industry",
+  marketingAreas: "Choose a marketing area"
+};
+
+const INDUSTRY_DISCLAIMER = "We asked alums to tell us all the industries they've worked in. This may not be the industry they're in now.";
+
+// Most filter categories read fine sorted alphabetically, but these three
+// have a natural order alphabetical sorting doesn't respect (chronological
+// months, or a deliberate "Both" belongs last vs the two specific sides).
+const CATEGORY_ORDER = {
+  availability: ["September", "October", "November", "December", "Into 2027"],
+  brandAgency: [
+    "Agency-side (working at an agency serving multiple clients)",
+    "Brand-side (in-house at a company, e.g., marketing team at a tech company)",
+    "Both"
+  ],
+  format: CANONICAL_FORMAT_OPTIONS,
+  // Day-to-day explicitly 2nd, international student explicitly last, per
+  // request - everything else keeps its original relative order.
+  topics: [
+    "Insight into your specific company or organization",
+    "The day-to-day of your role or field",
+    "Insight into a specific industry or function, regardless of company",
+    "Advice on how to break into a competitive field or role",
+    "How you navigated a career pivot or took a non-traditional path",
+    "Perspective from someone with a similar background/identity to students",
+    "Ongoing mentorship, not just a one-time conversation",
+    "Having full-time professional experience before IMC and transitioning into a new role",
+    "Experience as an international student"
+  ]
+};
+function sortFilterValues(key, values){
+  const order = CATEGORY_ORDER[key];
+  if(!order) return [...values].sort();
+  return [...values].sort((a, b) => {
+    const ia = order.indexOf(a), ib = order.indexOf(b);
+    if(ia === -1 && ib === -1) return a.localeCompare(b);
+    if(ia === -1) return 1;
+    if(ib === -1) return -1;
+    return ia - ib;
+  });
+}
+
+// A masthead set from a category click (e.g. "Brand management / brand
+// strategy") goes stale the moment someone edits filters directly in the
+// sidebar - rather than trying to describe every possible combination of
+// active filters, fall back to the same generic heading used for "Show me
+// all available alumni".
+function resetMastheadToGeneric(){
+  document.getElementById('subTitle').textContent = 'All available alumni';
+  lastCategoryKey = null;
+}
+
+// Builds one dropdown per filterable field - a pill button (showing the
+// field's name and, once anything's checked, a count) that opens a small
+// popover with the same checkbox list the old sidebar used. Only one
+// dropdown is open at a time; closing on outside-click/Escape and
+// swapping which one's "open" class is set handles that.
+function closeAllFilterDropdowns(except){
+  document.querySelectorAll('.filter-dropdown.open').forEach(d => {
+    if(d !== except) d.classList.remove('open');
+  });
+}
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('.filter-dropdown')) closeAllFilterDropdowns();
+});
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') closeAllFilterDropdowns();
+});
+
+// The checkbox list (select-all + one row per value) shared by every
+// dropdown - both the four primary single-field dropdowns and each
+// sub-section inside "Other filters". `onAnyChange` lets the caller keep
+// its own toggle button's count badge in sync without a full rebuild
+// (which would otherwise close the dropdown mid-click).
+function buildFilterCheckboxGroup(key, values, onAnyChange){
+  const optionsList = document.createElement('div');
+  optionsList.className = 'filter-checkboxes';
+
+  // No "Select all" for format or brandAgency - per request.
+  const showSelectAll = key !== 'format' && key !== 'brandAgency';
+  let selectAllBox = null;
+  const optionCheckboxes = [];
+  if(showSelectAll){
+    const selectAllLabel = document.createElement('label');
+    selectAllLabel.className = 'filter-checkbox-option filter-select-all';
+    selectAllBox = document.createElement('input');
+    selectAllBox.type = 'checkbox';
+    selectAllBox.checked = values.every(v => filterState[key].has(v));
+    selectAllBox.onchange = () => {
+      if(selectAllBox.checked) values.forEach(v => filterState[key].add(v));
+      else values.forEach(v => filterState[key].delete(v));
+      optionCheckboxes.forEach(cb => cb.checked = selectAllBox.checked);
+      resetMastheadToGeneric();
+      renderGrid();
+      // Update just this toggle's badge in place, same as an individual
+      // checkbox does - a full buildFilterPanel() rebuild would close the
+      // dropdown, which is wrong here since "Other filters" holds several
+      // independent Select-alls in one tray.
+      onAnyChange();
+    };
+    selectAllLabel.appendChild(selectAllBox);
+    selectAllLabel.appendChild(document.createTextNode('Select all'));
+    optionsList.appendChild(selectAllLabel);
+  }
+
+  values.forEach(val => {
+    const optionLabel = document.createElement('label');
+    optionLabel.className = 'filter-checkbox-option';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = filterState[key].has(val);
+    checkbox.onchange = () => {
+      if(checkbox.checked) filterState[key].add(val);
+      else filterState[key].delete(val);
+      if(selectAllBox) selectAllBox.checked = values.every(v => filterState[key].has(v));
+      resetMastheadToGeneric();
+      renderGrid();
+      onAnyChange();
+    };
+    optionLabel.appendChild(checkbox);
+    let displayVal = val;
+    if(key === 'topics') displayVal = filterTopicDisplayLabel(val);
+    else if(key === 'brandAgency') displayVal = brandAgencyDisplayLabel(val);
+    else if(key === 'marketingAreas') displayVal = marketingAreaDisplayLabel(val);
+    else if(key === 'format') displayVal = formatDisplayLabel(val);
+    optionLabel.appendChild(document.createTextNode(displayVal));
+    optionCheckboxes.push(checkbox);
+    optionsList.appendChild(optionLabel);
+  });
+
+  return optionsList;
+}
+
+// Location's own panel: 3 fixed region headers (United States, Asia,
+// Latin America), each a clickable row that reveals its own nested
+// checkbox list only once clicked - the cities/countries inside stay
+// hidden until then, per request. Reuses buildFilterCheckboxGroup for
+// each region's nested list, scoped to just that region's values.
+function buildLocationRegionGroup(values, onAnyChange){
+  const wrap = document.createElement('div');
+  wrap.className = 'location-regions';
+
+  const byRegion = {};
+  LOCATION_REGIONS.forEach(r => byRegion[r] = []);
+  values.forEach(v => {
+    const region = LOCATION_REGIONS.includes(regionForCity(v)) ? regionForCity(v) : "United States";
+    byRegion[region].push(v);
+  });
+
+  LOCATION_REGIONS.forEach(region => {
+    const regionValues = byRegion[region];
+    const regionWrap = document.createElement('div');
+    regionWrap.className = 'location-region';
+
+    const regionToggle = document.createElement('button');
+    regionToggle.type = 'button';
+    regionToggle.className = 'location-region-toggle';
+    const regionActiveCount = regionValues.filter(v => filterState.city.has(v)).length;
+    regionToggle.innerHTML = `<span>${region}</span>${regionActiveCount ? `<span class="filter-dropdown-count">(${regionActiveCount})</span>` : ''}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+    regionToggle.classList.toggle('has-selection', regionActiveCount > 0);
+
+    const regionPanel = document.createElement('div');
+    regionPanel.className = 'location-region-panel';
+    if(regionValues.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'location-region-empty';
+      empty.textContent = 'No alumni listed here yet.';
+      regionPanel.appendChild(empty);
+    } else {
+      regionPanel.appendChild(buildFilterCheckboxGroup('city', regionValues, () => {
+        updateDropdownCountBadge(regionToggle, regionValues.filter(v => filterState.city.has(v)).length);
+        onAnyChange();
+      }));
+    }
+
+    regionToggle.addEventListener('click', () => {
+      regionWrap.classList.toggle('open');
+    });
+
+    regionWrap.appendChild(regionToggle);
+    regionWrap.appendChild(regionPanel);
+    wrap.appendChild(regionWrap);
+  });
+
+  return wrap;
+}
+
+function updateDropdownCountBadge(toggle, count){
+  toggle.querySelector('.filter-dropdown-count')?.remove();
+  if(count){
+    toggle.insertBefore(
+      Object.assign(document.createElement('span'), {className: 'filter-dropdown-count', textContent: ` (${count})`}),
+      toggle.querySelector('svg')
+    );
+  }
+  toggle.classList.toggle('has-selection', count > 0);
+}
+
+function buildFilterDropdownToggle(dropdown, labelHtml){
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'filter-dropdown-toggle';
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.innerHTML = `${labelHtml} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = dropdown.classList.contains('open');
+    closeAllFilterDropdowns();
+    dropdown.classList.toggle('open', !isOpen);
+    toggle.setAttribute('aria-expanded', String(!isOpen));
+  });
+  return toggle;
+}
+
+function buildFilterPanel(){
+  const options = collectFilterOptions();
+  const panel = document.getElementById('filterPanel');
+  panel.innerHTML = '';
+
+  // Four primary facets, each its own pill - Industry, Marketing Area,
+  // Conversation Topics, City (City stays invisible, per PRIMARY_FILTERABLE
+  // and collectFilterOptions, until Phase II's real city data exists).
+  PRIMARY_FILTERABLE.forEach(key => {
+    const values = sortFilterValues(key, options[key]);
+    if(values.length === 0) return;
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'filter-dropdown';
+    const activeCount = filterState[key].size;
+    const toggle = buildFilterDropdownToggle(dropdown, `${CATEGORY_LABELS[key] || key}${activeCount ? ` <span class="filter-dropdown-count">(${activeCount})</span>` : ''}`);
+    toggle.classList.toggle('has-selection', activeCount > 0);
+    dropdown.appendChild(toggle);
+
+    const optionsPanel = document.createElement('div');
+    optionsPanel.className = key === 'city' ? 'filter-dropdown-panel filter-dropdown-panel-grouped' : 'filter-dropdown-panel';
+    optionsPanel.addEventListener('click', (e) => e.stopPropagation());
+
+    if(key === 'industries'){
+      const disclaimer = document.createElement('div');
+      disclaimer.className = 'filter-group-disclaimer';
+      disclaimer.textContent = INDUSTRY_DISCLAIMER;
+      optionsPanel.appendChild(disclaimer);
+    }
+
+    if(key === 'city'){
+      optionsPanel.appendChild(buildLocationRegionGroup(values, () => updateDropdownCountBadge(toggle, filterState.city.size)));
+    } else {
+      optionsPanel.appendChild(buildFilterCheckboxGroup(key, values, () => updateDropdownCountBadge(toggle, filterState[key].size)));
+    }
+    dropdown.appendChild(optionsPanel);
+    panel.appendChild(dropdown);
+  });
+
+  // Everything else (meeting format, brand/agency-side, availability)
+  // folds into one "Other filters" dropdown, each as its own labeled
+  // sub-section inside a single popover - keeps the primary row to just
+  // the four main facets above.
+  const otherKeysWithValues = OTHER_FILTERABLE.filter(key => sortFilterValues(key, options[key]).length > 0);
+  if(otherKeysWithValues.length){
+    const dropdown = document.createElement('div');
+    dropdown.className = 'filter-dropdown';
+    const activeCount = otherKeysWithValues.reduce((sum, key) => sum + filterState[key].size, 0);
+    const toggle = buildFilterDropdownToggle(dropdown, `Brand vs Agency${activeCount ? ` <span class="filter-dropdown-count">(${activeCount})</span>` : ''}`);
+    toggle.classList.toggle('has-selection', activeCount > 0);
+    dropdown.appendChild(toggle);
+
+    const optionsPanel = document.createElement('div');
+    optionsPanel.className = 'filter-dropdown-panel filter-dropdown-panel-grouped';
+    optionsPanel.addEventListener('click', (e) => e.stopPropagation());
+
+    const updateOtherBadge = () => updateDropdownCountBadge(toggle, otherKeysWithValues.reduce((sum, key) => sum + filterState[key].size, 0));
+
+    otherKeysWithValues.forEach(key => {
+      const values = sortFilterValues(key, options[key]);
+      const subgroup = document.createElement('div');
+      subgroup.className = 'filter-subgroup';
+      // Sub-label skipped when this tray holds only one group (currently
+      // always true, since Format moved out) - redundant with the
+      // "Brand vs Agency" tab name right above it. Still shows if more
+      // groups ever fold back in here.
+      if(otherKeysWithValues.length > 1){
+        const subLabel = document.createElement('div');
+        subLabel.className = 'filter-subgroup-label';
+        subLabel.textContent = CATEGORY_LABELS[key] || key;
+        subgroup.appendChild(subLabel);
+      }
+      subgroup.appendChild(buildFilterCheckboxGroup(key, values, updateOtherBadge));
+      optionsPanel.appendChild(subgroup);
+    });
+
+    dropdown.appendChild(optionsPanel);
+    panel.appendChild(dropdown);
+  }
+}
+
+function matchesFilters(alum){
+  // Search/filter state is fully independent of My Pins - the drawer
+  // reads straight from `cart` regardless of what's searched/checked
+  // here, so changing filters or search can never remove anyone from it.
+  const q = document.getElementById('searchInput').value.trim();
+  if(q){
+    const hay = [alum.name, alum.company, ...alum.industries, ...alum.marketingAreas, ...alum.topics]
+      .join(" ");
+    // Match at a word boundary rather than any substring, so a short query
+    // like "AI" doesn't match text that merely contains those letters in
+    // the middle of an unrelated word (e.g. "Cait"). Still case-insensitive.
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp('\\b' + escaped, 'i');
+    if(!pattern.test(hay)) return false;
+  }
+  for(const key of FILTERABLE){
+    const active = filterState[key];
+    if(!active || active.size === 0) continue;
+    const values = fieldValues(alum, key);
+    const hasMatch = values.some(v => active.has(v));
+    if(!hasMatch) return false;
+  }
+  return true;
+}
+
+function joinValues(values, transform){
+  const fn = transform || (v => v);
+  return values.map(v => `<span>${fn(v)}</span>`).join('<span class="sep">·</span>');
+}
+
+// City + meeting format - shares a line with the LinkedIn link, right
+// below the company name. City stays empty until Phase II's real city
+// field exists.
+// A laptop for Virtual, a location pin for In person - "Both" shows both
+// icons together rather than a third invented symbol.
+// Solid/filled rather than thin outlines, per request - colored with
+// --accent directly on the SVG (not currentColor) so they read as
+// colorful icons regardless of the muted text color around them.
+const FORMAT_ICON_VIRTUAL = '<svg class="format-icon" width="13" height="13" viewBox="0 0 24 24" fill="var(--accent)" stroke="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M2 4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5v1h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-1H6a2 2 0 0 1-2-2V4zm2 0h16v14H4V4z"/></svg>';
+const FORMAT_ICON_IN_PERSON = '<svg class="format-icon" width="13" height="13" viewBox="0 0 24 24" fill="var(--accent)" stroke="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0zM12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>';
+function formatIconHtml(value){
+  const both = "Both in person (Evanston/Chicago) and virtual";
+  const inPerson = "In person (Evanston/Chicago)";
+  if(value === both) return FORMAT_ICON_IN_PERSON + FORMAT_ICON_VIRTUAL;
+  if(value === inPerson) return FORMAT_ICON_IN_PERSON;
+  if(value === "Virtual") return FORMAT_ICON_VIRTUAL;
+  return '';
+}
+
+// City (plain text) + meeting format (each value paired with its icon) -
+// built as HTML directly (rather than through joinValues, which only
+// handles plain text) since format needs an icon alongside its label.
+// Normalizes a role/title string to mixed case for display, regardless of
+// how the alum typed it in the Form (ALL CAPS, all lowercase, etc.) -
+// applied only here at render time, never to the stored a.role value.
+// Per-word, so it can tell a short all-caps acronym (AI, GTM, VP...) apart
+// from shouted ALL CAPS, and leaves already-mixed-case words (the common
+// case) untouched rather than risk mangling something that was already
+// fine.
+const ROLE_MINOR_WORDS = new Set(['and','or','the','of','for','in','on','at','to','a','an','with']);
+const ROLE_LOWER_ACRONYMS = new Set(['ai','gtm','vp','svp','evp','pr','hr','ux','ui','ceo','cfo','coo','cmo','cto','seo','sem','crm','roi','kpi','pm']);
+function titleCaseRole(str){
+  let wordIndex = 0;
+  return str.replace(/[A-Za-z']+/g, (word) => {
+    const isFirst = wordIndex === 0;
+    wordIndex++;
+    const lower = word.toLowerCase();
+    const isAllUpper = word === word.toUpperCase() && word !== lower;
+    const isAllLower = word === lower;
+    if(!isAllUpper && !isAllLower) return word; // already mixed case - trust it
+    if(isAllUpper){
+      if(word.length <= 4) return word; // short all-caps - likely an acronym, keep
+      return word.charAt(0) + word.slice(1).toLowerCase(); // long ALL CAPS - title it
+    }
+    if(ROLE_LOWER_ACRONYMS.has(lower)) return word.toUpperCase();
+    if(!isFirst && ROLE_MINOR_WORDS.has(lower)) return lower;
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  });
+}
+
+function cardContactLineHtml(a){
+  // Format (Virtual/In person) cut from this line per request - still
+  // exists as a filter under "Other filters".
+  const cityHtml = a.city.map(v => `<span class="format-value">${FORMAT_ICON_IN_PERSON}${v}</span>`);
+  return cityHtml.join('<span class="sep"></span>');
+}
+
+// Industry + type of experience (brand/agency-side), each its own
+// labeled column - matches the reference page's two-column field layout
+// rather than pill tags.
+// Best-effort company -> industry lookup, used below to promote the
+// industry matching an alum's CURRENT company to the front of their
+// Industry Expertise list, instead of whichever one they happened to
+// check first on the form. Deliberately only covers companies/pairings
+// I'm actually confident about from recognizing the company - agencies,
+// consultancies and a number of smaller/unfamiliar names are left out on
+// purpose rather than guessed, since their listed industries are often
+// client/practice areas, not the firm's own category, and a wrong guess
+// would look just as authoritative on the card as a right one. For an
+// alum whose company isn't here (or where this guess is wrong), nothing
+// breaks - it just falls back to their original form order, which is
+// also the fix: reordering the comma-separated list in that alum's
+// "industries" cell in the source sheet so the right one comes first
+// overrides this table automatically, no code change needed. Keyed by
+// the exact "company" text as stored (not cleaned), mapped to one exact
+// string from that alum's own a.industries - only takes effect if the
+// alum actually selected that industry themselves.
+const COMPANY_PRIMARY_INDUSTRY = {
+  "Boston Consulting Group": "Consulting",
+  "Cartier NA": "Fashion & Luxury",
+  "Dyson, ex-Ulta Beauty": "Consumer Packaged Goods (CPG)",
+  "Hichew": "Food & Beverage",
+  "Jetblue": "Travel & Hospitality",
+  "Kering Eyewear (parent company for Gucci, Cartier, Bottega Veneta, Balenciaga etc)": "Fashion & Luxury",
+  "Mayer Brown": "Law",
+  "NBC Universal": "Media & Entertainment",
+  "Match Group": "Tech/SaaS",
+  "Instawork": "Tech/SaaS",
+  "IManage": "Tech/SaaS",
+  "Retell AI": "Tech/SaaS",
+  "Treasure AI": "Tech/SaaS",
+  "ThreeFlow": "Tech/SaaS",
+  "Royal Cyber": "Tech/SaaS",
+  "OpenWeb": "Tech/SaaS",
+  "The Kitchen at Kraft Heinz": "Food & Beverage",
+  "Versapay": "Tech/SaaS",
+  "Erie Family Health Centers": "Healthcare & Pharmaceuticals",
+  "Hinsdale Township High School District 86": "Education"
+};
+function primaryIndustryOrderedList(a){
+  const wanted = COMPANY_PRIMARY_INDUSTRY[a.company];
+  if(wanted && a.industries.includes(wanted)){
+    return [wanted, ...a.industries.filter(v => v !== wanted)];
+  }
+  return a.industries;
+}
+
+// Industry Expertise and Marketing Expertise side by side as two aligned
+// columns, per request - previously Marketing Expertise was its own full-
+// width line below this one. Each column is independent: either can be
+// empty without breaking the row's layout.
+function cardIndustryExpertiseColumnsHtml(a){
+  // Industry Expertise is plain text again (2026-10-15) - not pills like
+  // Marketing/Ask me about. Only the primary industry is shown as text;
+  // anything beyond it folds into a "+N more" pill (the only pill this
+  // column has) that opens a popover, same interaction as the filter
+  // dropdowns - this is a flat "show 1, count the rest" rule rather than
+  // the measured 1-line-collapse the pill rows use, since there's no
+  // per-item element here to measure against the column width.
+  const [primaryIndustry, ...otherIndustries] = primaryIndustryOrderedList(a);
+  let industryColHtml = '';
+  if(primaryIndustry){
+    let industryValueHtml = `<span>${primaryIndustry}</span>`;
+    if(otherIndustries.length){
+      industryValueHtml += ` <span class="industry-more-wrap">
+        <button type="button" class="industry-more-btn" aria-expanded="false">+${otherIndustries.length} more</button>
+        <div class="industry-more-popover">
+          <div class="industry-more-popover-title">This alum has also worked in:</div>
+          <div class="industry-more-popover-list">${otherIndustries.map(v => `<div>${v}</div>`).join('')}</div>
+        </div>
+      </span>`;
+    }
+    industryColHtml = `<div class="alum-col"><span class="field-label">Industry Expertise</span><div class="alum-col-value">${industryValueHtml}</div></div>`;
+  }
+
+  const marketingParts = cardMarketingLineValues(a);
+  const marketingColHtml = marketingParts.length
+    ? `<div class="alum-col"><span class="field-label">Marketing Expertise</span><div class="topic-tags marketing-tags">${marketingParts.map(v => `<span class="topic-tag">${v}</span>`).join('')}</div></div>`
+    : '';
+
+  if(!industryColHtml && !marketingColHtml) return '';
+  return `<div class="alum-columns">${industryColHtml}${marketingColHtml}</div>`;
+}
+
+// Marketing expertise - its own labeled line, matching the reference.
+// Card-only shortenings on top of the standard label, per explicit
+// request that these trims apply ONLY to the card pills - the filter
+// checkboxes and category picker must keep showing the full name from
+// MARKETING_AREA_DISPLAY_OVERRIDES untouched.
+const CARD_MARKETING_TAG_OVERRIDES = {
+  "Brand Management & Strategy": "Brand",
+  "PR & Communications": "PR & Comms",
+  "Marketing Analytics & Data Science": "Data",
+  "Social Media & Influencer Marketing": "Social Media",
+  "Market Research & Consumer Insights": "Market Research"
+};
+// The standalone word "Marketing" is also dropped from each pill here only
+// (e.g. "Growth Marketing" -> "Growth") - again, cards only. \b ensures
+// "Market Research..." isn't touched by this part.
+function cardMarketingLineValues(a){
+  return a.marketingAreas
+    .map(marketingAreaDisplayLabel)
+    .map(label => CARD_MARKETING_TAG_OVERRIDES[label]
+      || label.replace(/\s*\bMarketing\b\s*/gi, ' ').replace(/\s{2,}/g, ' ').trim());
+}
+
+// A handful of alumni selected all three format checkboxes, including the
+// redundant "Both ... and virtual" option alongside its own two halves -
+// e.g. ["In person (Evanston/Chicago)", "Virtual", "Both ... and virtual"].
+// Collapse that specific combination down to just the "Both" option on the
+// card display, since listing all three is redundant. Filtering/matching
+// still uses the raw, uncollapsed array.
+function cardFormatValues(formatArr){
+  const both = "Both in person (Evanston/Chicago) and virtual";
+  const inPerson = "In person (Evanston/Chicago)";
+  const virtual = "Virtual";
+  if(formatArr.includes(both) && formatArr.includes(inPerson) && formatArr.includes(virtual)){
+    return [both];
+  }
+  return formatArr;
+}
+
+// Some "topics" option text was written to face the alum filling out the
+// form (e.g. "your role") rather than the student reading the site. Only
+// list entries that actually need rewriting - anything not listed here
+// (including custom "Other" answers) is shown exactly as stored, and the
+// raw value is still what's used for filtering/matching either way.
+const TOPIC_DISPLAY_OVERRIDES = {
+  "The day-to-day of your role or field": "The day-to-day of their role or field",
+  "Insight into your specific company or organization": "Insight into their specific company or organization",
+  "How you navigated a career pivot or took a non-traditional path": "How they navigated a career pivot or took a non-traditional path"
+};
+
+function topicDisplayLabel(value){
+  return TOPIC_DISPLAY_OVERRIDES[value] || value;
+}
+
+// Relabeling for the Conversation Topics FILTER dropdown only - the
+// card's "Ask me about" pills and everywhere else keep the regular
+// topicDisplayLabel/topicShortLabel wording. Anything not listed here
+// falls back to the regular label.
+const FILTER_TOPIC_DISPLAY_OVERRIDES = {
+  "Advice on how to break into a competitive field or role": "Breaking into a competitive field or role",
+  "How you navigated a career pivot or took a non-traditional path": "Navigating a career pivot or a non-traditional path",
+  "Perspective from someone with a similar background/identity to students": "Perspective from someone with a similar background/identity",
+  "Having full-time professional experience before IMC and transitioning into a new role": "Full-time experience before IMC and transitioning to a new role",
+  "Ongoing mentorship, not just a one-time conversation": "Ongoing mentorship"
+};
+function filterTopicDisplayLabel(value){
+  return FILTER_TOPIC_DISPLAY_OVERRIDES[value] || topicDisplayLabel(value);
+}
+
+// Short tag versions of the known "topics" options, for the "Can advise on"
+// line on each card - the full sentences read as redundant/cluttered once
+// several are listed side by side. A custom "Other" write-in isn't in this
+// map, so it falls back to being shown in full (there's no safe way to
+// auto-shorten arbitrary text).
+const TOPIC_SHORT_LABELS = {
+  "The day-to-day of their role or field": "My day-to-day",
+  "Insight into their specific company or organization": "My company",
+  "Insight into a specific industry or function, regardless of company": "My industry",
+  "Advice on how to break into a competitive field or role": "Breaking into my field",
+  "How they navigated a career pivot or took a non-traditional path": "Career pivot or non-traditional path",
+  "Perspective from someone with a similar background/identity to students": "Similar background/identity",
+  "Ongoing mentorship, not just a one-time conversation": "Mentoring you",
+  "Experience as an international student": "International student experience",
+  "Having full-time professional experience before IMC and transitioning into a new role": "Work experience before IMC"
+};
+
+function topicShortLabel(value){
+  return TOPIC_SHORT_LABELS[topicDisplayLabel(value)] || topicDisplayLabel(value);
+}
+
+// Write-in topics dropped from the "Ask me about" pills entirely, per
+// request - too long/specific to read well as a pill and has no safe
+// short form. Doesn't affect filters (topics there are already limited
+// to KNOWN_OPTIONS.topics via FILTER_ALLOW_LISTS, so a write-in like
+// this was never a filter option to begin with).
+const TOPIC_CARD_EXCLUDE = [
+  "Leveraging IMC degree in a role that might not seem immediately applicable (e.g., working in change management, working at a consulting firm, working in communications in a B2B capacity)"
+];
+
+// "Agency-side (working at an agency serving multiple clients)" and its
+// brand-side counterpart read as unnecessarily explained - every IMC
+// student already knows the distinction. Shortened for both the filter
+// checkboxes and each alum's card; the raw value (with the full
+// parenthetical) is still what's stored and matched against filters.
+const BRAND_AGENCY_DISPLAY_OVERRIDES = {
+  "Agency-side (working at an agency serving multiple clients)": "Agency-side",
+  "Brand-side (in-house at a company, e.g., marketing team at a tech company)": "Brand-side",
+  "Both": "Both agency and brand-side"
+};
+
+function brandAgencyDisplayLabel(value){
+  return BRAND_AGENCY_DISPLAY_OVERRIDES[value] || value;
+}
+
+const FORMAT_DISPLAY_OVERRIDES = {
+  "Both in person (Evanston/Chicago) and virtual": "Both in person and virtual"
+};
+function formatDisplayLabel(value){
+  return FORMAT_DISPLAY_OVERRIDES[value] || value;
+}
+
+// A trailing parenthetical explainer after the company name (e.g.
+// "Dexmate (Robotics company in SF bay)") renders at the job title's
+// smaller size, so the brand name itself stays the prominent part.
+function companyHtml(company){
+  const m = /^(.*?)\s*(\([^()]*\))\s*$/.exec(company || '');
+  if(!m || !m[1]) return company;
+  return `${m[1]} <span class="alum-company-note">${m[2]}</span>`;
+}
+
+function capacityBadgeHtml(capacity, assumed){
+  let cls, label;
+  if(capacity <= 0){
+    cls = 'full';
+    label = 'Fully booked';
+  } else if(capacity === 1){
+    cls = 'low';
+    label = '1 spot left';
+  } else {
+    cls = 'open';
+    label = `${capacity} spots available`;
+  }
+  const icon = '<svg class="capacity-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
+  return `<span class="capacity-badge-wrap">${icon}<span class="capacity-badge capacity-badge-${cls}">${label}</span></span>`;
+}
+
+// Split-view directory (2026-10-16 redesign): renderGrid() is the
+// orchestrator kept under its old name so every existing call site
+// (search input, filter clicks, clear-filters, category nav, etc. -
+// there are about a dozen) didn't need to change. It now rebuilds the
+// left list and makes sure there's a valid selection, then renders the
+// right-hand profile panel for whichever alum ends up selected.
+let selectedAlumId = null;
+
+const PORTRAIT_PLACEHOLDER_SVG = '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg>';
+
+function updatePinCapNotice(){
+  document.getElementById('pinCapNotice').style.display = cart.length >= MAX_PICKS ? '' : 'none';
+}
+
+function renderGrid(){
+  const filtered = alumni.filter(matchesFilters);
+  updatePinCapNotice();
+  renderDirectoryList(filtered);
+
+  if(filtered.length === 0){
+    selectedAlumId = null;
+  } else if(!filtered.some(a => a.id === selectedAlumId)){
+    // Either nothing was selected yet (first load) or the previous
+    // selection got filtered out - either way, default to the first
+    // alum in the current result set, per request.
+    selectedAlumId = filtered[0].id;
+  }
+  renderProfilePanel();
+}
+
+// The left-hand list - name/role/company/location/availability only,
+// no pin button (that lives solely on the profile panel now) and no
+// photo (portraits are profile-panel-only, per request). Natural text
+// wrapping on the name, never truncated or shrunk.
+function renderDirectoryList(filtered){
+  const list = document.getElementById('directoryList');
+  const countEl = document.getElementById('directoryCount');
+  if(countEl) countEl.textContent = `${filtered.length} alumni`;
+  list.innerHTML = '';
+  if(filtered.length === 0){
+    list.innerHTML = `<div class="directory-empty">No alumni match those filters right now. Try clearing a few.</div>`;
+    return;
+  }
+  filtered.forEach(a => {
+    const contactHtml = cardContactLineHtml(a);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'directory-entry' + (a.id === selectedAlumId ? ' selected' : '');
+    btn.dataset.id = a.id;
+    btn.setAttribute('aria-pressed', String(a.id === selectedAlumId));
+    btn.innerHTML = `
+      <div class="directory-entry-info">
+        <div class="directory-entry-name">${a.name}</div>
+        ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
+        <div class="alum-company">${companyHtml(a.company)}</div>
+        ${contactHtml ? `<div class="directory-entry-location">${contactHtml}</div>` : ''}
+      </div>
+      <div class="directory-entry-right">
+        ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
+        <svg class="directory-entry-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+      </div>
+    `;
+    btn.addEventListener('click', () => selectAlum(a.id, {openMobileDetail: true, reopenProfile: true}));
+    list.appendChild(btn);
+  });
+}
+
+// Selecting an entry never rebuilds the list (so its scroll position is
+// untouched) - just swaps the .selected class and re-renders the
+// profile panel. openMobileDetail is only passed from an actual click
+// on a list entry, not from the default-selection renderGrid does on
+// load/filter-change, so landing on the directory never auto-opens the
+// mobile full-screen profile view. reopenProfile (same reasoning) only
+// comes from an actual entry click - clicking an alum while the profile
+// panel is collapsed reopens it, per request.
+function selectAlum(id, opts){
+  opts = opts || {};
+  selectedAlumId = id;
+  document.querySelectorAll('.directory-entry').forEach(el => {
+    const isSelected = Number(el.dataset.id) === id;
+    el.classList.toggle('selected', isSelected);
+    el.setAttribute('aria-pressed', String(isSelected));
+  });
+  renderProfilePanel();
+  if(opts.openMobileDetail){
+    document.getElementById('directorySplit').classList.add('mobile-detail-open');
+    document.getElementById('directoryRight').scrollTop = 0;
+  }
+  if(opts.reopenProfile) expandProfilePanel();
+}
+
+function closeMobileDetail(){
+  document.getElementById('directorySplit').classList.remove('mobile-detail-open');
+}
+
+// Collapsing/expanding the profile panel (2026-10-17) - only toggles a
+// class, so the selected alum and the stored divider width (see
+// initDirectoryResizer) are both untouched and exactly as they were
+// once the panel reopens, per request.
+function collapseProfilePanel(){
+  document.getElementById('directorySplit').classList.add('profile-collapsed');
+  document.getElementById('directoryReopenBtn').style.display = 'flex';
+}
+function expandProfilePanel(){
+  document.getElementById('directorySplit').classList.remove('profile-collapsed');
+  document.getElementById('directoryReopenBtn').style.display = 'none';
+}
+
+function renderProfilePanel(){
+  const right = document.getElementById('directoryRight');
+  const a = alumni.find(x => x.id === selectedAlumId);
+  if(!a){
+    right.innerHTML = `
+      <div class="profile-toolbar">
+        <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
+      </div>
+      <div class="directory-empty">No alumni match those filters right now. Try clearing a few.</div>
+    `;
+    return;
+  }
+
+  const atCap = cart.length >= MAX_PICKS;
+  const inCart = cart.includes(a.id);
+  const disablePin = atCap && !inCart;
+  const contactHtml = cardContactLineHtml(a);
+  const linkedinHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
+  const visibleTopics = a.topics.filter(t => !TOPIC_CARD_EXCLUDE.includes(t));
+
+  right.innerHTML = `
+    <div class="profile-toolbar">
+      <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
+      <div class="profile-availability">
+        ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
+        <button class="add-btn plus-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" ${disablePin ? 'disabled' : ''} aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name}` : `Add ${a.name}`}">
+          ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}
+        </button>
+        <button type="button" class="profile-collapse-btn" id="profileCollapseBtn" aria-label="Collapse profile panel">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="profile-header">
+      <div class="profile-portrait" aria-hidden="true">${PORTRAIT_PLACEHOLDER_SVG}</div>
+      <div class="profile-info">
+        <div class="profile-name">${a.name}</div>
+        ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
+        <div class="alum-company">${companyHtml(a.company)}</div>
+        ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
+      </div>
+    </div>
+    <div class="profile-divider"></div>
+    <div class="profile-sections">
+      ${cardIndustryExpertiseColumnsHtml(a)}
+      ${visibleTopics.length ? `<div class="ask-me-about"><span class="field-label">Ask me about</span><div class="topic-tags">${visibleTopics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</div></div>` : ''}
+    </div>
+  `;
+
+  right.querySelectorAll('.industry-more-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wrap = btn.closest('.industry-more-wrap');
+      const isOpen = wrap.classList.contains('open');
+      closeAllIndustryPopovers();
+      wrap.classList.toggle('open', !isOpen);
+      btn.setAttribute('aria-expanded', String(!isOpen));
+    });
+  });
+  right.querySelectorAll('.industry-more-popover').forEach(popover => {
+    popover.addEventListener('click', (e) => e.stopPropagation());
+  });
+
+  collapseAskMeAboutOverflow();
+}
+
+// Delegated rather than bound per-render (renderProfilePanel replaces
+// the panel's innerHTML on every call, which would otherwise mean
+// rebinding - or leaking - a listener every time).
+document.getElementById('directoryRight').addEventListener('click', (e) => {
+  if(e.target.closest('#profileBackBtn')){ closeMobileDetail(); return; }
+  if(e.target.closest('#profileCollapseBtn')){ collapseProfilePanel(); return; }
+  const addBtn = e.target.closest('.profile-add-btn');
+  if(addBtn) toggleCart(parseInt(addBtn.dataset.id, 10));
+});
+document.getElementById('directoryReopenBtn').addEventListener('click', expandProfilePanel);
+
+// When a pill row (Ask me about, or Marketing Expertise) wraps past its
+// first line, hides whatever wrapped and replaces it with a single
+// clickable "+N more" that pops open a list of the rest - same
+// interaction pattern (and CSS classes, so it also gets the existing
+// outside-click/Escape close handling for free) as the industry "+N more"
+// popover. Re-measures from the full tag list every call (not
+// cumulative), so it's safe to call again after a resize. Forces a
+// synchronous layout per container (offsetTop) - fine at this page's
+// scale (dozens of cards), but keep it to one pass.
+function collapsePillRowOverflow(containerSelector, popoverTitle){
+  document.querySelectorAll(containerSelector).forEach(container => {
+    const existingWrap = container.querySelector('.topic-tag-more-wrap');
+    if(existingWrap) existingWrap.remove();
+    const tags = [...container.querySelectorAll('.topic-tag')];
+    tags.forEach(t => { t.style.display = ''; });
+    if(!tags.length) return;
+    const lineTop = tags[0].offsetTop;
+    let overflowIndex = tags.findIndex(t => t.offsetTop > lineTop);
+    if(overflowIndex === -1) return; // everything already fits on one line
+    if(overflowIndex === 0) overflowIndex = 1; // always keep at least one real tag visible
+
+    const wrap = document.createElement('span');
+    wrap.className = 'industry-more-wrap topic-tag-more-wrap';
+    const moreBtn = document.createElement('button');
+    moreBtn.type = 'button';
+    moreBtn.className = 'industry-more-btn';
+    moreBtn.setAttribute('aria-expanded', 'false');
+    const popover = document.createElement('div');
+    popover.className = 'industry-more-popover';
+    popover.addEventListener('click', (e) => e.stopPropagation());
+    popover.innerHTML = `<div class="industry-more-popover-title">${popoverTitle}</div><div class="industry-more-popover-list"></div>`;
+    const list = popover.querySelector('.industry-more-popover-list');
+    wrap.appendChild(moreBtn);
+    wrap.appendChild(popover);
+    container.appendChild(wrap);
+
+    // The pill itself takes up room on line 1 - if adding it pushed it
+    // onto line 2, hide one more real tag and recheck, until it fits.
+    while(overflowIndex > 0){
+      for(let i = overflowIndex; i < tags.length; i++) tags[i].style.display = 'none';
+      const hidden = tags.slice(overflowIndex);
+      moreBtn.textContent = `+${hidden.length} more`;
+      list.innerHTML = hidden.map(t => `<div>${t.textContent}</div>`).join('');
+      if(wrap.offsetTop <= lineTop) break;
+      overflowIndex--;
+    }
+
+    moreBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = wrap.classList.contains('open');
+      closeAllIndustryPopovers();
+      wrap.classList.toggle('open', !isOpen);
+      moreBtn.setAttribute('aria-expanded', String(!isOpen));
+    });
+  });
+}
+function collapseAskMeAboutOverflow(){
+  collapsePillRowOverflow('.ask-me-about .topic-tags', 'Also ask about:');
+  collapsePillRowOverflow('.marketing-tags', 'Also has expertise in:');
+}
+let askMeAboutResizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(askMeAboutResizeTimer);
+  askMeAboutResizeTimer = setTimeout(collapseAskMeAboutOverflow, 150);
+});
+
+// Sizes the hero tower illustration off the gap between the bottom of
+// the "Find alumni" button and the bottom of the viewport, measured at
+// runtime rather than guessed with CSS vw/vh clamps - see the comment
+// on .hero-tower-decor for why. Image is 2303x793 natural pixels
+// (aspect ~2.904:1). Doubled per explicit request - overlapping the
+// hero text/button is accepted now, so this no longer subtracts a
+// safety margin or stops at the button's edge, just uses it as a
+// sizing reference and multiplies past it.
+const TOWER_ASPECT = 2303 / 793;
+function sizeTowerDecor(){
+  const img = document.querySelector('.hero-tower-decor');
+  const btn = document.querySelector('.landing-option');
+  if(!img || !btn || window.innerWidth < 768) return;
+  const availableHeight = Math.max(window.innerHeight - btn.getBoundingClientRect().bottom, 40);
+  const width = Math.min(
+    availableHeight * TOWER_ASPECT * 2,
+    window.innerWidth * 1.3,
+    3400
+  );
+  img.style.width = width + 'px';
+}
+sizeTowerDecor();
+window.addEventListener('load', sizeTowerDecor);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(sizeTowerDecor);
+let towerResizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(towerResizeTimer);
+  towerResizeTimer = setTimeout(sizeTowerDecor, 100);
+});
+
+// Sizes the split-view directory to exactly fill the viewport below the
+// masthead, measured at runtime rather than a guessed px value - same
+// reasoning as sizeTowerDecor above: the masthead's real height varies
+// (padding mixes px and vw), so a hardcoded calc(100vh - Npx) would
+// drift at some viewport width. No-ops below 1024px, where the split
+// view isn't in effect (single-column directory scrolls with the page
+// instead).
+function sizeDirectorySplit(){
+  const split = document.getElementById('directorySplit');
+  if(!split) return;
+  // Measured as #directorySplit's own distance from the viewport top,
+  // not summed from the masthead's height - that stayed accurate when
+  // this was the only thing above the split, but the 2026-10-17 shared
+  // toolbar (plus the status/pin-cap banners) now also sits above it,
+  // and summing each piece's height by hand is exactly the kind of
+  // guess that drifts. Measuring the split's own position is correct
+  // regardless of how many pieces are stacked above it. Set as a custom
+  // property (not just an inline height) because the mobile detail view
+  // needs the same number - it's a position:fixed panel anchored with
+  // `top: var(--content-top)`, not a child of a sized .directory-split,
+  // so it has no other way to know where the content starts.
+  const contentTop = split.getBoundingClientRect().top;
+  document.documentElement.style.setProperty('--content-top', contentTop + 'px');
+  if(window.innerWidth < 1024){
+    split.style.height = '';
+    return;
+  }
+  split.style.height = Math.max(window.innerHeight - contentTop, 300) + 'px';
+}
+let directorySplitResizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(directorySplitResizeTimer);
+  directorySplitResizeTimer = setTimeout(sizeDirectorySplit, 100);
+});
+
+// Draggable divider between the directory list and the profile panel
+// (2026-10-17) - sets #directoryLeft's flex-basis directly, which
+// persists across list/profile re-renders on its own (those only
+// replace #directoryList's/#directoryRight's innerHTML, never
+// #directoryLeft itself), satisfying "preserve panel width when
+// resizing or collapsing" without any extra state-tracking. Pointer
+// events (not mouse/touch separately) so drag works the same on
+// trackpad and touchscreen. Desktop-only in effect - the resizer is
+// display:none below 1024px, see the max-width:1023px block.
+function initDirectoryResizer(){
+  const resizer = document.getElementById('directoryResizer');
+  const left = document.getElementById('directoryLeft');
+  const split = document.getElementById('directorySplit');
+  if(!resizer || !left || !split) return;
+  let dragging = false;
+  const rightMinWidth = 320; // matches .directory-right's min-width in CSS
+
+  function setLeftWidth(px){
+    const minWidth = parseFloat(getComputedStyle(left).minWidth) || 280;
+    const splitWidth = split.getBoundingClientRect().width;
+    const maxWidth = splitWidth - rightMinWidth - 10; // 10 = the resizer's own width
+    left.style.flexBasis = Math.max(minWidth, Math.min(px, maxWidth)) + 'px';
+  }
+
+  resizer.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    resizer.classList.add('dragging');
+    resizer.setPointerCapture(e.pointerId);
+    document.body.style.userSelect = 'none';
+  });
+  resizer.addEventListener('pointermove', (e) => {
+    if(!dragging) return;
+    setLeftWidth(e.clientX - split.getBoundingClientRect().left);
+  });
+  function stopDrag(){
+    if(!dragging) return;
+    dragging = false;
+    resizer.classList.remove('dragging');
+    document.body.style.userSelect = '';
+  }
+  resizer.addEventListener('pointerup', stopDrag);
+  resizer.addEventListener('pointercancel', stopDrag);
+
+  // Arrow-key nudging, matching the resizer's role="separator" semantics.
+  resizer.addEventListener('keydown', (e) => {
+    const current = left.getBoundingClientRect().width;
+    if(e.key === 'ArrowLeft'){ setLeftWidth(current - 24); e.preventDefault(); }
+    else if(e.key === 'ArrowRight'){ setLeftWidth(current + 24); e.preventDefault(); }
+  });
+}
+initDirectoryResizer();
+
+// Portrait + text in the profile header stack vertically once the
+// panel itself gets narrow (dragged small, or the mobile detail view) -
+// a ResizeObserver rather than a media query because the panel's width
+// changes from dragging the divider, not just the viewport changing.
+function watchProfilePanelWidth(){
+  const right = document.getElementById('directoryRight');
+  if(!right || typeof ResizeObserver === 'undefined') return;
+  const observer = new ResizeObserver(entries => {
+    for(const entry of entries){
+      right.classList.toggle('narrow', entry.contentRect.width < 420);
+    }
+  });
+  observer.observe(right);
+}
+watchProfilePanelWidth();
+
+function closeAllIndustryPopovers(){
+  document.querySelectorAll('.industry-more-wrap.open').forEach(w => {
+    w.classList.remove('open');
+    w.querySelector('.industry-more-btn')?.setAttribute('aria-expanded', 'false');
+  });
+}
+document.addEventListener('click', () => closeAllIndustryPopovers());
+document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeAllIndustryPopovers(); });
+
+function showToast(msg, type, alignEl){
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = 'toast show' + (type === 'success' ? ' toast-success' : '');
+  if(alignEl){
+    const rect = alignEl.getBoundingClientRect();
+    toast.style.left = Math.round(rect.left + rect.width / 2) + 'px';
+  } else {
+    toast.style.left = '';
+  }
+  const duration = type === 'success' ? 5000 : 3000;
+  setTimeout(() => toast.classList.remove('show'), duration);
+}
+
+function toggleCart(id){
+  const idx = cart.indexOf(id);
+  if(idx !== -1){
+    cart.splice(idx, 1);
+  } else {
+    if(cart.length >= MAX_PICKS){
+      showToast(`You can pin up to ${MAX_PICKS} alumni. Remove one first to pin another.`);
+      return;
+    }
+    cart.push(id);
+  }
+  // The add/pin button only ever lives on the profile panel now (the
+  // directory list doesn't show one), so toggling it only ever affects
+  // the currently-selected alum - no need to rebuild the whole list
+  // (which would also reset its scroll position) just to pin someone.
+  updatePinCapNotice();
+  renderProfilePanel();
+  renderPinsDrawer();
+}
+
+// Renders the pinned-alumni cards (with a Remove control on each) into
+// either the drawer's editable list or its review pane - the two states
+// show the same records, so they share this one renderer.
+function renderPinCardsInto(containerId){
+  const list = document.getElementById(containerId);
+  list.innerHTML = cart.map(id => {
+    const a = alumni.find(alum => alum.id === id);
+    if(!a) return '';
+    const contactHtml = cardContactLineHtml(a);
+    const linkedinHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
+    const hasContact = contactHtml || linkedinHtml;
+    return `
+      <div class="review-card">
+        <button class="review-card-remove" data-id="${id}" aria-label="Remove ${a.name} from pins">×</button>
+        <div class="review-card-header">
+          <div class="review-card-name">${a.name}</div>
+          ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
+        </div>
+        ${a.role ? `<div class="review-card-role">${a.role}</div>` : ''}
+        <div class="review-card-company">${a.company}</div>
+        ${hasContact ? `<div class="alum-meta review-card-contact">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('.review-card-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      toggleCart(parseInt(btn.dataset.id, 10));
+    });
+  });
+}
+
+// Refreshes whichever parts of the drawer are currently relevant - safe
+// to call any time the cart changes, whether or not the drawer is open.
+function renderPinsDrawer(){
+  document.getElementById('pinsDrawerCount').textContent = `(${cart.length}/${MAX_PICKS})`;
+  document.getElementById('pinsCount').textContent = cart.length ? ` (${cart.length})` : '';
+
+  const empty = cart.length === 0;
+  document.getElementById('pinsDrawerEmpty').style.display = empty ? '' : 'none';
+  document.getElementById('pinsDrawerContinueExploring').style.display = empty ? '' : 'none';
+  document.getElementById('pinsDrawerContinueBtn').disabled = empty;
+  renderPinCardsInto('pinsDrawerList');
+
+  if(pinsDrawerMode === 'review'){
+    renderPinCardsInto('reviewList');
+    document.getElementById('reviewSubmitBtn').disabled = cart.length === 0;
+  }
+}
+
+// The drawer has two internal states - the editable pins list, and the
+// final review before handing off to the form - rather than the review
+// being a separate page. Switching between them never closes the drawer
+// or touches the directory underneath it.
+function setPinsDrawerMode(mode){
+  pinsDrawerMode = mode;
+  const isReview = mode === 'review';
+  document.getElementById('pinsDrawerListPane').style.display = isReview ? 'none' : '';
+  document.getElementById('pinsDrawerListFooter').style.display = isReview ? 'none' : '';
+  document.getElementById('pinsDrawerReviewPane').style.display = isReview ? '' : 'none';
+  document.getElementById('pinsDrawerReviewFooter').style.display = isReview ? '' : 'none';
+  document.getElementById('pinsDrawerTitle').firstChild.textContent = 'Please rank your top 5 ';
+  renderPinsDrawer();
+}
+
+function onPinsDrawerKeydown(e){
+  if(e.key === 'Escape'){ closePinsDrawer(); return; }
+  if(e.key !== 'Tab') return;
+  const focusables = document.getElementById('pinsDrawer').querySelectorAll('button:not([disabled]), a[href], input, [tabindex]:not([tabindex="-1"])');
+  if(!focusables.length) return;
+  const first = focusables[0], last = focusables[focusables.length - 1];
+  if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+}
+
+// Opens as a true overlay on top of the directory - #view-listing is
+// never hidden or reflowed, just dimmed and made keyboard-inert while
+// the drawer has focus, then restored exactly as it was on close.
+function openPinsDrawer(mode, opener){
+  pinsDrawerReturnFocusEl = opener || document.activeElement;
+  setPinsDrawerMode(mode || 'list');
+  pinsDrawerOpen = true;
+  document.getElementById('pinsDrawer').classList.add('open');
+  document.getElementById('pinsDrawerBackdrop').classList.add('open');
+  document.getElementById('pinsDrawer').setAttribute('aria-hidden', 'false');
+  document.getElementById('pinsToggleBtn').classList.add('active');
+  const listingView = document.getElementById('view-listing');
+  if('inert' in listingView) listingView.inert = true;
+  document.getElementById('pinsDrawerClose').focus();
+  document.addEventListener('keydown', onPinsDrawerKeydown);
+}
+
+function closePinsDrawer(){
+  pinsDrawerOpen = false;
+  document.getElementById('pinsDrawer').classList.remove('open');
+  document.getElementById('pinsDrawerBackdrop').classList.remove('open');
+  document.getElementById('pinsDrawer').setAttribute('aria-hidden', 'true');
+  document.getElementById('pinsToggleBtn').classList.remove('active');
+  const listingView = document.getElementById('view-listing');
+  if('inert' in listingView) listingView.inert = false;
+  document.removeEventListener('keydown', onPinsDrawerKeydown);
+  if(pinsDrawerReturnFocusEl && document.contains(pinsDrawerReturnFocusEl)){
+    pinsDrawerReturnFocusEl.focus();
+  } else {
+    document.getElementById('pinsToggleBtn').focus();
+  }
+}
+
+// Name plus role/company, so a name alone doesn't require the organizer to
+// go look the person up again when reviewing Form responses.
+function alumReferenceLabel(alum){
+  const roleCompany = alum.role ? `${alum.role}, ${alum.company}` : alum.company;
+  return roleCompany ? `${alum.name} — ${roleCompany}` : alum.name;
+}
+
+function buildPrefillUrl(){
+  const params = new URLSearchParams();
+  params.set('usp', 'pp_url');
+  const entryKeys = ['pick1', 'pick2', 'pick3', 'pick4', 'pick5'];
+  cart.forEach((id, i) => {
+    const alum = alumni.find(a => a.id === id);
+    const entryId = CLAIM_FORM.entryIds[entryKeys[i]];
+    if(entryId) params.set(entryId, alumReferenceLabel(alum));
+  });
+
+  return `${CLAIM_FORM.baseUrl}?${params.toString()}`;
+}
+
+function goSubmitNewPicks(){
+  const url = buildPrefillUrl();
+  window.open(url, '_blank', 'noopener');
+  markAsSubmitted();
+  closeResubmitModal();
+}
+function goEditOriginalResponse(){
+  // No prefill - this sends them to the bare form, where Google's own
+  // "edit your response" flow takes over if they're signed into the same
+  // account they used before.
+  window.open(CLAIM_FORM.baseUrl, '_blank', 'noopener');
+  closeResubmitModal();
+}
+function openResubmitModal(){ document.getElementById('resubmitModal').style.display = ''; }
+function closeResubmitModal(){ document.getElementById('resubmitModal').style.display = 'none'; }
+
+document.getElementById('pinsDrawerContinueBtn').addEventListener('click', () => {
+  if(cart.length === 0) return;
+  setPinsDrawerMode('review');
+  document.getElementById('pinsDrawerClose').focus();
+});
+document.getElementById('pinsDrawerEditBtn').addEventListener('click', () => {
+  setPinsDrawerMode('list');
+  document.getElementById('pinsDrawerClose').focus();
+});
+document.getElementById('reviewSubmitBtn').addEventListener('click', () => {
+  if(cart.length === 0) return;
+  if(hasSubmittedBefore()) openResubmitModal();
+  else goSubmitNewPicks();
+});
+document.getElementById('resubmitNewPicks').addEventListener('click', goSubmitNewPicks);
+document.getElementById('resubmitEditOriginal').addEventListener('click', goEditOriginalResponse);
+document.getElementById('resubmitCancel').addEventListener('click', closeResubmitModal);
+document.getElementById('resubmitModal').addEventListener('click', (e) => {
+  if(e.target.id === 'resubmitModal') closeResubmitModal();
+});
+
+document.getElementById('searchInput').addEventListener('input', renderGrid);
+document.getElementById('searchBtn').addEventListener('click', renderGrid);
+
+document.getElementById('pinsToggleBtn').addEventListener('click', (e) => {
+  openPinsDrawer('list', e.currentTarget);
+});
+document.getElementById('pinsDrawerClose').addEventListener('click', closePinsDrawer);
+document.getElementById('pinsDrawerBackdrop').addEventListener('click', closePinsDrawer);
+document.getElementById('pinsDrawerContinueExploring').addEventListener('click', closePinsDrawer);
+
+document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+  FILTERABLE.forEach(key => filterState[key] = new Set());
+  document.getElementById('searchInput').value = '';
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  // Clearing all filters also clears whichever industry/marketing-area
+  // category the student arrived through, so the masthead heading and the
+  // Back button both reflect "all alumni" rather than a stale category.
+  lastCategoryKey = null;
+  document.getElementById('subTitle').textContent = 'All available alumni';
+  buildFilterPanel();
+  renderGrid();
+});
+
+function setStatus(html, type){
+  document.getElementById('statusArea').innerHTML = html ? `<div class="status-banner ${type}">${html}</div>` : '';
+}
+
+// PHASE I / PHASE II CUTOFF
+// Everyone up through and including this alum (by Timestamp, the public
+// data tab's own source of truth for submission order - NOT row position,
+// since that tab's formula can reorder rows) is shown on the site. Anyone
+// with a later timestamp is held back for the Phase II site, even though
+// they already appear on the public data tab. Set to "" to remove the
+// cutoff entirely once Phase II is ready to launch.
+const PHASE_CUTOFF_ALUM_NAME = "Bri Sandack";
+
+/**
+ * Finds PHASE_CUTOFF_ALUM_NAME's timestamp and drops everyone whose
+ * timestamp is later than it - matched case-insensitively, and by the
+ * FIRST match if a name were ever to repeat, since that earliest
+ * submission is the one that actually defines "on or before" the cutoff.
+ * If the cutoff name isn't found (blank, typo, or already removed),
+ * this leaves the full list untouched rather than hiding everyone.
+ */
+function applyPhaseCutoff(list){
+  if(!PHASE_CUTOFF_ALUM_NAME) return list;
+  const target = list.find(a => a.name.toLowerCase() === PHASE_CUTOFF_ALUM_NAME.toLowerCase());
+  if(!target || !target.timestamp) return list;
+  const cutoffTime = new Date(target.timestamp).getTime();
+  if(isNaN(cutoffTime)) return list;
+  return list.filter(a => {
+    const t = new Date(a.timestamp).getTime();
+    return isNaN(t) ? true : t <= cutoffTime;
+  });
+}
+
+function loadData(){
+  if(SHEET_CSV_URL.includes("PASTE_YOUR")){
+    // No real Sheet connected yet — preview with sample data instead.
+    alumni = applyPhaseCutoff(SAMPLE_ROWS.map(normalizeRow).filter(a => a.name));
+    FILTERABLE.forEach(key => filterState[key] = new Set());
+    document.getElementById('roundNote').textContent = ROUND_LABEL + " (preview mode)";
+    buildFilterPanel();
+    renderGrid();
+    renderPinsDrawer();
+    return;
+  }
+
+  setStatus("Loading alumni…", "loading");
+
+  function finishLoad(rows){
+    alumni = applyPhaseCutoff(
+      rows
+        .map(normalizeRow)
+        .filter(a => a.name) // drop any blank rows
+    );
+    FILTERABLE.forEach(key => filterState[key] = new Set());
+    document.getElementById('roundNote').textContent = ROUND_LABEL;
+    buildFilterPanel();
+    renderGrid();
+    renderPinsDrawer();
+  }
+
+  // Google Form question wording sometimes picks up stray double spaces
+  // (easy to introduce invisibly while editing a Form), and those become
+  // column headers verbatim. Normalize whitespace so a COLUMNS entry still
+  // matches even if the live Form's exact spacing drifts from this file's.
+  const headerFix = h => h.trim().replace(/\s+/g, ' ');
+
+  Papa.parse(SHEET_CSV_URL, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: headerFix,
+    complete: (results) => {
+      finishLoad(results.data);
+      setStatus(null);
+    },
+    error: (err) => {
+      // The live sheet above is unreachable from here - most likely this
+      // page is running somewhere that can't make outside network
+      // requests at all (e.g. a published Artifact's sandbox only allows
+      // a short domain allowlist, and Google Sheets isn't on it). Fall
+      // back to ALUMNI_SNAPSHOT_CSV_URL, a bundled copy of the same
+      // public sheet saved alongside this file, so the directory still
+      // has real data to work with. The real deployed site and this
+      // repo's own local preview can always reach the live sheet and
+      // never hit this path.
+      Papa.parse(ALUMNI_SNAPSHOT_CSV_URL, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: headerFix,
+        complete: (results) => {
+          finishLoad(results.data);
+          setStatus(null); // banner removed per request - fallback still happens silently
+        },
+        error: () => {
+          setStatus(`Couldn't load the alumni list (${err.message}). If you're the organizer: check that SHEET_CSV_URL is correct and the sheet is published to web.`, "error");
+        }
+      });
+    }
+  });
+}
+
+// Palette is fixed to olive/gold (set in :root at the top of the stylesheet).
+
+// ------------------------------------------------------------
+// VIEW ROUTING — landing screen, category picker, filtered listing
+// ------------------------------------------------------------
+let currentView = 'landing';      // 'landing' | 'category' | 'listing' | 'info'
+let lastCategoryKey = null;       // which category (if any) led into the current listing
+let viewBeforeInfo = null;        // where Back should return to after visiting About/FAQ/Feedback
+let subTitleBeforeInfo = null;    // the listing's context label, if that's where we came from
+
+const INFO_TAB_LABELS = { about: 'About', faq: 'FAQ', feedback: 'Feedback' };
+
+function showInfo(tab, fromHistory){
+  window.scrollTo(0, 0);
+  if(currentView !== 'info'){
+    viewBeforeInfo = currentView;
+    subTitleBeforeInfo = document.getElementById('subTitle').textContent;
+  }
+  currentView = 'info';
+  document.getElementById('heroLanding').style.display = 'none';
+  document.getElementById('heroSub').style.display = '';
+  document.getElementById('heroSub').classList.remove('compact');
+  document.querySelector('header.site').classList.add('masthead-mode');
+  document.getElementById('view-category').style.display = 'none';
+  document.getElementById('view-listing').style.display = 'none';
+  document.getElementById('view-info').style.display = '';
+  selectInfoTab(tab);
+  if(!fromHistory) pushHistory({view:'info', tab, viewBeforeInfo, lastCategoryKey, subTitleBeforeInfo});
+}
+
+function selectInfoTab(tab){
+  document.getElementById('subTitle').textContent = INFO_TAB_LABELS[tab] || 'About';
+  document.querySelectorAll('.info-panel').forEach(panel => {
+    panel.classList.remove('active');
+  });
+  const panelId = 'infoPanel' + tab.charAt(0).toUpperCase() + tab.slice(1);
+  const panel = document.getElementById(panelId);
+  if(panel) panel.classList.add('active');
+}
+
+function showLanding(fromHistory){
+  window.scrollTo(0, 0);
+  currentView = 'landing';
+  lastCategoryKey = null;
+  document.getElementById('heroLanding').style.display = '';
+  document.getElementById('heroSub').style.display = 'none';
+  document.querySelector('header.site').classList.remove('masthead-mode');
+  document.getElementById('view-category').style.display = 'none';
+  document.getElementById('view-listing').style.display = 'none';
+  document.getElementById('view-info').style.display = 'none';
+  if(!fromHistory) pushHistory({view:'landing'});
+}
+
+// The IMC | CONNECT logo (both the landing header's own copy and the
+// masthead's, shown on every other screen) doubles as a home link.
+// On the home page itself, the logo does a real page refresh; everywhere
+// else (the masthead's copy, shown on listing/category/info) it just
+// navigates back home without reloading.
+document.getElementById('logoHomeBtnLanding').addEventListener('click', () => {
+  window.location.reload();
+});
+document.getElementById('logoHomeBtnMasthead').addEventListener('click', () => {
+  if(pinsDrawerOpen) closePinsDrawer();
+  showLanding();
+});
+
+function showCategoryPicker(key, fromHistory){
+  window.scrollTo(0, 0);
+  currentView = 'category';
+  lastCategoryKey = key;
+  document.getElementById('heroLanding').style.display = 'none';
+  document.getElementById('heroSub').style.display = '';
+  document.getElementById('heroSub').classList.remove('compact');
+  document.querySelector('header.site').classList.add('masthead-mode');
+  document.getElementById('subTitle').textContent = CATEGORY_PROMPTS[key] || 'Choose an option';
+  document.getElementById('view-category').style.display = '';
+  document.getElementById('view-listing').style.display = 'none';
+  document.getElementById('view-info').style.display = 'none';
+
+  const options = collectFilterOptions();
+  const values = [...(options[key] || [])].sort();
+  const list = document.getElementById('categoryList');
+  list.innerHTML = values.map(v => {
+    const displayText = key === 'marketingAreas' ? marketingAreaDisplayLabel(v) : v;
+    return `<button class="category-option" data-key="${key}" data-value="${v.replace(/"/g,'&quot;')}">${displayText}</button>`;
+  }).join('');
+  list.querySelectorAll('.category-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      FILTERABLE.forEach(k => filterState[k] = new Set());
+      filterState[key] = new Set([btn.dataset.value]);
+      let displayLabel = key === 'marketingAreas' ? marketingAreaDisplayLabel(btn.dataset.value) : btn.dataset.value;
+      displayLabel = MASTHEAD_LABEL_OVERRIDES[displayLabel] || displayLabel;
+      showListing(displayLabel, false, key, btn.dataset.value);
+    });
+  });
+  if(!fromHistory) pushHistory({view:'category', key});
+}
+
+function showListing(contextLabel, fromHistory, categoryKey, categoryValue){
+  window.scrollTo(0, 0);
+  currentView = 'listing';
+  document.getElementById('heroLanding').style.display = 'none';
+  document.getElementById('heroSub').style.display = '';
+  document.getElementById('heroSub').classList.add('compact');
+  document.querySelector('header.site').classList.add('masthead-mode');
+  document.getElementById('subTitle').textContent = contextLabel ? contextLabel : 'All available alumni';
+  document.getElementById('view-category').style.display = 'none';
+  document.getElementById('view-listing').style.display = '';
+  document.getElementById('view-info').style.display = 'none';
+  document.getElementById('directorySplit').classList.remove('mobile-detail-open');
+  buildFilterPanel();
+  renderGrid();
+  renderPinsDrawer();
+  sizeDirectorySplit();
+  if(!fromHistory) pushHistory({view:'listing', contextLabel, categoryKey, categoryValue});
+}
+
+function goToAllAlumni(){
+  FILTERABLE.forEach(k => filterState[k] = new Set());
+  lastCategoryKey = null;
+  showListing(null);
+}
+document.getElementById('landingOptions').addEventListener('click', (e) => {
+  const btn = e.target.closest('.landing-option');
+  if(!btn) return;
+  if(btn.dataset.action === 'category'){
+    showCategoryPicker(btn.dataset.key);
+  } else if(btn.dataset.action === 'all'){
+    goToAllAlumni();
+  }
+});
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  if(currentView === 'category'){
+    showLanding();
+  } else if(currentView === 'listing'){
+    if(lastCategoryKey){
+      showCategoryPicker(lastCategoryKey);
+    } else {
+      showLanding();
+    }
+  } else if(currentView === 'info'){
+    if(viewBeforeInfo === 'category'){
+      showCategoryPicker(lastCategoryKey);
+    } else if(viewBeforeInfo === 'listing'){
+      showListing(subTitleBeforeInfo);
+    } else {
+      showLanding();
+    }
+  }
+});
+
+// So the browser's own Back/Forward buttons work as a second way to move
+// between pages, not just the site's own "← Back" link. Every page-level
+// transition above pushes a history entry (skipped when fromHistory is set,
+// i.e. when we're the ones restoring a popstate rather than navigating
+// fresh, so this can't create an infinite loop of pushes).
+function pushHistory(state){
+  history.pushState(state, '', location.href);
+}
+window.addEventListener('popstate', (e) => {
+  const state = e.state;
+  if(!state){ showLanding(true); return; }
+  if(state.view === 'landing'){
+    showLanding(true);
+  } else if(state.view === 'category'){
+    showCategoryPicker(state.key, true);
+  } else if(state.view === 'listing'){
+    if(state.categoryKey){
+      FILTERABLE.forEach(k => filterState[k] = new Set());
+      filterState[state.categoryKey] = new Set([state.categoryValue]);
+    }
+    lastCategoryKey = state.categoryKey || null;
+    showListing(state.contextLabel, true, state.categoryKey, state.categoryValue);
+  } else if(state.view === 'info'){
+    viewBeforeInfo = state.viewBeforeInfo;
+    lastCategoryKey = state.lastCategoryKey;
+    subTitleBeforeInfo = state.subTitleBeforeInfo;
+    showInfo(state.tab, true);
+  }
+});
+history.replaceState({view:'landing'}, '', location.href);
+
+document.querySelectorAll('[data-nav]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    showInfo(btn.dataset.nav);
+    document.getElementById('topTabs').classList.remove('open');
+    document.getElementById('heroHamburger').setAttribute('aria-expanded', 'false');
+  });
+});
+
+const heroHamburger = document.getElementById('heroHamburger');
+if(heroHamburger){
+  heroHamburger.addEventListener('click', () => {
+    const tabs = document.getElementById('topTabs');
+    const isOpen = tabs.classList.toggle('open');
+    heroHamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+  document.addEventListener('click', (e) => {
+    const tabs = document.getElementById('topTabs');
+    if(tabs.classList.contains('open') && !tabs.contains(e.target) && e.target !== heroHamburger && !heroHamburger.contains(e.target)){
+      tabs.classList.remove('open');
+      heroHamburger.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
+
+document.getElementById('feedbackSend').addEventListener('click', () => {
+  const textArea = document.getElementById('feedbackText');
+  const text = textArea.value.trim();
+  const error = document.getElementById('feedbackError');
+  if(!text){
+    error.classList.add('show');
+    return;
+  }
+  error.classList.remove('show');
+  document.getElementById('feedbackEntryInput').value = text;
+  document.getElementById('feedbackFormPost').submit();
+  textArea.value = '';
+  showToast('Feedback sent. Thank you!', 'success', document.getElementById('feedbackSend'));
+});
+
+document.querySelectorAll('.faq-item').forEach(item => {
+  const question = item.querySelector('.faq-q');
+  const answer = item.querySelector('.faq-a');
+  question.addEventListener('click', () => {
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(openItem => {
+      openItem.classList.remove('open');
+      openItem.querySelector('.faq-a').style.maxHeight = '0px';
+    });
+    if(!wasOpen){
+      item.classList.add('open');
+      answer.style.maxHeight = answer.scrollHeight + 'px';
+    }
+  });
+});
+
+// (Palette is fixed — no runtime theme call needed.)
+showLanding();
+
+loadData();
+
+/**
+ * Re-fetches this same page (bypassing the cache) every few minutes and
+ * compares its BUILD_VERSION to the one this tab loaded with. A mismatch
+ * means a newer version has been deployed since this tab opened, so a
+ * banner offers a refresh instead of leaving someone on stale code with
+ * no indication anything changed. Deliberately never auto-reloads on its
+ * own - someone might be mid-search or about to submit their picks.
+ */
+let updateCheckDismissed = false;
+function checkForNewVersion(){
+  if(updateCheckDismissed) return;
+  fetch(window.location.pathname + '?_=' + Date.now(), { cache: 'no-store' })
+    .then(r => r.text())
+    .then(html => {
+      const match = html.match(/const BUILD_VERSION = "([^"]+)"/);
+      if(match && match[1] !== BUILD_VERSION){
+        document.getElementById('updateBanner').classList.add('show');
+      }
+    })
+    .catch(() => {}); // offline or blocked - just try again next interval
+}
+document.getElementById('updateBannerRefresh').addEventListener('click', () => window.location.reload());
+document.getElementById('updateBannerDismiss').addEventListener('click', () => {
+  updateCheckDismissed = true;
+  document.getElementById('updateBanner').classList.remove('show');
+});
+setInterval(checkForNewVersion, 3 * 60 * 1000);
+</script>
+
+
+</body>
+</html>
