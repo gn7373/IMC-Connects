@@ -193,18 +193,24 @@ header.site{
 /* Shares .hero-nav-inner's exact max-width/margin/padding-left formula
    so the headline's left edge lines up with the logo above it at every
    viewport width, instead of drifting apart via two separate clamps. */
-/* Vertically positioned in .hero-top (the 100vh hero section) via a
-   fixed percentage rather than pinned near the nav, so the whole text
-   block (headline through the button) holds its position regardless of
-   viewport height. Horizontal placement (margin: 0 auto within
-   left/right: 0) is unchanged from the old in-flow version.
-   top: 33.5% (2026-10-17) was hand-tuned so "Northwestern"'s baseline
-   lines up with the tower illustration's tip, per request - it's a
-   plain viewport-relative percentage, not read from or derived from the
-   image's own size in any way, so adjusting .hero-tower-decor's width
-   later won't move this text. If the alignment ever needs re-tuning,
-   re-measure both and adjust this one value - don't wire the two
-   together programmatically. */
+/* Vertically positioned in .hero-top (the 100vh hero section), so the
+   whole text block (headline through the button) holds its tuned
+   position regardless of viewport height. Horizontal placement
+   (margin: 0 auto within left/right: 0) is unchanged from the old
+   in-flow version.
+   top: 33.5% below is just the pre-JS fallback (first paint, or JS
+   disabled) - positionHeroCopy() in the script overrides it on load/
+   resize with the same 33.5% value clamped to never sit above a safe
+   distance below the nav row, which a flat percentage alone can't do
+   (33.5% of a short viewport can collide with the nav, where 33.5% of a
+   tall one won't - see that function's own comment). 33.5% itself
+   (2026-10-17) was hand-tuned so "Northwestern"'s baseline lines up
+   with the tower illustration's tip at a typical viewport, per request
+   - it's not read from or derived from the image's own size in any
+   way, so adjusting .hero-tower-decor's width later won't move this
+   text. If the alignment ever needs re-tuning, re-measure both and
+   adjust the 0.335 figure in positionHeroCopy() (and this fallback to
+   match) - don't wire the two together programmatically. */
 .hero-copy{
   position: absolute;
   top: 33.5%;
@@ -3754,6 +3760,39 @@ window.addEventListener('resize', () => {
   askMeAboutResizeTimer = setTimeout(collapseAskMeAboutOverflow, 150);
 });
 
+// Keeps the hero headline at its tuned position - 33.5% of the hero
+// section's height is what lines up "Northwestern"'s baseline with the
+// tower illustration's tip (see the comment on .hero-copy) - but never
+// lets it climb higher than a safe distance below the nav row's own
+// real rendered bottom edge. A flat CSS percentage alone (what this
+// used to be) pushes the text further up the *shorter* the viewport
+// gets, since the nav itself barely shrinks (its own top/padding are
+// clamp()-capped) - on a short enough window that collided with, or
+// even sat above, the nav and its divider line. Computed here instead,
+// measured against the nav's actual position, same "measure, don't
+// guess" approach as sizeTowerDecor below. Skipped under 768px, where
+// .hero-copy goes back to being laid out in normal flow (see the
+// max-width:767px block) and this inline override would only fight it.
+function positionHeroCopy(){
+  const heroCopy = document.querySelector('.hero-copy');
+  const nav = document.querySelector('.hero-nav');
+  if(!heroCopy || !nav) return;
+  if(window.innerWidth < 768){ heroCopy.style.top = ''; return; }
+  // `top` sets .hero-copy's own anchor point, but translateY(-50%) (see
+  // the CSS) then shifts its actual rendered position up by half of its
+  // OWN height - so the floor has to account for that offset too, not
+  // just compare the nav's bottom edge directly against `top`, or the
+  // clamp silently does nothing (it did, the first time this was
+  // written - the anchor looked clamped correctly, but the rendered
+  // text was still flush against the nav).
+  const minTop = nav.getBoundingClientRect().bottom + 24 + heroCopy.offsetHeight / 2;
+  const preferredTop = window.innerHeight * 0.335;
+  heroCopy.style.top = Math.max(preferredTop, minTop) + 'px';
+}
+positionHeroCopy();
+window.addEventListener('load', positionHeroCopy);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(positionHeroCopy);
+
 // Sizes the hero tower illustration off the gap between the bottom of
 // the "Find alumni" button and the bottom of the viewport, measured at
 // runtime rather than guessed with CSS vw/vh clamps - see the comment
@@ -3761,7 +3800,10 @@ window.addEventListener('resize', () => {
 // (aspect ~2.904:1). Doubled per explicit request - overlapping the
 // hero text/button is accepted now, so this no longer subtracts a
 // safety margin or stops at the button's edge, just uses it as a
-// sizing reference and multiplies past it.
+// sizing reference and multiplies past it. Called after
+// positionHeroCopy() everywhere below (load/fonts/resize), since the
+// button it measures lives inside .hero-copy - sizing off a stale
+// pre-reposition button location would be wrong.
 const TOWER_ASPECT = 2303 / 793;
 function sizeTowerDecor(){
   const img = document.querySelector('.hero-tower-decor');
@@ -3776,12 +3818,12 @@ function sizeTowerDecor(){
   img.style.width = width + 'px';
 }
 sizeTowerDecor();
-window.addEventListener('load', sizeTowerDecor);
-if(document.fonts && document.fonts.ready) document.fonts.ready.then(sizeTowerDecor);
+window.addEventListener('load', () => { positionHeroCopy(); sizeTowerDecor(); });
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { positionHeroCopy(); sizeTowerDecor(); });
 let towerResizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(towerResizeTimer);
-  towerResizeTimer = setTimeout(sizeTowerDecor, 100);
+  towerResizeTimer = setTimeout(() => { positionHeroCopy(); sizeTowerDecor(); }, 100);
 });
 
 // Sizes the split-view directory to exactly fill the viewport below the
