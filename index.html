@@ -702,6 +702,18 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    "measure, don't assume" approach used for the hero tower sizing) so
    the two panels fill exactly the space below the nav, no page-level
    scroll. */
+/* Shared centered container (2026-10-17, per request) - caps the
+   browsing page at 1280px with responsive side margins via this one
+   clamp(), instead of each piece below (toolbar, list rows, profile
+   panel) carrying its own full-viewport 6vw inset. Those now use a
+   smaller, fixed internal padding instead - "reduce unnecessary
+   horizontal padding" - since this container is what provides the
+   actual page margin now. */
+.listing-container{
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 40px);
+}
 /* Shared toolbar - search, all 5 filters, Clear all, Review & Submit -
    now spans the full page width above both panels (2026-10-17; was
    inside .directory-left, with Review & Submit a separate rotated edge
@@ -710,7 +722,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 18px 6vw;
+  padding: 18px 0;
   border-bottom: 2px solid var(--line);
 }
 /* .search-box's own `flex: 1 1 280px` sets a WIDTH basis in its other
@@ -731,30 +743,34 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 6vw 8px;
+  padding: 16px 28px 8px;
   font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   color: var(--muted);
 }
-/* Sort (2026-10-17) - moved here, beside the alumni count, from the
-   filter row; a plain icon button (3 descending bars, the familiar
-   "sort" glyph) rather than a labeled pill like the filters, since this
-   sits in a much tighter spot next to the count. */
-.sort-icon-btn{
-  display: flex;
+/* Sort (2026-10-17, revised again) - a plain icon button here read as
+   unclear/undiscoverable, per request; back to a labeled pill (like the
+   filters) that spells out the active sort, e.g. "Sort: Name A–Z". */
+.sort-label-btn{
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
+  gap: 6px;
+  border-radius: 20px;
   border: 1.5px solid var(--line-strong);
   background: none;
   color: var(--muted);
+  padding: 7px 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
   cursor: pointer;
   flex-shrink: 0;
+  white-space: nowrap;
 }
-.sort-icon-btn:hover{ border-color: var(--accent); color: var(--accent); }
-.sort-icon-btn.has-selection{ background: var(--accent); border-color: var(--accent); color: #fff; }
+.sort-label-btn svg{ transition: transform 150ms ease; flex-shrink: 0; }
+.sort-label-btn:hover{ border-color: var(--accent); color: var(--accent); }
+.sort-dropdown.open .sort-label-btn{ border-color: var(--accent); color: var(--accent); }
+.sort-dropdown.open .sort-label-btn svg{ transform: rotate(180deg); }
 .sort-dropdown .filter-dropdown-panel{ left: auto; right: 0; }
 .directory-split{
   display: flex;
@@ -764,8 +780,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .directory-left{
   /* Width is adjustable (sizeableLeftWidth(), set as an inline
-     flex-basis on this element) - 35% is just the starting point. */
-  flex: 0 0 35%;
+     flex-basis on this element) - 42% is just the starting point
+     (2026-10-17, was 35% - widened so names have more natural room
+     before the resize floor ever has to kick in). */
+  flex: 0 0 42%;
   min-width: 280px;
   display: flex;
   flex-direction: column;
@@ -814,9 +832,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .directory-resizer:hover::before,
 .directory-resizer.dragging::before{ background: var(--accent); }
+/* Slightly bigger (2026-10-17, was 24x44 - "more discoverable", per
+   request) - the resizer hairline itself stays 16px wide; this just
+   overflows it a bit, same as before. */
 .directory-resizer-collapse{
-  width: 24px;
-  height: 44px;
+  width: 28px;
+  height: 52px;
   border-radius: 10px;
   border: 1.5px solid var(--line-strong);
   background: #fff;
@@ -834,7 +855,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   flex: 1 1 auto;
   min-width: 320px;
   overflow-y: auto;
-  padding: 28px 6vw 60px;
+  padding: 24px 28px 48px;
 }
 /* Collapsing the profile panel (2026-10-17): hides it and the resizer,
    the directory expands to fill the width. Selection and the stored
@@ -856,7 +877,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 14px;
-  padding: 16px 6vw;
+  padding: 16px 28px;
   cursor: pointer;
   border: none;
   border-bottom: 2px solid var(--line);
@@ -894,6 +915,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   line-height: 1.25;
   color: var(--ink);
 }
+/* Slightly smaller specifically in compact mode - when the profile
+   panel is open, the list column is much narrower, so this (together
+   with the reduced horizontal padding above and the resize floor in
+   initDirectoryResizer) keeps names reliably on one line instead of
+   wrapping, per request (2026-10-17). */
+.directory-split:not(.profile-collapsed) .directory-entry-name{ font-size: 17px; }
 /* Location + spots-available (2026-10-17, revised again) - location is
    its own centered grid column; spots-available now groups with the
    chevron in the right-hand track instead of sitting beside location,
@@ -923,9 +950,17 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .directory-entry-spots .capacity-badge{ font-size: 13.5px; }
 .directory-entry-chevron{ color: var(--muted); flex-shrink: 0; }
 .directory-entry.selected .directory-entry-chevron{ color: var(--accent); }
+/* .directory-entry-right hidden outright now, not just its children,
+   AND the grid itself collapses to a single column (2026-10-17 bugfix)
+   - an explicit grid-template-columns track still claims its defined
+   share of the row's width even once its item is display:none (grid
+   tracks are sized independently of occupancy), so this was quietly
+   halving the name column's real width in compact mode and wrapping
+   names that had plenty of room - this is what the "names should stay
+   on one line" bug report several turns later traced back to. */
+.directory-split:not(.profile-collapsed) .directory-entry{ grid-template-columns: 1fr; }
 .directory-split:not(.profile-collapsed) .directory-entry-location-inline,
-.directory-split:not(.profile-collapsed) .directory-entry-spots,
-.directory-split:not(.profile-collapsed) .directory-entry-chevron{ display: none; }
+.directory-split:not(.profile-collapsed) .directory-entry-right{ display: none; }
 /* Shuffle-in (2026-10-17, per request) - plays once per card whenever a
    filter or sort change re-renders the list (see renderDirectoryList's
    pendingShuffle flag), so it's visually obvious something changed even
@@ -985,11 +1020,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    query, since the panel's width changes from dragging the divider, not
    just from the viewport changing. */
 .directory-right.narrow .profile-header{ flex-direction: column; align-items: flex-start; }
-.directory-right.narrow .profile-portrait{ width: 140px; height: 175px; }
+.directory-right.narrow .profile-portrait{ width: 130px; height: 155px; }
+/* Reduced from 176x220 (2026-10-17, per request - "tighten the
+   portrait/header section") - the whole header's height follows this
+   (see .profile-info's align-items:stretch tie-in above), so a smaller
+   portrait directly means less vertical whitespace in the row. */
 .profile-portrait{
   flex-shrink: 0;
-  width: 176px;
-  height: 220px;
+  width: 156px;
+  height: 185px;
   border-radius: 8px;
   background: var(--paper);
   border: 1px solid var(--line-strong);
@@ -1037,14 +1076,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    justify-content:space-between, not a fixed margin. */
 .profile-info .alum-meta{ font-size: 14px; }
 /* Edge-to-edge (2026-10-17, per request) - the negative horizontal
-   margin matches .directory-right's own 6vw side padding, so this line
-   reaches the column's actual left/right edges instead of stopping at
-   the inset content width. No margin-bottom any more either, so the
-   vertical dividers in .alum-columns right below (see .alum-col-divider)
-   start flush against this line instead of leaving a gap - "connect to
-   the top horizontal", per request. */
+   margin matches .directory-right's own fixed 28px side padding, so
+   this line reaches the column's actual left/right edges instead of
+   stopping at the inset content width. No margin-bottom any more
+   either, so the expertise section right below starts flush against
+   this line instead of leaving a gap - "connect to the top horizontal",
+   per request. */
 .profile-divider{
-  margin: 28px -6vw 0;
+  margin: 20px -28px 0;
   border-top: 2px solid var(--line);
 }
 .profile-sections .alum-columns{ margin-top: 0; }
@@ -1063,7 +1102,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   font-size: 16px; width:100%; font-family: 'Baskerville', 'Libre Baskerville', serif; font-style: italic;
   color: var(--ink);
 }
-.search-box input::placeholder{ color: var(--muted); }
+/* Darker than the usual --muted (2026-10-17, per request - "increase
+   the contrast... while retaining its italic style") - a one-off, not a
+   change to --muted itself, which other, lower-emphasis text still
+   relies on. */
+.search-box input::placeholder{ color: #3D3A5C; opacity: 1; }
 .search-btn{
   background:none; border:none; padding:0; cursor:pointer;
   color: var(--muted); display:flex; flex-shrink:0;
@@ -1553,25 +1596,29 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   font-weight: 700;
 }
 .ask-me-about .field-label{ margin-bottom: 8px; }
-/* Industry Expertise, Marketing Expertise and Ask Me About as one row
-   of up to 3 columns (2026-10-17 - Ask Me About used to be a separate
-   full-width block below), each pair separated by a vertical divider
-   (.alum-col-divider, built by profileThreeColumnsHtml only between
-   columns that actually exist). align-items:stretch so each divider's
-   height always matches its row's tallest column. */
+/* Industry Expertise + Marketing Expertise side by side in one row
+   (2026-10-17, revised again) - Ask Me About is a separate full-width
+   row below (see .profile-section-divider), not a 3rd column here, and
+   the gap between the two columns is plain spacing now, no vertical
+   divider - "subtle horizontal separators rather than tall vertical
+   dividers", per request. */
 .alum-columns{
   display: flex;
   flex-direction: row;
-  align-items: stretch;
   gap: 24px;
   margin-top: 12px;
 }
 /* padding-top gives the column text its own breathing room below the
-   (now flush) horizontal divider above, without affecting where the
-   vertical dividers themselves start - those still begin right at the
-   row's top edge via align-items:stretch on .alum-columns. */
+   (flush) horizontal divider above it. */
 .alum-col{ flex: 1 1 140px; min-width: 0; padding-top: 16px; }
-.alum-col-divider{ width: 2px; background: var(--line); flex-shrink: 0; }
+/* Subtle (1px, not the site's usual 2px dividers - deliberately lighter
+   here per request) separator between the expertise row above and Ask
+   Me About below. Negative side margins match .directory-right's 28px
+   padding, same edge-to-edge trick as .profile-divider. */
+.profile-section-divider{
+  border-top: 1px solid var(--line);
+  margin: 20px -28px;
+}
 /* Industry Expertise's primary value - plain text, not a pill (that's
    what distinguishes it from Marketing Expertise/Ask me about). Not
    bold, per request. */
@@ -2127,6 +2174,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 
 <div id="view-listing" style="display:none">
 
+<!-- Shared max-width container (2026-10-17, per request) - caps the
+     whole browsing page (toolbar + split) at 1280px, centered, with
+     responsive side margins, instead of the toolbar/list/profile
+     spanning the raw viewport edge-to-edge. Individual pieces below no
+     longer carry their own 6vw inset - this one padding value is now
+     the only horizontal margin in play. -->
+<div class="listing-container">
+
 <!-- Shared toolbar (2026-10-17 redesign): search + all 5 filters +
      Review & Submit now span the full page width, above both panels,
      instead of living inside the left panel with Review & Submit as a
@@ -2164,16 +2219,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <div class="directory-list-header">
       <span id="directoryCount"></span>
       <div class="filter-dropdown sort-dropdown" id="sortDropdown">
-        <button type="button" class="sort-icon-btn" id="sortToggle" aria-haspopup="true" aria-expanded="false" aria-label="Sort">
-          <svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <line x1="1" y1="1" x2="17" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="1" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="1" y1="13" x2="7" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
+        <button type="button" class="sort-label-btn" id="sortToggle" aria-haspopup="true" aria-expanded="false">
+          <span id="sortToggleLabel">Sort: Name A–Z</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="filter-dropdown-panel sort-panel" id="sortPanel">
+          <button type="button" class="sort-option" data-sort="name">Name A–Z</button>
+          <button type="button" class="sort-option" data-sort="capacity">Most spots available</button>
           <button type="button" class="sort-option" data-sort="recent">Recently added</button>
-          <button type="button" class="sort-option" data-sort="capacity">Spots available</button>
         </div>
       </div>
     </div>
@@ -2186,6 +2239,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   </div>
   <div class="directory-right" id="directoryRight"></div>
 </div>
+
+</div><!-- /listing-container -->
 
 </div><!-- /view-listing -->
 
@@ -3301,6 +3356,10 @@ function primaryIndustryOrderedList(a){
 // stacked below the other two) - built as an array and joined so a
 // missing column (e.g. no marketing areas selected) never leaves a
 // stray divider floating next to nothing.
+// Industry/Marketing Expertise sit side by side in one row; Ask Me
+// About is its own full-width row below, separated by a subtle
+// horizontal line rather than the vertical dividers this used to use
+// between all 3 columns (2026-10-17, per request).
 function profileThreeColumnsHtml(a, visibleTopics){
   const cols = [];
 
@@ -3332,12 +3391,17 @@ function profileThreeColumnsHtml(a, visibleTopics){
     cols.push(`<div class="alum-col"><span class="field-label">Marketing Expertise</span><div class="topic-tags marketing-tags">${marketingParts.map(v => `<span class="topic-tag">${v}</span>`).join('')}</div></div>`);
   }
 
-  if(visibleTopics.length){
-    cols.push(`<div class="alum-col ask-me-about"><span class="field-label">Ask Me About</span><div class="topic-tags">${visibleTopics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</div></div>`);
-  }
+  const askMeAboutHtml = visibleTopics.length
+    ? `<div class="alum-col ask-me-about"><span class="field-label">Ask Me About</span><div class="topic-tags">${visibleTopics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</div></div>`
+    : '';
 
-  if(!cols.length) return '';
-  return `<div class="alum-columns">${cols.join('<div class="alum-col-divider"></div>')}</div>`;
+  if(!cols.length && !askMeAboutHtml) return '';
+  let html = cols.length ? `<div class="alum-columns">${cols.join('')}</div>` : '';
+  if(askMeAboutHtml){
+    if(html) html += `<div class="profile-section-divider"></div>`;
+    html += askMeAboutHtml;
+  }
+  return html;
 }
 
 // Marketing expertise - its own labeled line, matching the reference.
@@ -3495,12 +3559,17 @@ let selectedAlumId = null;
 
 const PORTRAIT_PLACEHOLDER_SVG = '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg>';
 
-// Sort (2026-10-17) - re-orders whatever matchesFilters already narrowed
-// the list down to, so it's always "relevant to whatever filters have
-// been applied" rather than a separate, independent sort over everyone.
-let sortMode = null; // null | 'recent' | 'capacity'
-const SORT_LABELS = {recent: 'Recently added', capacity: 'Spots available'};
+// Sort (2026-10-17, revised again) - re-orders whatever matchesFilters
+// already narrowed the list down to, so it's always "relevant to
+// whatever filters have been applied" rather than a separate,
+// independent sort over everyone. Always has an active mode now (no
+// more "off" state) - Name A-Z is the default, per request.
+let sortMode = 'name'; // 'name' | 'recent' | 'capacity'
+const SORT_LABELS = {name: 'Name A–Z', recent: 'Recently added', capacity: 'Most spots available'};
 function applySort(list){
+  if(sortMode === 'name'){
+    return [...list].sort((a, b) => a.name.localeCompare(b.name));
+  }
   if(sortMode === 'recent'){
     return [...list].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   }
@@ -3573,6 +3642,7 @@ function renderDirectoryList(filtered){
     btn.addEventListener('click', () => selectAlum(a.id, {openMobileDetail: true, reopenProfile: true}));
     list.appendChild(btn);
   });
+  enforceDirectoryListMinWidth();
 }
 
 // Up/Down arrow-key navigation across the list rows (2026-10-17) - moves
@@ -3631,6 +3701,7 @@ function collapseProfilePanel(){
 }
 function expandProfilePanel(){
   document.getElementById('directorySplit').classList.remove('profile-collapsed');
+  enforceDirectoryListMinWidth();
 }
 
 function renderProfilePanel(){
@@ -3889,7 +3960,7 @@ function sizeDirectorySplit(){
 let directorySplitResizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(directorySplitResizeTimer);
-  directorySplitResizeTimer = setTimeout(sizeDirectorySplit, 100);
+  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); }, 100);
 });
 
 // Draggable divider between the directory list and the profile panel
@@ -3922,7 +3993,31 @@ function minDirectoryListWidthForNames(){
   nameEls.forEach(el => { widest = Math.max(widest, measureTextWidth(el.textContent, font)); });
   const entryStyle = getComputedStyle(entry);
   const padding = parseFloat(entryStyle.paddingLeft) + parseFloat(entryStyle.paddingRight);
-  return Math.ceil(widest + padding);
+  // 1.08x + 12px safety buffer - canvas measureText() doesn't perfectly
+  // match real DOM text layout (web font metrics can differ slightly
+  // from the canvas's fallback if measured before the font's fully
+  // loaded, plus sub-pixel rounding/kerning), so the raw measurement
+  // alone still wrapped a couple of the longer names by a few pixels.
+  return Math.ceil((widest * 1.08) + padding) + 12;
+}
+// The drag-time floor above only fires mid-drag - it did nothing for
+// the *default* 42% split, which on a long enough name (e.g. "Carmen
+// Gutierrez de la Roza") was still narrow enough to wrap, same bug in a
+// different trigger. Called whenever the column might have just gotten
+// narrower without a drag: after the profile opens, after the list
+// re-renders while the profile's already open (filters/sort can change
+// which names are visible), and on viewport resize. Only ever widens
+// (never fights a width the user deliberately dragged wider), and no-ops
+// entirely while the profile is collapsed, where the list is already
+// full-width.
+function enforceDirectoryListMinWidth(){
+  const split = document.getElementById('directorySplit');
+  const left = document.getElementById('directoryLeft');
+  if(!split || !left || split.classList.contains('profile-collapsed')) return;
+  const floor = minDirectoryListWidthForNames();
+  if(left.getBoundingClientRect().width < floor){
+    left.style.flexBasis = floor + 'px';
+  }
 }
 
 function initDirectoryResizer(){
@@ -4252,9 +4347,7 @@ document.getElementById('searchInput').addEventListener('input', renderGrid);
 document.getElementById('searchBtn').addEventListener('click', renderGrid);
 
 function updateSortUI(){
-  const toggle = document.getElementById('sortToggle');
-  toggle.setAttribute('aria-label', sortMode ? `Sort: ${SORT_LABELS[sortMode]}` : 'Sort');
-  toggle.classList.toggle('has-selection', !!sortMode);
+  document.getElementById('sortToggleLabel').textContent = `Sort: ${SORT_LABELS[sortMode]}`;
   document.querySelectorAll('.sort-option').forEach(b => b.classList.toggle('active', b.dataset.sort === sortMode));
 }
 document.getElementById('sortToggle').addEventListener('click', (e) => {
@@ -4267,7 +4360,8 @@ document.getElementById('sortToggle').addEventListener('click', (e) => {
 });
 document.querySelectorAll('.sort-option').forEach(btn => {
   btn.addEventListener('click', () => {
-    sortMode = sortMode === btn.dataset.sort ? null : btn.dataset.sort;
+    if(sortMode === btn.dataset.sort){ closeAllFilterDropdowns(); return; }
+    sortMode = btn.dataset.sort;
     updateSortUI();
     closeAllFilterDropdowns();
     pendingShuffle = true;
