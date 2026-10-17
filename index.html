@@ -34,8 +34,17 @@
   --accent-tint: #EFEAFD;
   --success: #401F68;
   --success-on-light: #401F68;
-  --line: #E9E3FA;
-  --line-strong: #DAD2F4;
+  /* A real green (2026-10-17), used only for "added to my list" cards in
+   the directory - kept separate from --success/--success-on-light above,
+   which this app deliberately maps to purple everywhere else. */
+  --list-added: #2E7D4F;
+  --list-added-tint: #E6F4EA;
+  /* Gray, not light purple (2026-10-17, per request) - every divider/
+     edge line in the app (card borders, panel borders, filter-dropdown
+     borders, etc.) reads off these two tokens, so this one change covers
+     all of them. */
+  --line: #E1E1E1;
+  --line-strong: #C9C9C9;
   --muted: #5C5A82;
   --warn: #E87518;
   /* Secondary accents - used sparingly for pins/icons/small marks only,
@@ -320,6 +329,31 @@ header.site{
   cursor: pointer;
 }
 .review-card-remove:hover{ border-color: var(--warn); color: var(--warn); }
+/* "My list" has no size cap any more (2026-10-17) - the 5-max now only
+   applies to shortlisting within this drawer, via a checkbox per card
+   (top-left, mirroring the remove button at top-right) rather than at
+   add-time. */
+.shortlist-status{
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.shortlist-toggle{
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+}
+.shortlist-toggle input{ width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+.review-card.shortlisted{ border-color: var(--accent); box-shadow: 0 6px 16px rgba(37,37,100,0.08), 0 0 0 1.5px var(--accent) inset; }
 .review-empty{
   color: var(--muted);
   font-style: italic;
@@ -648,21 +682,54 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    tab). */
 .directory-toolbar{
   display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 6vw;
+  border-bottom: 1px solid var(--line);
+}
+/* .search-box's own `flex: 1 1 280px` sets a WIDTH basis in its other
+   context (a row-direction flex parent) - .directory-toolbar is
+   column-direction now, where that same flex-basis would instead set a
+   280px HEIGHT, blowing the search row up to 280px tall. Override back
+   to a plain block here. */
+.directory-toolbar .search-box{ flex: none; width: 100%; max-width: none; }
+.toolbar-row2{
+  display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 18px 28px;
-  border-bottom: 1px solid var(--line);
 }
-.directory-toolbar .search-box{ flex: 1 1 240px; max-width: 360px; }
-.directory-toolbar .filter-bar{ flex: 2 1 auto; margin-top: 0; }
+.toolbar-row2 .filter-bar{ flex: 1 1 auto; margin-top: 0; }
 .directory-list-header{
   flex: 0 0 auto;
-  padding: 16px 28px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 6vw 8px;
   font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   color: var(--muted);
 }
+/* Sort (2026-10-17) - moved here, beside the alumni count, from the
+   filter row; a plain icon button (3 descending bars, the familiar
+   "sort" glyph) rather than a labeled pill like the filters, since this
+   sits in a much tighter spot next to the count. */
+.sort-icon-btn{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-strong);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sort-icon-btn:hover{ border-color: var(--accent); color: var(--accent); }
+.sort-icon-btn.has-selection{ background: var(--accent); border-color: var(--accent); color: #fff; }
+.sort-dropdown .filter-dropdown-panel{ left: auto; right: 0; }
 .directory-split{
   display: flex;
   align-items: stretch;
@@ -682,12 +749,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   min-height: 0;
   overflow-y: auto;
 }
-/* Draggable divider - see initDirectoryResizer(). A 10px hit target
-   (easier to grab than the hairline it draws) with a small pill handle,
-   both highlighting on hover/drag. */
+/* Draggable divider - see initDirectoryResizer(). A 16px hit target
+   (bigger than before, per request, for easier grabbing/visibility) that
+   draws a hairline down its middle, highlighting on hover/drag. The
+   collapse control (2026-10-17) lives directly on it now, as a small
+   chevron button at its vertical midpoint - double-clicking/double-
+   tapping it resets the split back to the default widths. */
 .directory-resizer{
-  flex: 0 0 10px;
-  width: 10px;
+  flex: 0 0 16px;
+  width: 16px;
   cursor: col-resize;
   position: relative;
   display: flex;
@@ -709,53 +779,49 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .directory-resizer:hover::before,
 .directory-resizer.dragging::before{ background: var(--accent); }
-.directory-resizer-handle{
-  width: 4px;
-  height: 32px;
-  border-radius: 3px;
-  background: var(--line-strong);
-  pointer-events: none;
-}
-.directory-resizer:hover .directory-resizer-handle,
-.directory-resizer.dragging .directory-resizer-handle{ background: var(--accent); }
-.directory-right{
-  flex: 1 1 auto;
-  min-width: 320px;
-  overflow-y: auto;
-  padding: 28px 40px 60px;
-}
-/* Collapsing the profile panel (2026-10-17): hides it and the resizer,
-   the directory expands to fill the width, and a floating "›" docks at
-   the right edge to reopen it. Selection and the stored panel width are
-   untouched by this - collapsing/expanding only toggles this class. */
-.directory-split.profile-collapsed .directory-right,
-.directory-split.profile-collapsed .directory-resizer{ display: none; }
-.directory-split.profile-collapsed .directory-left{ flex: 1 1 auto; max-width: none; }
-.directory-reopen-btn{
-  position: absolute;
-  top: 50%;
-  right: 0;
-  transform: translateY(-50%);
-  width: 26px;
-  height: 56px;
-  border-radius: 8px 0 0 8px;
+.directory-resizer-collapse{
+  width: 24px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1.5px solid var(--line-strong);
   background: #fff;
-  border: 1px solid var(--line);
-  border-right: none;
   color: var(--muted);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: -4px 0 12px rgba(37,37,100,0.1);
+  position: relative;
+  z-index: 1;
 }
-.directory-reopen-btn:hover{ color: var(--accent); border-color: var(--accent); }
+.directory-resizer:hover .directory-resizer-collapse,
+.directory-resizer.dragging .directory-resizer-collapse{ border-color: var(--accent); color: var(--accent); }
+.directory-right{
+  flex: 1 1 auto;
+  min-width: 320px;
+  overflow-y: auto;
+  padding: 28px 6vw 60px;
+}
+/* Collapsing the profile panel (2026-10-17): hides it and the resizer,
+   the directory expands to fill the width. Selection and the stored
+   divider width are untouched by this - collapsing/expanding only
+   toggles this class. Reopening (2026-10-17) happens from any row's own
+   chevron/click, same as opening any other alum - the separate floating
+   "›" edge button this used to dock was redundant with that and has
+   been removed, per request. */
+.directory-split.profile-collapsed .directory-right,
+.directory-split.profile-collapsed .directory-resizer{ display: none; }
+.directory-split.profile-collapsed .directory-left{ flex: 1 1 auto; max-width: none; }
+/* Grid (2026-10-17, revised again) - two equal 1fr tracks (info, and
+   the spots+chevron group) flank the centered location column, so
+   location sits truly centered relative to the name/role/company block
+   and the spots-available badge, per request - not just evenly spaced
+   among 3+ items as an earlier pass had it. */
 .directory-entry{
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 14px;
-  padding: 16px 28px;
+  padding: 16px 6vw;
   cursor: pointer;
   border: none;
   border-bottom: 1px solid var(--line);
@@ -771,33 +837,60 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   background: var(--accent-tint);
   border-left-color: var(--accent);
 }
+/* Added-to-list (2026-10-17) - a real green, distinct from the purple
+   "currently viewing" selected state above (and from --success-on-light,
+   which this app deliberately maps to purple elsewhere) since the user
+   asked for these two states to read as visibly different colors. Comes
+   after .selected so it wins when a card is both selected and in the
+   list. */
+.directory-entry.in-list{
+  background: var(--list-added-tint);
+  border-left-color: var(--list-added);
+}
+.directory-entry.in-list .directory-entry-chevron{ color: var(--list-added); }
 .directory-entry-info{ min-width: 0; }
 /* Natural wrapping, no truncation/ellipsis and no dynamic font shrink
-   for long names - per explicit request for this list. */
+   for long names - per explicit request for this list. Semi-bold per
+   request (2026-10-17; was briefly full bold - toned down one step). */
 .directory-entry-name{
   font-family: 'Baskerville', 'Libre Baskerville', serif;
-  font-weight: 400;
+  font-weight: 600;
   font-size: 19px;
   line-height: 1.25;
   color: var(--ink);
 }
-.directory-entry-location{
+/* Location + spots-available (2026-10-17, revised again) - location is
+   its own centered grid column; spots-available now groups with the
+   chevron in the right-hand track instead of sitting beside location,
+   so location's centering is relative to info and spots specifically,
+   not diluted by the chevron's position. Both hide once the profile
+   panel is open (the card has no room for them there - no stacked
+   location take-over any more either, per request: when both panels are
+   open, location just isn't shown on the card at all). Sized to match
+   .alum-company (13.5px) in this left-column context only - the profile
+   panel's own badge keeps its usual smaller size. */
+.directory-entry-location-inline{
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-top: 6px;
+  justify-self: center;
+  white-space: nowrap;
   font-family: 'Inter', sans-serif;
-  font-size: 12px;
+  font-size: 13.5px;
   color: var(--muted);
 }
 .directory-entry-right{
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0;
+  justify-self: end;
 }
+.directory-entry-spots .capacity-badge{ font-size: 13.5px; }
 .directory-entry-chevron{ color: var(--muted); flex-shrink: 0; }
 .directory-entry.selected .directory-entry-chevron{ color: var(--accent); }
+.directory-split:not(.profile-collapsed) .directory-entry-location-inline,
+.directory-split:not(.profile-collapsed) .directory-entry-spots,
+.directory-split:not(.profile-collapsed) .directory-entry-chevron{ display: none; }
 .directory-empty{
   padding: 48px 28px;
   color: var(--muted);
@@ -824,29 +917,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 0;
 }
 .profile-back-btn:hover{ color: var(--ink); }
-.profile-availability{ display: flex; align-items: center; gap: 12px; }
-/* Collapse control (2026-10-17) - hides the profile panel so the
-   directory can take the full width; .directory-reopen-btn (floating
-   "›" on the right edge) brings it back. Desktop-only, same as the
-   resizer - mobile already has its own full-screen pattern. */
-.profile-collapse-btn{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1.5px solid var(--line-strong);
-  background: none;
-  color: var(--muted);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.profile-collapse-btn:hover{ border-color: var(--accent); color: var(--accent); }
-@media (max-width: 1023px){
-  .profile-collapse-btn{ display: none; }
-}
-.profile-header{ display: flex; gap: 28px; align-items: flex-start; }
+/* justify-content:flex-end (2026-10-17, per request) - pushes this row
+   to the right edge of .profile-info, which (since .profile-info fills
+   whatever's left of .directory-right beside the fixed-width portrait)
+   is the same right edge .directory-right's own content box ends at -
+   the same edge the toolbar's Review & Submit button sits against
+   (matching 6vw right padding on both), so the add-to-list button's
+   right edge now lines up with Review & Submit's. */
+.profile-availability{ display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+/* align-items:stretch (2026-10-17, was flex-start) so .profile-info
+   takes on the portrait's full 220px height - that's what lets its own
+   top/middle/bottom children (below) pin to the portrait's top and
+   bottom edges instead of just sitting at its top. */
+.profile-header{ display: flex; gap: 28px; align-items: stretch; }
 /* Portrait + text stack vertically once the panel gets narrow (resized
    small, or on a mobile detail view) - toggled by a ResizeObserver on
    #directoryRight (watchProfilePanelWidth()) rather than a plain media
@@ -866,22 +949,49 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   justify-content: center;
   color: var(--line-strong);
 }
+/* The 3-row text column beside the portrait (2026-10-17) - top row
+   (spots-available + add-to-list) pins to the portrait's top edge,
+   bottom row (location + LinkedIn) pins to its bottom edge, and the
+   name/role/company group floats in the middle, via space-between on a
+   column that's now exactly as tall as the portrait (see
+   align-items:stretch above). */
+.profile-info{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* flex:1 1 auto (2026-10-17) - without a grow factor this only took
+     its own content's width, falling well short of .directory-right's
+     right edge; grabbing the rest of .profile-header's width is what
+     lets .profile-availability's flex-end actually land flush with the
+     toolbar's Review & Submit button, per request. */
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.profile-info-bottom{ display: flex; align-items: center; min-height: 1px; }
+/* Nudged down from the top row (2026-10-17, per request) - on top of
+   the automatic space-between gap above it. */
+.profile-info-middle{ margin-top: 10px; }
+/* Semi-bold (2026-10-17, was regular weight) - matches
+   .directory-entry-name's own left-column formatting, per request. */
 .profile-name{
   font-family: 'Baskerville', 'Libre Baskerville', serif;
-  font-weight: 400;
-  font-size: 32px;
+  font-weight: 600;
+  font-size: 26px;
   line-height: 1.15;
   color: var(--ink);
 }
-.profile-info .alum-role{ margin-top: 8px; font-size: 15px; }
-.profile-info .alum-company{ font-size: 18px; margin-top: 4px; }
-.profile-info .alum-meta{ margin-top: 16px; font-size: 14px; }
+.profile-info .alum-role{ margin-top: 8px; font-size: 16px; }
+.profile-info .alum-company{ font-size: 15px; margin-top: 4px; }
+/* No margin-top here any more (2026-10-17) - .alum-meta now lives inside
+   .profile-info-bottom, its own flex item at the bottom of the column
+   (see .profile-info below), so the gap above it comes from
+   justify-content:space-between, not a fixed margin. */
+.profile-info .alum-meta{ font-size: 14px; }
 .profile-divider{
   margin: 28px 0;
   border-top: 1px solid var(--line);
 }
 .profile-sections .alum-columns{ margin-top: 0; }
-.profile-sections .ask-me-about{ margin-top: 28px; }
 .search-box{
   flex: 1 1 280px;
   border-bottom: 1.5px solid var(--ink);
@@ -909,11 +1019,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   border:none;
   cursor:pointer;
   font-size: 13.5px;
+  font-weight: 700;
   font-family: inherit;
   padding: 0;
   color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
 }
 /* A vertical tab docked to the right edge of the viewport, centered on
    it - not part of the toolbar/search row any more (2026-10-15, per
@@ -1053,7 +1163,18 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    flyout anchors to that specific row, not the dropdown panel's corner. */
 .location-regions{ display: flex; flex-direction: column; gap: 4px; min-width: 200px; }
 .location-region{ position: relative; }
-.location-region + .location-region{ border-top: 1px solid var(--line); padding-top: 10px; margin-top: 6px; }
+/* Negative margins matching .filter-dropdown-panel's own 18px side
+   padding (2026-10-17, per request) - runs this divider edge-to-edge
+   across the dropdown instead of just the inset content width. */
+.location-region + .location-region{
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-top: 6px;
+  margin-left: -18px;
+  margin-right: -18px;
+  padding-left: 18px;
+  padding-right: 18px;
+}
 .location-region-toggle{
   display: flex;
   align-items: center;
@@ -1154,7 +1275,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-left{ flex: 1 1 auto; max-width: none; }
   /* Resize/collapse are desktop-only concepts - mobile already has its
      own full-screen detail pattern below. */
-  .directory-resizer, .directory-reopen-btn{ display: none !important; }
+  .directory-resizer{ display: none !important; }
   /* The list's own height is auto here (.directory-split isn't given a
      fixed height below 1024px - see sizeDirectorySplit), so it just
      flows with the page instead of scrolling in its own box. The detail
@@ -1309,7 +1430,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .alum-role{
   font-family: 'Inter', sans-serif;
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 400;
   color: var(--ink);
   margin-top: 4px;
@@ -1329,7 +1450,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .linkedin-icon{ flex-shrink: 0; }
 .alum-company{
   font-family: 'Inter', sans-serif;
-  font-size: 17px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--accent);
   margin-top: 2px;
@@ -1364,25 +1485,29 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .field-label{
   display: block;
   font-family: 'Inter', sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--accent-deep);
   margin-bottom: 6px;
-  font-weight: 500;
+  font-weight: 700;
 }
 .ask-me-about .field-label{ margin-bottom: 8px; }
-/* Industry Expertise + Marketing Expertise side by side as two columns
-   - "Ask me about" is a separate block rendered after this one, so it's
-   unaffected and stays full-width below. Back to row on request (2026-
-   10-15); an earlier pass had stacked these, see git history. */
+/* Industry Expertise, Marketing Expertise and Ask Me About as one row
+   of up to 3 columns (2026-10-17 - Ask Me About used to be a separate
+   full-width block below), each pair separated by a vertical divider
+   (.alum-col-divider, built by profileThreeColumnsHtml only between
+   columns that actually exist). align-items:stretch so each divider's
+   height always matches its row's tallest column. */
 .alum-columns{
   display: flex;
   flex-direction: row;
+  align-items: stretch;
   gap: 24px;
   margin-top: 12px;
 }
 .alum-col{ flex: 1 1 140px; min-width: 0; }
+.alum-col-divider{ width: 1px; background: var(--line); flex-shrink: 0; }
 /* Industry Expertise's primary value - plain text, not a pill (that's
    what distinguishes it from Marketing Expertise/Ask me about). Not
    bold, per request. */
@@ -1705,14 +1830,25 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   gap: 10px;
 }
 .submit-btn:disabled{ background: var(--line-strong); color: var(--muted); cursor:not-allowed; }
-.pin-cap-notice{
-  background: var(--accent-tint);
-  color: var(--ink);
-  border-radius: 10px;
-  padding: 12px 16px;
+/* Sort dropdown (2026-10-17) - reuses .filter-dropdown-panel's base
+   positioning/box styling, just a vertical list of plain option buttons
+   instead of checkboxes. */
+.sort-option{
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 10px;
+  font-family: 'Inter', sans-serif;
   font-size: 13.5px;
-  margin-top: 16px;
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
 }
+.sort-option:hover{ background: var(--paper); }
+.sort-option.active{ color: var(--accent); font-weight: 600; }
 
 .toast{
   position: fixed;
@@ -1931,21 +2067,22 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      separate rotated edge tab. -->
 <div class="directory-toolbar">
   <div class="search-box">
-    <input type="text" id="searchInput" placeholder="Search by name, company, or keyword…">
     <button class="search-btn" id="searchBtn" aria-label="Search">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     </button>
+    <input type="text" id="searchInput" placeholder="Search by name, company, or keyword…">
   </div>
-  <div class="filter-bar">
-    <div class="filter-dropdowns" id="filterPanel"></div>
-    <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
+  <div class="toolbar-row2">
+    <div class="filter-bar">
+      <div class="filter-dropdowns" id="filterPanel"></div>
+      <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
+    </div>
+    <button class="pins-toggle-btn" id="pinsToggleBtn">
+      Review &amp; Submit<span class="pins-count" id="pinsCount"></span>
+    </button>
   </div>
-  <button class="pins-toggle-btn" id="pinsToggleBtn">
-    Review &amp; Submit<span class="pins-count" id="pinsCount"></span>
-  </button>
 </div>
 <div id="statusArea"></div>
-<div class="pin-cap-notice" id="pinCapNotice" style="display:none">You've selected 5 of 5 alumni. Remove a pin to choose someone else.</div>
 
 <!-- Split-view directory: left panel is the scrollable alumni list;
      right panel is the selected alumnus's full profile, resizable via
@@ -1960,16 +2097,28 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   <div class="directory-left" id="directoryLeft">
     <div class="directory-list-header">
       <span id="directoryCount"></span>
+      <div class="filter-dropdown sort-dropdown" id="sortDropdown">
+        <button type="button" class="sort-icon-btn" id="sortToggle" aria-haspopup="true" aria-expanded="false" aria-label="Sort">
+          <svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <line x1="1" y1="1" x2="17" y2="1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="1" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="1" y1="13" x2="7" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="filter-dropdown-panel sort-panel" id="sortPanel">
+          <button type="button" class="sort-option" data-sort="recent">Recently added</button>
+          <button type="button" class="sort-option" data-sort="capacity">Spots available</button>
+        </div>
+      </div>
     </div>
     <div class="directory-list" id="directoryList"></div>
   </div>
   <div class="directory-resizer" id="directoryResizer" role="separator" aria-orientation="vertical" aria-label="Resize directory and profile panels" tabindex="0">
-    <span class="directory-resizer-handle" aria-hidden="true"></span>
+    <button type="button" class="directory-resizer-collapse" id="directoryCollapseBtn" aria-label="Collapse profile panel">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>
+    </button>
   </div>
   <div class="directory-right" id="directoryRight"></div>
-  <button class="directory-reopen-btn" id="directoryReopenBtn" aria-label="Show profile panel" style="display:none">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
-  </button>
 </div>
 
 </div><!-- /view-listing -->
@@ -1977,14 +2126,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 <div class="pins-drawer-backdrop" id="pinsDrawerBackdrop"></div>
 <aside class="pins-drawer" id="pinsDrawer" role="dialog" aria-modal="true" aria-labelledby="pinsDrawerTitle" aria-hidden="true">
   <div class="pins-drawer-header">
-    <h2 id="pinsDrawerTitle">Please rank your top 5 <span class="pins-drawer-count" id="pinsDrawerCount">(0/5)</span></h2>
+    <h2 id="pinsDrawerTitle">My list <span class="pins-drawer-count" id="pinsDrawerCount"></span></h2>
     <button class="pins-drawer-close" id="pinsDrawerClose" aria-label="Close">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
     </button>
   </div>
 
   <div class="pins-drawer-body" id="pinsDrawerListPane">
-    <div class="review-empty" id="pinsDrawerEmpty" style="display:none">No alumni pinned yet. Browse the directory to find people you'd like to meet.</div>
+    <div class="review-empty" id="pinsDrawerEmpty" style="display:none">No alumni added yet. Browse the directory to find people you'd like to meet.</div>
+    <div class="shortlist-status" id="shortlistStatus"></div>
     <div id="pinsDrawerList" class="review-list"></div>
   </div>
   <div class="pins-drawer-footer" id="pinsDrawerListFooter">
@@ -1997,7 +2147,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <div id="reviewList" class="review-list"></div>
   </div>
   <div class="pins-drawer-footer" id="pinsDrawerReviewFooter" style="display:none">
-    <button class="review-back-btn" id="pinsDrawerEditBtn">← Edit my pins</button>
+    <button class="review-back-btn" id="pinsDrawerEditBtn">← Edit my list</button>
     <button class="submit-btn" id="reviewSubmitBtn">Continue to form →</button>
   </div>
 </aside>
@@ -2224,6 +2374,9 @@ const CLAIM_FORM = {
   }
 };
 
+// Caps the SHORTLIST only (2026-10-17) - "my list" (cart, below) itself
+// is unlimited now; this only gates how many of those can be marked for
+// the final Review & Submit step.
 const MAX_PICKS = 5;
 
 // ------------------------------------------------------------
@@ -2361,7 +2514,8 @@ const SAMPLE_ROWS = [
 
 let alumni = [];       // normalized alumni records
 let filterState = {};  // { categoryKey: Set of active filter values }
-let cart = [];         // unordered array of pinned alum ids (name held over from before pinning replaced the ranked-picks cart)
+let cart = [];         // unordered array of ids added to "my list" - unlimited size (2026-10-17)
+let shortlist = [];    // subset of cart's ids marked for the final Review & Submit step - capped at MAX_PICKS
 let pinsDrawerOpen = false;
 let pinsDrawerMode = 'list';         // 'list' | 'review' - two states of the same drawer, not separate pages
 let pinsDrawerReturnFocusEl = null;  // element to restore focus to when the drawer closes
@@ -3073,7 +3227,15 @@ function primaryIndustryOrderedList(a){
 // columns, per request - previously Marketing Expertise was its own full-
 // width line below this one. Each column is independent: either can be
 // empty without breaking the row's layout.
-function cardIndustryExpertiseColumnsHtml(a){
+// Industry Expertise, Marketing Expertise and Ask Me About as one
+// horizontal row of up to 3 columns with a vertical divider between
+// each PRESENT one (2026-10-17 - Ask Me About used to be its own block
+// stacked below the other two) - built as an array and joined so a
+// missing column (e.g. no marketing areas selected) never leaves a
+// stray divider floating next to nothing.
+function profileThreeColumnsHtml(a, visibleTopics){
+  const cols = [];
+
   // Industry Expertise is plain text again (2026-10-15) - not pills like
   // Marketing/Ask me about. Only the primary industry is shown as text;
   // anything beyond it folds into a "+N more" pill (the only pill this
@@ -3082,11 +3244,10 @@ function cardIndustryExpertiseColumnsHtml(a){
   // the measured 1-line-collapse the pill rows use, since there's no
   // per-item element here to measure against the column width.
   const [primaryIndustry, ...otherIndustries] = primaryIndustryOrderedList(a);
-  let industryColHtml = '';
   if(primaryIndustry){
-    let industryValueHtml = `<span>${primaryIndustry}</span>`;
+    let industryValueHtml = `<div class="topic-tags"><span class="topic-tag">${primaryIndustry}</span>`;
     if(otherIndustries.length){
-      industryValueHtml += ` <span class="industry-more-wrap">
+      industryValueHtml += `<span class="industry-more-wrap">
         <button type="button" class="industry-more-btn" aria-expanded="false">+${otherIndustries.length} more</button>
         <div class="industry-more-popover">
           <div class="industry-more-popover-title">This alum has also worked in:</div>
@@ -3094,16 +3255,21 @@ function cardIndustryExpertiseColumnsHtml(a){
         </div>
       </span>`;
     }
-    industryColHtml = `<div class="alum-col"><span class="field-label">Industry Expertise</span><div class="alum-col-value">${industryValueHtml}</div></div>`;
+    industryValueHtml += `</div>`;
+    cols.push(`<div class="alum-col"><span class="field-label">Industry Expertise</span><div class="alum-col-value">${industryValueHtml}</div></div>`);
   }
 
   const marketingParts = cardMarketingLineValues(a);
-  const marketingColHtml = marketingParts.length
-    ? `<div class="alum-col"><span class="field-label">Marketing Expertise</span><div class="topic-tags marketing-tags">${marketingParts.map(v => `<span class="topic-tag">${v}</span>`).join('')}</div></div>`
-    : '';
+  if(marketingParts.length){
+    cols.push(`<div class="alum-col"><span class="field-label">Marketing Expertise</span><div class="topic-tags marketing-tags">${marketingParts.map(v => `<span class="topic-tag">${v}</span>`).join('')}</div></div>`);
+  }
 
-  if(!industryColHtml && !marketingColHtml) return '';
-  return `<div class="alum-columns">${industryColHtml}${marketingColHtml}</div>`;
+  if(visibleTopics.length){
+    cols.push(`<div class="alum-col ask-me-about"><span class="field-label">Ask Me About</span><div class="topic-tags">${visibleTopics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</div></div>`);
+  }
+
+  if(!cols.length) return '';
+  return `<div class="alum-columns">${cols.join('<div class="alum-col-divider"></div>')}</div>`;
 }
 
 // Marketing expertise - its own labeled line, matching the reference.
@@ -3261,13 +3427,23 @@ let selectedAlumId = null;
 
 const PORTRAIT_PLACEHOLDER_SVG = '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg>';
 
-function updatePinCapNotice(){
-  document.getElementById('pinCapNotice').style.display = cart.length >= MAX_PICKS ? '' : 'none';
+// Sort (2026-10-17) - re-orders whatever matchesFilters already narrowed
+// the list down to, so it's always "relevant to whatever filters have
+// been applied" rather than a separate, independent sort over everyone.
+let sortMode = null; // null | 'recent' | 'capacity'
+const SORT_LABELS = {recent: 'Recently added', capacity: 'Spots available'};
+function applySort(list){
+  if(sortMode === 'recent'){
+    return [...list].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }
+  if(sortMode === 'capacity'){
+    return [...list].sort((a, b) => (b.capacity || 0) - (a.capacity || 0));
+  }
+  return list;
 }
 
 function renderGrid(){
-  const filtered = alumni.filter(matchesFilters);
-  updatePinCapNotice();
+  const filtered = applySort(alumni.filter(matchesFilters));
   renderDirectoryList(filtered);
 
   if(filtered.length === 0){
@@ -3298,7 +3474,9 @@ function renderDirectoryList(filtered){
     const contactHtml = cardContactLineHtml(a);
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'directory-entry' + (a.id === selectedAlumId ? ' selected' : '');
+    btn.className = 'directory-entry'
+      + (a.id === selectedAlumId ? ' selected' : '')
+      + (cart.includes(a.id) ? ' in-list' : '');
     btn.dataset.id = a.id;
     btn.setAttribute('aria-pressed', String(a.id === selectedAlumId));
     btn.innerHTML = `
@@ -3306,10 +3484,10 @@ function renderDirectoryList(filtered){
         <div class="directory-entry-name">${a.name}</div>
         ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
         <div class="alum-company">${companyHtml(a.company)}</div>
-        ${contactHtml ? `<div class="directory-entry-location">${contactHtml}</div>` : ''}
       </div>
+      ${contactHtml ? `<div class="directory-entry-location-inline">${contactHtml}</div>` : '<div></div>'}
       <div class="directory-entry-right">
-        ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
+        <div class="directory-entry-spots">${capacityBadgeHtml(a.capacity, a.capacityAssumed)}</div>
         <svg class="directory-entry-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
       </div>
     `;
@@ -3317,6 +3495,25 @@ function renderDirectoryList(filtered){
     list.appendChild(btn);
   });
 }
+
+// Up/Down arrow-key navigation across the list rows (2026-10-17) - moves
+// focus to the next/previous row and selects it, same as arrowing
+// through a native listbox. Delegated once on the list container (whose
+// own node survives every render, even though its rows are rebuilt each
+// time) rather than bound per-row.
+document.getElementById('directoryList').addEventListener('keydown', (e) => {
+  if(e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+  const entries = [...document.querySelectorAll('.directory-entry')];
+  const currentIndex = entries.indexOf(document.activeElement);
+  if(currentIndex === -1) return;
+  e.preventDefault();
+  const nextIndex = e.key === 'ArrowDown'
+    ? Math.min(currentIndex + 1, entries.length - 1)
+    : Math.max(currentIndex - 1, 0);
+  const nextEntry = entries[nextIndex];
+  nextEntry.focus();
+  selectAlum(Number(nextEntry.dataset.id), {});
+});
 
 // Selecting an entry never rebuilds the list (so its scroll position is
 // untouched) - just swaps the .selected class and re-renders the
@@ -3352,11 +3549,9 @@ function closeMobileDetail(){
 // once the panel reopens, per request.
 function collapseProfilePanel(){
   document.getElementById('directorySplit').classList.add('profile-collapsed');
-  document.getElementById('directoryReopenBtn').style.display = 'flex';
 }
 function expandProfilePanel(){
   document.getElementById('directorySplit').classList.remove('profile-collapsed');
-  document.getElementById('directoryReopenBtn').style.display = 'none';
 }
 
 function renderProfilePanel(){
@@ -3372,9 +3567,7 @@ function renderProfilePanel(){
     return;
   }
 
-  const atCap = cart.length >= MAX_PICKS;
   const inCart = cart.includes(a.id);
-  const disablePin = atCap && !inCart;
   const contactHtml = cardContactLineHtml(a);
   const linkedinHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
   const visibleTopics = a.topics.filter(t => !TOPIC_CARD_EXCLUDE.includes(t));
@@ -3382,29 +3575,29 @@ function renderProfilePanel(){
   right.innerHTML = `
     <div class="profile-toolbar">
       <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
-      <div class="profile-availability">
-        ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
-        <button class="add-btn plus-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" ${disablePin ? 'disabled' : ''} aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name}` : `Add ${a.name}`}">
-          ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}
-        </button>
-        <button type="button" class="profile-collapse-btn" id="profileCollapseBtn" aria-label="Collapse profile panel">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
-        </button>
-      </div>
     </div>
     <div class="profile-header">
       <div class="profile-portrait" aria-hidden="true">${PORTRAIT_PLACEHOLDER_SVG}</div>
       <div class="profile-info">
-        <div class="profile-name">${a.name}</div>
-        ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
-        <div class="alum-company">${companyHtml(a.company)}</div>
-        ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
+        <div class="profile-info-top profile-availability">
+          ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
+          <button class="add-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name} from my list` : `Add ${a.name} to my list`}">
+            ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>
+          </button>
+        </div>
+        <div class="profile-info-middle">
+          <div class="profile-name">${a.name}</div>
+          ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
+          <div class="alum-company">${companyHtml(a.company)}</div>
+        </div>
+        <div class="profile-info-bottom">
+          ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
+        </div>
       </div>
     </div>
     <div class="profile-divider"></div>
     <div class="profile-sections">
-      ${cardIndustryExpertiseColumnsHtml(a)}
-      ${visibleTopics.length ? `<div class="ask-me-about"><span class="field-label">Ask me about</span><div class="topic-tags">${visibleTopics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</div></div>` : ''}
+      ${profileThreeColumnsHtml(a, visibleTopics)}
     </div>
   `;
 
@@ -3430,11 +3623,18 @@ function renderProfilePanel(){
 // rebinding - or leaking - a listener every time).
 document.getElementById('directoryRight').addEventListener('click', (e) => {
   if(e.target.closest('#profileBackBtn')){ closeMobileDetail(); return; }
-  if(e.target.closest('#profileCollapseBtn')){ collapseProfilePanel(); return; }
   const addBtn = e.target.closest('.profile-add-btn');
   if(addBtn) toggleCart(parseInt(addBtn.dataset.id, 10));
 });
-document.getElementById('directoryReopenBtn').addEventListener('click', expandProfilePanel);
+// The divider's own chevron is the collapse control (2026-10-17, was a
+// separate X button on the profile panel) - stopPropagation on
+// pointerdown keeps a click here from also being read as a drag-start by
+// the resizer's own pointerdown listener below.
+document.getElementById('directoryCollapseBtn').addEventListener('pointerdown', (e) => e.stopPropagation());
+document.getElementById('directoryCollapseBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  collapseProfilePanel();
+});
 
 // When a pill row (Ask me about, or Marketing Expertise) wraps past its
 // first line, hides whatever wrapped and replaces it with a single
@@ -3576,23 +3776,49 @@ window.addEventListener('resize', () => {
 // events (not mouse/touch separately) so drag works the same on
 // trackpad and touchscreen. Desktop-only in effect - the resizer is
 // display:none below 1024px, see the max-width:1023px block.
+// The widest currently-listed name's rendered width (2026-10-17) - used
+// as an extra resize floor so dragging the divider can never squeeze the
+// left column tight enough to wrap a name onto 2 lines. Measured against
+// whichever names are actually in the current filtered list (not the
+// full dataset), so a narrow filtered-down list isn't held back by some
+// unrelated long name elsewhere.
+function measureTextWidth(text, font){
+  const canvas = measureTextWidth._canvas || (measureTextWidth._canvas = document.createElement('canvas'));
+  const ctx = canvas.getContext('2d');
+  ctx.font = font;
+  return ctx.measureText(text).width;
+}
+function minDirectoryListWidthForNames(){
+  const nameEls = document.querySelectorAll('.directory-entry-name');
+  const entry = document.querySelector('.directory-entry');
+  if(!nameEls.length || !entry) return 0;
+  const font = getComputedStyle(nameEls[0]).font;
+  let widest = 0;
+  nameEls.forEach(el => { widest = Math.max(widest, measureTextWidth(el.textContent, font)); });
+  const entryStyle = getComputedStyle(entry);
+  const padding = parseFloat(entryStyle.paddingLeft) + parseFloat(entryStyle.paddingRight);
+  return Math.ceil(widest + padding);
+}
+
 function initDirectoryResizer(){
   const resizer = document.getElementById('directoryResizer');
   const left = document.getElementById('directoryLeft');
   const split = document.getElementById('directorySplit');
   if(!resizer || !left || !split) return;
   let dragging = false;
+  let nameFloor = 0; // recomputed at the start of each drag, see above
   const rightMinWidth = 320; // matches .directory-right's min-width in CSS
 
   function setLeftWidth(px){
-    const minWidth = parseFloat(getComputedStyle(left).minWidth) || 280;
+    const minWidth = Math.max(parseFloat(getComputedStyle(left).minWidth) || 280, nameFloor);
     const splitWidth = split.getBoundingClientRect().width;
-    const maxWidth = splitWidth - rightMinWidth - 10; // 10 = the resizer's own width
+    const maxWidth = splitWidth - rightMinWidth - 16; // 16 = the resizer's own width
     left.style.flexBasis = Math.max(minWidth, Math.min(px, maxWidth)) + 'px';
   }
 
   resizer.addEventListener('pointerdown', (e) => {
     dragging = true;
+    nameFloor = minDirectoryListWidthForNames();
     resizer.classList.add('dragging');
     resizer.setPointerCapture(e.pointerId);
     document.body.style.userSelect = 'none';
@@ -3610,11 +3836,21 @@ function initDirectoryResizer(){
   resizer.addEventListener('pointerup', stopDrag);
   resizer.addEventListener('pointercancel', stopDrag);
 
+  // Double-click/double-tap the divider resets the split back to its
+  // default widths (clearing the inline flex-basis falls back to
+  // .directory-left's CSS default of 35%), per request.
+  resizer.addEventListener('dblclick', () => {
+    left.style.flexBasis = '';
+  });
+
   // Arrow-key nudging, matching the resizer's role="separator" semantics.
   resizer.addEventListener('keydown', (e) => {
+    if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    nameFloor = minDirectoryListWidthForNames();
     const current = left.getBoundingClientRect().width;
-    if(e.key === 'ArrowLeft'){ setLeftWidth(current - 24); e.preventDefault(); }
-    else if(e.key === 'ArrowRight'){ setLeftWidth(current + 24); e.preventDefault(); }
+    if(e.key === 'ArrowLeft'){ setLeftWidth(current - 24); }
+    else { setLeftWidth(current + 24); }
+    e.preventDefault();
   });
 }
 initDirectoryResizer();
@@ -3658,40 +3894,74 @@ function showToast(msg, type, alignEl){
   setTimeout(() => toast.classList.remove('show'), duration);
 }
 
+// "My list" (cart) is unlimited (2026-10-17) - the old 5-max lived here,
+// at add-time; it now only applies to the shortlist, below.
 function toggleCart(id){
   const idx = cart.indexOf(id);
+  let inList;
   if(idx !== -1){
     cart.splice(idx, 1);
+    const sIdx = shortlist.indexOf(id);
+    if(sIdx !== -1) shortlist.splice(sIdx, 1);
+    inList = false;
   } else {
-    if(cart.length >= MAX_PICKS){
-      showToast(`You can pin up to ${MAX_PICKS} alumni. Remove one first to pin another.`);
-      return;
-    }
     cart.push(id);
+    inList = true;
   }
-  // The add/pin button only ever lives on the profile panel now (the
+  // The add/pin button itself only ever lives on the profile panel (the
   // directory list doesn't show one), so toggling it only ever affects
-  // the currently-selected alum - no need to rebuild the whole list
-  // (which would also reset its scroll position) just to pin someone.
-  updatePinCapNotice();
+  // the currently-selected alum there - no need to rebuild the whole
+  // list (which would also reset its scroll position) just to pin
+  // someone. Its matching card DOES need updating though, now that
+  // being in the list turns a card green - toggled directly on that one
+  // row rather than a full re-render for the same scroll-position reason.
+  document.querySelector(`.directory-entry[data-id="${id}"]`)?.classList.toggle('in-list', inList);
   renderProfilePanel();
   renderPinsDrawer();
 }
 
-// Renders the pinned-alumni cards (with a Remove control on each) into
-// either the drawer's editable list or its review pane - the two states
-// show the same records, so they share this one renderer.
-function renderPinCardsInto(containerId){
+// Shortlisting (2026-10-17) - a separate, capped-at-5 subset of "my
+// list" that the student narrows down to within the Review & Submit
+// drawer; only the shortlist (not the full list) is ever sent to the
+// form.
+function toggleShortlist(id){
+  const idx = shortlist.indexOf(id);
+  if(idx !== -1){
+    shortlist.splice(idx, 1);
+  } else {
+    if(shortlist.length >= MAX_PICKS){
+      showToast(`You can shortlist up to ${MAX_PICKS} alumni to submit. Remove one first to add another.`);
+      return;
+    }
+    shortlist.push(id);
+  }
+  renderPinsDrawer();
+}
+
+// Renders alumni cards (with a Remove control, and - only in the
+// editable "my list" pane - a Shortlist checkbox) into either the
+// drawer's editable list or its read-only review pane. The two states
+// render different id lists (the full cart vs. just the shortlist), so
+// they share this one renderer parameterized by which.
+function renderPinCardsInto(containerId, ids, opts){
+  opts = opts || {};
   const list = document.getElementById(containerId);
-  list.innerHTML = cart.map(id => {
+  list.innerHTML = ids.map(id => {
     const a = alumni.find(alum => alum.id === id);
     if(!a) return '';
     const contactHtml = cardContactLineHtml(a);
     const linkedinHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
     const hasContact = contactHtml || linkedinHtml;
+    const isShortlisted = shortlist.includes(id);
     return `
-      <div class="review-card">
-        <button class="review-card-remove" data-id="${id}" aria-label="Remove ${a.name} from pins">×</button>
+      <div class="review-card ${isShortlisted ? 'shortlisted' : ''}">
+        ${opts.showShortlistToggle ? `
+          <label class="shortlist-toggle">
+            <input type="checkbox" class="shortlist-checkbox" data-id="${id}" ${isShortlisted ? 'checked' : ''}>
+            Shortlist
+          </label>
+        ` : ''}
+        ${opts.showRemove ? `<button class="review-card-remove" data-id="${id}" aria-label="Remove ${a.name} from my list">×</button>` : ''}
         <div class="review-card-header">
           <div class="review-card-name">${a.name}</div>
           ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
@@ -3708,30 +3978,40 @@ function renderPinCardsInto(containerId){
       toggleCart(parseInt(btn.dataset.id, 10));
     });
   });
+  list.querySelectorAll('.shortlist-checkbox').forEach(cb => {
+    cb.addEventListener('change', () => {
+      toggleShortlist(parseInt(cb.dataset.id, 10));
+    });
+  });
 }
 
 // Refreshes whichever parts of the drawer are currently relevant - safe
-// to call any time the cart changes, whether or not the drawer is open.
+// to call any time the cart/shortlist changes, whether or not the
+// drawer is open.
 function renderPinsDrawer(){
-  document.getElementById('pinsDrawerCount').textContent = `(${cart.length}/${MAX_PICKS})`;
+  const isReview = pinsDrawerMode === 'review';
+  document.getElementById('pinsDrawerCount').textContent = isReview ? `(${shortlist.length}/${MAX_PICKS})` : `(${cart.length})`;
   document.getElementById('pinsCount').textContent = cart.length ? ` (${cart.length})` : '';
 
   const empty = cart.length === 0;
   document.getElementById('pinsDrawerEmpty').style.display = empty ? '' : 'none';
   document.getElementById('pinsDrawerContinueExploring').style.display = empty ? '' : 'none';
-  document.getElementById('pinsDrawerContinueBtn').disabled = empty;
-  renderPinCardsInto('pinsDrawerList');
+  document.getElementById('pinsDrawerContinueBtn').disabled = shortlist.length === 0;
+  renderPinCardsInto('pinsDrawerList', cart, {showShortlistToggle: true, showRemove: true});
 
-  if(pinsDrawerMode === 'review'){
-    renderPinCardsInto('reviewList');
-    document.getElementById('reviewSubmitBtn').disabled = cart.length === 0;
+  const statusEl = document.getElementById('shortlistStatus');
+  if(statusEl) statusEl.textContent = cart.length ? `${shortlist.length} of ${MAX_PICKS} shortlisted for Review & Submit` : '';
+
+  if(isReview){
+    renderPinCardsInto('reviewList', shortlist, {showShortlistToggle: false, showRemove: false});
+    document.getElementById('reviewSubmitBtn').disabled = shortlist.length === 0;
   }
 }
 
-// The drawer has two internal states - the editable pins list, and the
-// final review before handing off to the form - rather than the review
-// being a separate page. Switching between them never closes the drawer
-// or touches the directory underneath it.
+// The drawer has two internal states - the editable "my list", and the
+// final review of just the shortlist before handing off to the form -
+// rather than the review being a separate page. Switching between them
+// never closes the drawer or touches the directory underneath it.
 function setPinsDrawerMode(mode){
   pinsDrawerMode = mode;
   const isReview = mode === 'review';
@@ -3739,7 +4019,7 @@ function setPinsDrawerMode(mode){
   document.getElementById('pinsDrawerListFooter').style.display = isReview ? 'none' : '';
   document.getElementById('pinsDrawerReviewPane').style.display = isReview ? '' : 'none';
   document.getElementById('pinsDrawerReviewFooter').style.display = isReview ? '' : 'none';
-  document.getElementById('pinsDrawerTitle').firstChild.textContent = 'Please rank your top 5 ';
+  document.getElementById('pinsDrawerTitle').firstChild.textContent = isReview ? 'Your shortlist ' : 'My list ';
   renderPinsDrawer();
 }
 
@@ -3797,7 +4077,7 @@ function buildPrefillUrl(){
   const params = new URLSearchParams();
   params.set('usp', 'pp_url');
   const entryKeys = ['pick1', 'pick2', 'pick3', 'pick4', 'pick5'];
-  cart.forEach((id, i) => {
+  shortlist.forEach((id, i) => {
     const alum = alumni.find(a => a.id === id);
     const entryId = CLAIM_FORM.entryIds[entryKeys[i]];
     if(entryId) params.set(entryId, alumReferenceLabel(alum));
@@ -3823,7 +4103,7 @@ function openResubmitModal(){ document.getElementById('resubmitModal').style.dis
 function closeResubmitModal(){ document.getElementById('resubmitModal').style.display = 'none'; }
 
 document.getElementById('pinsDrawerContinueBtn').addEventListener('click', () => {
-  if(cart.length === 0) return;
+  if(shortlist.length === 0) return;
   setPinsDrawerMode('review');
   document.getElementById('pinsDrawerClose').focus();
 });
@@ -3832,7 +4112,7 @@ document.getElementById('pinsDrawerEditBtn').addEventListener('click', () => {
   document.getElementById('pinsDrawerClose').focus();
 });
 document.getElementById('reviewSubmitBtn').addEventListener('click', () => {
-  if(cart.length === 0) return;
+  if(shortlist.length === 0) return;
   if(hasSubmittedBefore()) openResubmitModal();
   else goSubmitNewPicks();
 });
@@ -3845,6 +4125,29 @@ document.getElementById('resubmitModal').addEventListener('click', (e) => {
 
 document.getElementById('searchInput').addEventListener('input', renderGrid);
 document.getElementById('searchBtn').addEventListener('click', renderGrid);
+
+function updateSortUI(){
+  const toggle = document.getElementById('sortToggle');
+  toggle.setAttribute('aria-label', sortMode ? `Sort: ${SORT_LABELS[sortMode]}` : 'Sort');
+  toggle.classList.toggle('has-selection', !!sortMode);
+  document.querySelectorAll('.sort-option').forEach(b => b.classList.toggle('active', b.dataset.sort === sortMode));
+}
+document.getElementById('sortToggle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const dropdown = document.getElementById('sortDropdown');
+  const isOpen = dropdown.classList.contains('open');
+  closeAllFilterDropdowns();
+  dropdown.classList.toggle('open', !isOpen);
+  e.currentTarget.setAttribute('aria-expanded', String(!isOpen));
+});
+document.querySelectorAll('.sort-option').forEach(btn => {
+  btn.addEventListener('click', () => {
+    sortMode = sortMode === btn.dataset.sort ? null : btn.dataset.sort;
+    updateSortUI();
+    closeAllFilterDropdowns();
+    renderGrid();
+  });
+});
 
 document.getElementById('pinsToggleBtn').addEventListener('click', (e) => {
   openPinsDrawer('list', e.currentTarget);
@@ -4078,6 +4381,10 @@ function showListing(contextLabel, fromHistory, categoryKey, categoryValue){
   document.getElementById('view-listing').style.display = '';
   document.getElementById('view-info').style.display = 'none';
   document.getElementById('directorySplit').classList.remove('mobile-detail-open');
+  // Every time the browsing page is (re)entered, start with the full-
+  // width directory and the profile panel closed, per request - not just
+  // on first load.
+  collapseProfilePanel();
   buildFilterPanel();
   renderGrid();
   renderPinsDrawer();
