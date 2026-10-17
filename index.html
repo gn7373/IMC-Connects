@@ -705,7 +705,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 @media (max-width: 700px){
   .category-option{ font-size: 16px; }
 }
-#view-listing{ background: #fff; }
 /* ---------- SPLIT-VIEW DIRECTORY (2026-10-16) ---------- */
 /* Height is set inline by sizeDirectorySplit() (measures the masthead's
    real rendered height rather than guessing a fixed px value - same
@@ -733,13 +732,21 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 /* Shared toolbar - search, all 5 filters, Clear all, Review & Submit -
    now spans the full page width above both panels (2026-10-17; was
    inside .directory-left, with Review & Submit a separate rotated edge
-   tab). */
+   tab). Revised again (2026-10-17) - the bar itself (background +
+   bottom divider) now runs the true full viewport width, edge-to-edge,
+   per request; the search/filter/button *content* stays put by sitting
+   inside its own nested .listing-container, which keeps it at the same
+   1280px-centered position it was already at. */
 .directory-toolbar{
+  background: #fff;
+  border-bottom: 2px solid var(--line);
+}
+.directory-toolbar > .listing-container{
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 18px 0;
-  border-bottom: 2px solid var(--line);
+  padding-top: 18px;
+  padding-bottom: 18px;
 }
 /* .search-box's own `flex: 1 1 280px` sets a WIDTH basis in its other
    context (a row-direction flex parent) - .directory-toolbar is
@@ -754,12 +761,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   flex-wrap: wrap;
 }
 .toolbar-row2 .filter-bar{ flex: 1 1 auto; margin-top: 0; }
+/* border-bottom + the matching -28px margin/padding pair (2026-10-17,
+   per request) separates the count/sort row from the alumni listings
+   below it, and - like every other divider on this page - runs the
+   full width of its container (.directory-left) rather than just the
+   inset content width. */
 .directory-list-header{
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 28px 8px;
+  padding: 16px 28px;
+  margin: 0 -28px;
+  border-bottom: 2px solid var(--line);
   font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   color: var(--muted);
@@ -803,10 +817,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   min-width: 280px;
   display: flex;
   flex-direction: column;
-  /* Frames the alumni list so it feels nestled between two vertical
-     lines (2026-10-17, per request) rather than floating edge-to-edge -
-     present whether the profile panel is open or collapsed. */
-  border-left: 2px solid var(--line);
+  /* Right edge only now (2026-10-17, was left+right) - the left one
+     was removed per request; this side still marks where the directory
+     ends and the resizer/profile begin. */
   border-right: 2px solid var(--line);
 }
 .directory-list{
@@ -1573,7 +1586,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   color: var(--accent);
   margin-top: 2px;
 }
-.alum-company-note{ display: block; font-size: 13.5px; margin-top: 1px; }
+/* em-based (2026-10-17, was a flat 13.5px that happened to equal the
+   card's own .alum-company size in some contexts) - "slightly smaller"
+   than whichever parent (card or profile) it's actually in, per
+   request, rather than a fixed px that isn't always smaller. */
+.alum-company-note, .alum-role-note{ display: block; font-size: 0.82em; margin-top: 1px; color: var(--muted); }
 .capacity-line{ font-size: 12px; margin-top: 8px; color: var(--muted); }
 .capacity-line strong{ color: var(--accent); font-weight: 600; }
 .capacity-line.full strong{ color: var(--warn); }
@@ -2180,19 +2197,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 
 <div id="view-listing" style="display:none">
 
-<!-- Shared max-width container (2026-10-17, per request) - caps the
-     whole browsing page (toolbar + split) at 1280px, centered, with
-     responsive side margins, instead of the toolbar/list/profile
-     spanning the raw viewport edge-to-edge. Individual pieces below no
-     longer carry their own 6vw inset - this one padding value is now
-     the only horizontal margin in play. -->
-<div class="listing-container">
-
-<!-- Shared toolbar (2026-10-17 redesign): search + all 5 filters +
-     Review & Submit now span the full page width, above both panels,
-     instead of living inside the left panel with Review & Submit as a
-     separate rotated edge tab. -->
+<!-- Shared toolbar (2026-10-17 redesign; revised again 2026-10-17 to
+     span the full viewport width with its own white background and
+     divider, while the actual search/filter/button content stays
+     nested in a .listing-container so it keeps its 1280px-centered
+     position - see that class's own comment). -->
 <div class="directory-toolbar">
+<div class="listing-container">
   <div class="search-box">
     <button class="search-btn" id="searchBtn" aria-label="Search">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -2209,6 +2220,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     </button>
   </div>
 </div>
+</div><!-- /directory-toolbar -->
+
+<!-- Shared max-width container (2026-10-17, per request) - caps the
+     split-view (directory + profile) at 1280px, centered, with
+     responsive side margins, instead of spanning the raw viewport
+     edge-to-edge. Individual pieces below no longer carry their own 6vw
+     inset - this one padding value is now the only horizontal margin in
+     play. -->
+<div class="listing-container">
 <div id="statusArea"></div>
 
 <!-- Split-view directory: left panel is the scrollable alumni list;
@@ -3267,6 +3287,47 @@ function formatIconHtml(value){
 // City (plain text) + meeting format (each value paired with its icon) -
 // built as HTML directly (rather than through joinValues, which only
 // handles plain text) since format needs an icon alongside its label.
+// Two general display rules (2026-10-17, per request), applied wherever
+// alum-authored free text gets rendered: "and" always reads as "&", and
+// "previously" always reads as "prev" - several respondents already
+// write "prev." themselves (e.g. "prev. Spine AI..."), so this just
+// makes anyone who spelled it out match that same shorthand. Case of
+// the replacement follows the source word's own first letter, so a
+// sentence-leading "Previously" still reads as a sentence-leading
+// "Prev" rather than jarringly lowercase.
+function applyTextRules(str){
+  if(!str) return str;
+  return str
+    .replace(/\bprevious(ly)?\b/gi, (m) => m[0] === m[0].toUpperCase() ? 'Prev' : 'prev')
+    .replace(/\band\b/gi, '&');
+}
+
+// Splits off a trailing parenthetical, or (failing that) a comma-
+// separated segment that itself starts with a "previously worked
+// there" marker (ex-, prev., previously, formerly) - e.g. "Dyson,
+// ex-Ulta Beauty" or "Morning Brew Inc. (prev. Orchestra...)". Ordinary
+// commas that are just part of the title/company itself (e.g. "Senior
+// Director, Product Experience Design") are left alone, since nothing
+// after them matches a previous-work marker. Used to put that extra
+// detail on its own, smaller line rather than running it into the main
+// text - per request.
+const PREV_NOTE_MARKER_RE = /^(ex-|ex\s|prev\.?\b|previously\b|formerly\b)/i;
+function splitPrevNote(str){
+  if(!str) return {main: str, note: ''};
+  const parenMatch = /^(.*?)\s*(\([^()]*\))\s*$/.exec(str);
+  if(parenMatch && parenMatch[1]){
+    return {main: parenMatch[1], note: parenMatch[2]};
+  }
+  const parts = str.split(/,\s*/);
+  if(parts.length > 1){
+    const idx = parts.findIndex((p, i) => i > 0 && PREV_NOTE_MARKER_RE.test(p));
+    if(idx !== -1){
+      return {main: parts.slice(0, idx).join(', '), note: parts.slice(idx).join(', ')};
+    }
+  }
+  return {main: str, note: ''};
+}
+
 // Normalizes a role/title string to mixed case for display, regardless of
 // how the alum typed it in the Form (ALL CAPS, all lowercase, etc.) -
 // applied only here at render time, never to the stored a.role value.
@@ -3276,7 +3337,7 @@ function formatIconHtml(value){
 // fine.
 const ROLE_MINOR_WORDS = new Set(['and','or','the','of','for','in','on','at','to','a','an','with']);
 const ROLE_LOWER_ACRONYMS = new Set(['ai','gtm','vp','svp','evp','pr','hr','ux','ui','ceo','cfo','coo','cmo','cto','seo','sem','crm','roi','kpi','pm']);
-function titleCaseRole(str){
+function titleCaseWords(str){
   let wordIndex = 0;
   return str.replace(/[A-Za-z']+/g, (word) => {
     const isFirst = wordIndex === 0;
@@ -3293,6 +3354,15 @@ function titleCaseRole(str){
     if(!isFirst && ROLE_MINOR_WORDS.has(lower)) return lower;
     return word.charAt(0).toUpperCase() + word.slice(1);
   });
+}
+// Role display - mixed-cases the main title, splits a "previously held
+// this role" note onto its own smaller line, and applies the and->& /
+// previously->prev rules to both.
+function titleCaseRole(role){
+  const {main, note} = splitPrevNote(role);
+  const mainHtml = applyTextRules(titleCaseWords(main));
+  if(!note) return mainHtml;
+  return `${mainHtml}<span class="alum-role-note">${applyTextRules(note)}</span>`;
 }
 
 function cardContactLineHtml(a){
@@ -3378,16 +3448,16 @@ function profileThreeColumnsHtml(a, visibleTopics){
   // pills actually don't fit.
   const allIndustries = primaryIndustryOrderedList(a);
   if(allIndustries.length){
-    cols.push(`<div class="alum-col"><span class="field-label">Industry Expertise</span><div class="topic-tags industry-tags">${allIndustries.map(v => `<span class="topic-tag">${v}</span>`).join('')}</div></div>`);
+    cols.push(`<div class="alum-col"><span class="field-label">Industry Expertise</span><div class="topic-tags industry-tags">${allIndustries.map(v => `<span class="topic-tag">${applyTextRules(v)}</span>`).join('')}</div></div>`);
   }
 
   const marketingParts = cardMarketingLineValues(a);
   if(marketingParts.length){
-    cols.push(`<div class="alum-col"><span class="field-label">Marketing Expertise</span><div class="topic-tags marketing-tags">${marketingParts.map(v => `<span class="topic-tag">${v}</span>`).join('')}</div></div>`);
+    cols.push(`<div class="alum-col"><span class="field-label">Marketing Expertise</span><div class="topic-tags marketing-tags">${marketingParts.map(v => `<span class="topic-tag">${applyTextRules(v)}</span>`).join('')}</div></div>`);
   }
 
   const askMeAboutHtml = visibleTopics.length
-    ? `<div class="alum-col ask-me-about"><span class="field-label">Ask Me About</span><div class="topic-tags">${visibleTopics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</div></div>`
+    ? `<div class="alum-col ask-me-about"><span class="field-label">Ask Me About</span><div class="topic-tags">${visibleTopics.map(t => `<span class="topic-tag">${applyTextRules(topicShortLabel(t))}</span>`).join('')}</div></div>`
     : '';
 
   if(!cols.length && !askMeAboutHtml) return '';
@@ -3519,13 +3589,16 @@ function formatDisplayLabel(value){
   return FORMAT_DISPLAY_OVERRIDES[value] || value;
 }
 
-// A trailing parenthetical explainer after the company name (e.g.
-// "Dexmate (Robotics company in SF bay)") renders at the job title's
-// smaller size, so the brand name itself stays the prominent part.
+// A trailing parenthetical explainer, or a comma-separated "previously
+// worked there" aside (e.g. "Dexmate (Robotics company in SF bay)" or
+// "Dyson, ex-Ulta Beauty") - see splitPrevNote - renders on its own
+// line, smaller, so the current company name itself stays the prominent
+// part. and->& / previously->prev applied to both.
 function companyHtml(company){
-  const m = /^(.*?)\s*(\([^()]*\))\s*$/.exec(company || '');
-  if(!m || !m[1]) return company;
-  return `${m[1]} <span class="alum-company-note">${m[2]}</span>`;
+  const {main, note} = splitPrevNote(company || '');
+  const mainHtml = applyTextRules(main);
+  if(!note) return mainHtml;
+  return `${mainHtml}<span class="alum-company-note">${applyTextRules(note)}</span>`;
 }
 
 function capacityBadgeHtml(capacity, assumed){
