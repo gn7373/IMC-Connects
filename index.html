@@ -4276,7 +4276,13 @@ function setStatus(html, type){
 // with a later timestamp is held back for the Phase II site, even though
 // they already appear on the public data tab. Set to "" to remove the
 // cutoff entirely once Phase II is ready to launch.
-const PHASE_CUTOFF_ALUM_NAME = "Bri Sandack";
+// Removed (2026-10-17, per request) - this matches the decision already
+// made for the archived index.html (the cutoff was added there, then
+// explicitly reverted - see git history). IMC Connects was built from
+// this file, which still had the cutoff active, so it had inherited a
+// restriction the archived site no longer carries. "For Launch" should
+// show everyone who's responded, not just the Phase I subset.
+const PHASE_CUTOFF_ALUM_NAME = "";
 
 /**
  * Finds PHASE_CUTOFF_ALUM_NAME's timestamp and drops everyone whose
