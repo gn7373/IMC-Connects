@@ -718,11 +718,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    smaller, fixed internal padding instead - "reduce unnecessary
    horizontal padding" - since this container is what provides the
    actual page margin now. */
-/* Light beige outside the centered container, white inside it
-   (2026-10-17, per request) - makes the actual content (toolbar +
-   directory/profile) read as a distinct section against the page
-   rather than blending into it. */
-#view-listing{ background: #F3EEE1; }
+/* Plain white, both outside and inside the centered container (per
+   request - a beige margin outside it was tried and then reverted). */
+#view-listing{ background: #fff; }
 .listing-container{
   max-width: 1280px;
   margin: 0 auto;
@@ -773,7 +771,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 28px;
+  /* Shorter row (per request - "too tall") - was 16px 28px. */
+  padding: 10px 28px;
   border-bottom: 2px solid var(--line);
   font-family: 'Inter', sans-serif;
   font-size: 12.5px;
@@ -790,7 +789,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   border: 1.5px solid var(--line-strong);
   background: none;
   color: var(--muted);
-  padding: 7px 12px;
+  /* Shorter (per request, along with .directory-list-header's own
+     padding) - was 7px 12px. */
+  padding: 5px 12px;
   font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   font-weight: 500;
@@ -817,10 +818,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   min-width: 300px;
   display: flex;
   flex-direction: column;
-  /* Right edge only now (2026-10-17, was left+right) - the left one
-     was removed per request; this side still marks where the directory
-     ends and the resizer/profile begin. */
-  border-right: 2px solid var(--line);
+  /* No border here any more (per request - "3 separator lines... just
+     have 1") - the resizer's own ::before hairline is the single divider
+     between directory and profile now; this border plus .directory-
+     right's matching one were making it read as 3 lines bunched
+     together in the gutter. */
 }
 .directory-list{
   flex: 1 1 auto;
@@ -886,13 +888,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   min-width: 480px;
   overflow-y: auto;
   padding: 24px 28px 48px;
-  /* Mirrors .directory-left's own border-right (per request: "the
-     dragger button... should sit in between the two divider lines") -
-     without this, the resizer only had one real line (.directory-left's)
-     on one side and nothing symmetric on the other, so the collapse
-     chevron read as sitting on top of a single line rather than in a
-     clean gutter between two. */
-  border-left: 2px solid var(--line);
 }
 /* Collapsing the profile panel (2026-10-17): hides it and the resizer,
    the directory expands to fill the width. Selection and the stored
