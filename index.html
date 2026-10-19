@@ -825,10 +825,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .directory-list{
   flex: 1 1 auto;
   min-height: 0;
-  /* Buffer space after the last card (2026-10-17, per request) - without
-     it the list's scroll just stops flush against the last alum's own
-     row padding, which read as an abrupt cutoff. */
-  padding-bottom: 48px;
+  /* Side inset for the card-style rows below (per request) - was 0,
+     back when rows ran edge-to-edge with a border-bottom divider
+     between them instead of being discrete cards. Buffer space after
+     the last card so the list's scroll doesn't stop flush against it. */
+  padding: 10px 14px 48px;
   overflow-y: auto;
 }
 /* Draggable divider - see initDirectoryResizer(). A 16px hit target
@@ -885,6 +886,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   min-width: 480px;
   overflow-y: auto;
   padding: 24px 28px 48px;
+  /* Mirrors .directory-left's own border-right (per request: "the
+     dragger button... should sit in between the two divider lines") -
+     without this, the resizer only had one real line (.directory-left's)
+     on one side and nothing symmetric on the other, so the collapse
+     chevron read as sitting on top of a single line rather than in a
+     clean gutter between two. */
+  border-left: 2px solid var(--line);
 }
 /* Collapsing the profile panel (2026-10-17): hides it and the resizer,
    the directory expands to fill the width. Selection and the stored
@@ -901,22 +909,32 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    location sits truly centered relative to the name/role/company block
    and the spots-available badge, per request - not just evenly spaced
    among 3+ items as an earlier pass had it. */
+/* Cards, not a flat divided list (per request: "get rid of the deep
+   divider lines for the alumni listings and instead have them as cards
+   with very subtle vertical dividers") - each row is its own bordered,
+   shadowed card with a gap below it instead of a shared border-bottom
+   line; the only dividers left are the thin ones between a card's own
+   columns (see .directory-entry-location-inline/.directory-entry-right
+   below), not between cards. */
 .directory-entry{
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 14px;
   padding: 16px 28px;
+  margin-bottom: 10px;
   cursor: pointer;
-  border: none;
-  border-bottom: 2px solid var(--line);
+  border: 1px solid var(--line);
+  border-radius: 10px;
   border-left: 3px solid transparent;
-  background: none;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(32, 27, 29, 0.05);
   width: 100%;
   text-align: left;
   font: inherit;
   color: inherit;
 }
+.directory-entry:last-child{ margin-bottom: 0; }
 .directory-entry:hover{ background: var(--paper); }
 .directory-entry.selected{
   background: var(--accent-tint);
@@ -960,6 +978,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    open, location just isn't shown on the card at all). Sized to match
    .alum-company (13.5px) in this left-column context only - the profile
    panel's own badge keeps its usual smaller size. */
+/* Subtle vertical dividers between this card's columns (per request,
+   replacing the old shared border-bottom between whole rows) - sit in
+   the grid's own 14px gap, not adding any extra width. */
 .directory-entry-location-inline{
   display: flex;
   align-items: center;
@@ -969,12 +990,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   font-family: 'Inter', sans-serif;
   font-size: 13.5px;
   color: var(--muted);
+  border-left: 1px solid var(--line);
+  padding-left: 10px;
 }
 .directory-entry-right{
   display: flex;
   align-items: center;
   gap: 10px;
   justify-self: end;
+  border-left: 1px solid var(--line);
+  padding-left: 10px;
 }
 .directory-entry-spots .capacity-badge{ font-size: 13.5px; }
 .directory-entry-chevron{ color: var(--muted); flex-shrink: 0; }
@@ -1030,15 +1055,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 0;
 }
 .profile-back-btn:hover{ color: var(--ink); }
-/* justify-content:flex-end (per request) - pushes this row to the right
-   edge of .profile-info, which (since .profile-info fills whatever's
-   left of .directory-right beside the fixed-width portrait) is the same
-   right edge .directory-right's own content box ends at - the same edge
-   the toolbar's Review & Submit button sits against (matching 6vw right
-   padding on both), so the add-to-list button's right edge lines up with
-   Review & Submit's. Sits beneath the identity block now (margin-top),
-   not pinned above it, per request. */
-.profile-availability{ display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 16px; }
+/* justify-content:flex-start (per request) - sits directly under the
+   identity block's own left edge (location/LinkedIn), not pushed out to
+   the right edge where it no longer has anything to align with now that
+   it's beneath the identity block rather than beside it. */
+.profile-availability{ display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-top: 16px; }
 /* Top-aligned (2026-10-17) - the identity block (name/role/company/
    location+LinkedIn) is a single stack beside the portrait, with
    availability+Add-to-list beneath it, so the column no longer needs to
@@ -1094,15 +1115,17 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .profile-info .alum-role{ margin-top: 8px; font-size: 16px; }
 .profile-info .alum-company{ font-size: 15px; margin-top: 4px; }
 .profile-info .alum-meta{ margin-top: 10px; font-size: 14px; }
-/* Edge-to-edge (2026-10-17, per request) - the negative horizontal
-   margin matches .directory-right's own fixed 28px side padding, so
-   this line reaches the column's actual left/right edges instead of
-   stopping at the inset content width. No margin-bottom any more
-   either, so the expertise section right below starts flush against
-   this line instead of leaving a gap - "connect to the top horizontal",
-   per request. */
+/* Edge-to-edge on the right only (per request: "start below the dragger
+   artifact") - the right negative margin still matches .directory-
+   right's own 28px padding, reaching the column's actual right edge, but
+   the left side no longer bleeds past the normal content inset - it
+   used to run flush against the resizer/dragger's own edge, which read
+   as continuing underneath it; starting at the same inset as the
+   Industry Expertise text below keeps it clearly separate from the
+   dragger. No margin-bottom either, so the expertise section right
+   below starts flush against this line instead of leaving a gap. */
 .profile-divider{
-  margin: 20px -28px 0;
+  margin: 20px -28px 0 0;
   border-top: 2px solid var(--line);
 }
 .profile-sections .alum-columns{ margin-top: 0; }
@@ -1615,7 +1638,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    .profile-info .alum-role (16px), per request. */
 .field-label{
   display: block;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Baskerville', 'Libre Baskerville', serif;
   font-size: 16px;
   letter-spacing: 0.01em;
   text-transform: none;
@@ -1980,6 +2003,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .sort-option:hover{ background: var(--paper); }
 .sort-option.active{ color: var(--accent); font-weight: 600; }
+/* Clears sortMode back to unsorted (natural list order), same idea as
+   the filters' own "Clear all" - styled the same way (purple, bold, no
+   background) and set off from the real sort choices below it with a
+   thin divider, per request. */
+.sort-option.sort-clear{
+  color: var(--accent);
+  font-weight: 700;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  margin-bottom: 4px;
+  padding-bottom: 10px;
+}
+.sort-option.sort-clear:hover{ background: none; color: var(--accent-deep); }
 
 .toast{
   position: fixed;
@@ -2245,9 +2281,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="filter-dropdown-panel sort-panel" id="sortPanel">
+          <button type="button" class="sort-option sort-clear" data-sort="none">Clear</button>
           <button type="button" class="sort-option" data-sort="name">Name A–Z</button>
+          <button type="button" class="sort-option" data-sort="name_desc">Name Z–A</button>
           <button type="button" class="sort-option" data-sort="capacity">Most spots available</button>
-          <button type="button" class="sort-option" data-sort="recent">Recently added</button>
+          <button type="button" class="sort-option" data-sort="capacity_asc">Least spots available</button>
+          <button type="button" class="sort-option" data-sort="newest">Newest</button>
+          <button type="button" class="sort-option" data-sort="oldest">Oldest</button>
         </div>
       </div>
     </div>
@@ -3627,19 +3667,36 @@ const PORTRAIT_PLACEHOLDER_SVG = '<svg width="56" height="56" viewBox="0 0 24 24
 // whatever filters have been applied" rather than a separate,
 // independent sort over everyone. Always has an active mode now (no
 // more "off" state) - Name A-Z is the default, per request.
-let sortMode = 'name'; // 'name' | 'recent' | 'capacity'
-const SORT_LABELS = {name: 'Name A–Z', recent: 'Recently added', capacity: 'Most spots available'};
+let sortMode = 'name'; // 'none' | 'name' | 'name_desc' | 'capacity' | 'capacity_asc' | 'newest' | 'oldest'
+const SORT_LABELS = {
+  none: 'Sort',
+  name: 'Name A–Z',
+  name_desc: 'Name Z–A',
+  capacity: 'Most spots available',
+  capacity_asc: 'Least spots available',
+  newest: 'Newest',
+  oldest: 'Oldest'
+};
 function applySort(list){
   if(sortMode === 'name'){
     return [...list].sort((a, b) => a.name.localeCompare(b.name));
   }
-  if(sortMode === 'recent'){
-    return [...list].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  if(sortMode === 'name_desc'){
+    return [...list].sort((a, b) => b.name.localeCompare(a.name));
   }
   if(sortMode === 'capacity'){
     return [...list].sort((a, b) => (b.capacity || 0) - (a.capacity || 0));
   }
-  return list;
+  if(sortMode === 'capacity_asc'){
+    return [...list].sort((a, b) => (a.capacity || 0) - (b.capacity || 0));
+  }
+  if(sortMode === 'newest'){
+    return [...list].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }
+  if(sortMode === 'oldest'){
+    return [...list].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  }
+  return list; // 'none' - unsorted, natural order
 }
 
 function renderGrid(){
@@ -4049,12 +4106,20 @@ function measureTextWidth(text, font){
 function minDirectoryListWidthForNames(){
   const nameEls = document.querySelectorAll('.directory-entry-name');
   const entry = document.querySelector('.directory-entry');
+  const list = document.getElementById('directoryList');
   if(!nameEls.length || !entry) return 0;
   const font = getComputedStyle(nameEls[0]).font;
   let widest = 0;
   nameEls.forEach(el => { widest = Math.max(widest, measureTextWidth(el.textContent, font)); });
   const entryStyle = getComputedStyle(entry);
-  const padding = parseFloat(entryStyle.paddingLeft) + parseFloat(entryStyle.paddingRight);
+  const listStyle = getComputedStyle(list);
+  // Each card now sits inset within .directory-list's own side padding
+  // (the card redesign, per request) rather than running the full width
+  // of #directoryLeft, so the floor needs that inset added back in too -
+  // otherwise it only guaranteed room for the card itself, not for the
+  // actual #directoryLeft width the resizer/enforce functions clamp.
+  const padding = parseFloat(entryStyle.paddingLeft) + parseFloat(entryStyle.paddingRight)
+    + parseFloat(listStyle.paddingLeft) + parseFloat(listStyle.paddingRight);
   // 1.08x + 12px safety buffer - canvas measureText() doesn't perfectly
   // match real DOM text layout (web font metrics can differ slightly
   // from the canvas's fallback if measured before the font's fully
@@ -4418,7 +4483,7 @@ document.getElementById('searchInput').addEventListener('input', renderGrid);
 document.getElementById('searchBtn').addEventListener('click', renderGrid);
 
 function updateSortUI(){
-  document.getElementById('sortToggleLabel').textContent = `Sort: ${SORT_LABELS[sortMode]}`;
+  document.getElementById('sortToggleLabel').textContent = sortMode === 'none' ? 'Sort' : `Sort: ${SORT_LABELS[sortMode]}`;
   document.querySelectorAll('.sort-option').forEach(b => b.classList.toggle('active', b.dataset.sort === sortMode));
 }
 document.getElementById('sortToggle').addEventListener('click', (e) => {
