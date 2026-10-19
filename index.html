@@ -718,9 +718,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    smaller, fixed internal padding instead - "reduce unnecessary
    horizontal padding" - since this container is what provides the
    actual page margin now. */
-/* Plain white, both outside and inside the centered container (per
-   request - a beige margin outside it was tried and then reverted). */
-#view-listing{ background: #fff; }
+/* Outer margins use the requested swatch color; inner centered
+   container stays white so the toolbar/directory/profile read as a
+   distinct section against it. */
+#view-listing{ background: #F4F2EE; }
 .listing-container{
   max-width: 1280px;
   margin: 0 auto;
@@ -812,9 +813,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .directory-left{
   /* Width is adjustable (initDirectoryResizer(), set as an inline
-     flex-basis on this element) - 45% is just the starting point, per
-     request (~45/55 default split). */
-  flex: 0 0 45%;
+     flex-basis on this element) - 32% is just the starting point, per
+     request (~32/68 default split). */
+  flex: 0 0 32%;
   min-width: 300px;
   display: flex;
   flex-direction: column;
@@ -837,25 +838,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 /* Draggable divider - see initDirectoryResizer(). A 16px hit target
    (bigger than before, per request, for easier grabbing/visibility) that
    draws a hairline down its middle, highlighting on hover/drag. The
-   collapse control lives directly on it now, as a small chevron button -
-   double-clicking/double-tapping it resets the split back to the
-   default widths. aligned to the top (not vertically centered on the
-   whole panel any more) and positioned via positionResizerChevron() to
-   sit level with the profile header, so the Industry/Marketing Expertise
-   section below always reads as starting below the dragger, per
-   request - padding-top here is just the pre-JS fallback. */
+   collapse control lives directly on it now, as a small chevron button,
+   centered on the divider line (per request) - double-clicking/double-
+   tapping it resets the split back to the default widths. */
 .directory-resizer{
   flex: 0 0 16px;
   width: 16px;
   cursor: col-resize;
   position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   background: none;
   border: none;
   padding: 0;
-  padding-top: 110px;
 }
 .directory-resizer::before{
   content: '';
@@ -2298,7 +2294,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   </div>
   <div class="directory-resizer" id="directoryResizer" role="separator" aria-orientation="vertical" aria-label="Resize directory and profile panels" tabindex="0">
     <button type="button" class="directory-resizer-collapse" id="directoryCollapseBtn" aria-label="Collapse profile panel">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
     </button>
   </div>
   <div class="directory-right" id="directoryRight"></div>
@@ -3837,7 +3833,6 @@ function renderProfilePanel(){
       </div>
       <div class="directory-empty">No alumni match those filters right now. Try clearing a few.</div>
     `;
-    positionResizerChevron();
     return;
   }
 
@@ -3888,7 +3883,6 @@ function renderProfilePanel(){
   });
 
   collapseAskMeAboutOverflow();
-  positionResizerChevron();
 }
 
 // Delegated rather than bound per-render (renderProfilePanel replaces
@@ -4084,36 +4078,8 @@ function sizeDirectorySplit(){
 let directorySplitResizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(directorySplitResizeTimer);
-  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); positionResizerChevron(); }, 100);
+  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); }, 100);
 });
-
-// Aligns the resizer's collapse chevron with the profile header's
-// vertical center (2026-10-17, per request: "industry & marketing
-// expertise should begin below the dragger") - it used to be centered
-// on the whole panel's height instead, which on a tall profile put it
-// roughly level with Ask Me About rather than the header, so Industry/
-// Marketing Expertise read as starting *above* it, not below. Measured
-// against the real rendered header (not a guessed px value) since its
-// height varies (portrait stacks above the identity block once the
-// panel gets narrow - see .directory-right.narrow). Falls back to
-// vertical center when there's no header to measure against (profile
-// collapsed, or the empty "no alumni match" state).
-function positionResizerChevron(){
-  const resizer = document.getElementById('directoryResizer');
-  const split = document.getElementById('directorySplit');
-  if(!resizer || !split) return;
-  const splitRect = split.getBoundingClientRect();
-  const header = document.querySelector('#directoryRight .profile-header');
-  const chevronHalfHeight = 26; // half of .directory-resizer-collapse's own 52px height
-  let top;
-  if(header && splitRect.height > 0){
-    const headerRect = header.getBoundingClientRect();
-    top = (headerRect.top + headerRect.bottom) / 2 - splitRect.top - chevronHalfHeight;
-  } else {
-    top = splitRect.height / 2 - chevronHalfHeight;
-  }
-  resizer.style.paddingTop = Math.max(8, top) + 'px';
-}
 
 // Draggable divider between the directory list and the profile panel
 // (2026-10-17) - sets #directoryLeft's flex-basis directly, which
@@ -4161,7 +4127,7 @@ function minDirectoryListWidthForNames(){
   return Math.ceil((widest * 1.08) + padding) + 12;
 }
 // The drag-time floor above only fires mid-drag - it did nothing for
-// the *default* 45% split, which on a long enough name (e.g. "Carmen
+// the *default* split, which on a long enough name (e.g. "Carmen
 // Gutierrez de la Roza") was still narrow enough to wrap, same bug in a
 // different trigger. Called whenever the column might have just gotten
 // narrower without a drag: after the profile opens, after the list
@@ -4174,7 +4140,7 @@ function minDirectoryListWidthForNames(){
 // current view (e.g. the landing page is shown, so #view-listing is
 // display:none) used to measure a not-yet-laid-out 0px-wide column as
 // "too narrow" and latch the floor width into #directoryLeft's inline
-// style - inert while collapsed, so it silently overrode the real 45%
+// style - inert while collapsed, so it silently overrode the real
 // default the next time a profile was opened. A real rendered width is
 // never 0 (min-width:300px alone prevents that), so treat 0 as "not
 // actually visible yet" and skip.
@@ -4227,7 +4193,7 @@ function initDirectoryResizer(){
 
   // Double-click/double-tap the divider resets the split back to its
   // default widths (clearing the inline flex-basis falls back to
-  // .directory-left's CSS default of 45%), per request.
+  // .directory-left's CSS default of 32%), per request.
   resizer.addEventListener('dblclick', () => {
     left.style.flexBasis = '';
   });
@@ -4255,7 +4221,6 @@ function watchProfilePanelWidth(){
     for(const entry of entries){
       right.classList.toggle('narrow', entry.contentRect.width < 420);
     }
-    positionResizerChevron();
   });
   observer.observe(right);
 }
