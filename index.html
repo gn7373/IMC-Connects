@@ -837,20 +837,25 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 /* Draggable divider - see initDirectoryResizer(). A 16px hit target
    (bigger than before, per request, for easier grabbing/visibility) that
    draws a hairline down its middle, highlighting on hover/drag. The
-   collapse control (2026-10-17) lives directly on it now, as a small
-   chevron button at its vertical midpoint - double-clicking/double-
-   tapping it resets the split back to the default widths. */
+   collapse control lives directly on it now, as a small chevron button -
+   double-clicking/double-tapping it resets the split back to the
+   default widths. aligned to the top (not vertically centered on the
+   whole panel any more) and positioned via positionResizerChevron() to
+   sit level with the profile header, so the Industry/Marketing Expertise
+   section below always reads as starting below the dragger, per
+   request - padding-top here is just the pre-JS fallback. */
 .directory-resizer{
   flex: 0 0 16px;
   width: 16px;
   cursor: col-resize;
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   background: none;
   border: none;
   padding: 0;
+  padding-top: 110px;
 }
 .directory-resizer::before{
   content: '';
@@ -919,9 +924,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 16px 28px;
   margin-bottom: 10px;
   cursor: pointer;
+  /* Plain 1px border on all 4 sides by default (bugfix - the left side
+     used to default to transparent, so the card only had a visible edge
+     on 3 of its 4 sides until selected). .selected/.in-list below widen
+     just the left side and color it as their own accent, overriding this. */
   border: 1px solid var(--line);
   border-radius: 10px;
-  border-left: 3px solid transparent;
   background: #fff;
   box-shadow: 0 1px 3px rgba(32, 27, 29, 0.05);
   width: 100%;
@@ -933,7 +941,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .directory-entry:hover{ background: var(--paper); }
 .directory-entry.selected{
   background: var(--accent-tint);
-  border-left-color: var(--accent);
+  border-left: 3px solid var(--accent);
 }
 /* Added-to-list (2026-10-17) - a real green, distinct from the purple
    "currently viewing" selected state above (and from --success-on-light,
@@ -943,7 +951,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    list. */
 .directory-entry.in-list{
   background: var(--list-added-tint);
-  border-left-color: var(--list-added);
+  border-left: 3px solid var(--list-added);
 }
 .directory-entry.in-list .directory-entry-chevron{ color: var(--list-added); }
 .directory-entry-info{ min-width: 0; }
@@ -3829,6 +3837,7 @@ function renderProfilePanel(){
       </div>
       <div class="directory-empty">No alumni match those filters right now. Try clearing a few.</div>
     `;
+    positionResizerChevron();
     return;
   }
 
@@ -3879,6 +3888,7 @@ function renderProfilePanel(){
   });
 
   collapseAskMeAboutOverflow();
+  positionResizerChevron();
 }
 
 // Delegated rather than bound per-render (renderProfilePanel replaces
@@ -4074,8 +4084,36 @@ function sizeDirectorySplit(){
 let directorySplitResizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(directorySplitResizeTimer);
-  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); }, 100);
+  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); positionResizerChevron(); }, 100);
 });
+
+// Aligns the resizer's collapse chevron with the profile header's
+// vertical center (2026-10-17, per request: "industry & marketing
+// expertise should begin below the dragger") - it used to be centered
+// on the whole panel's height instead, which on a tall profile put it
+// roughly level with Ask Me About rather than the header, so Industry/
+// Marketing Expertise read as starting *above* it, not below. Measured
+// against the real rendered header (not a guessed px value) since its
+// height varies (portrait stacks above the identity block once the
+// panel gets narrow - see .directory-right.narrow). Falls back to
+// vertical center when there's no header to measure against (profile
+// collapsed, or the empty "no alumni match" state).
+function positionResizerChevron(){
+  const resizer = document.getElementById('directoryResizer');
+  const split = document.getElementById('directorySplit');
+  if(!resizer || !split) return;
+  const splitRect = split.getBoundingClientRect();
+  const header = document.querySelector('#directoryRight .profile-header');
+  const chevronHalfHeight = 26; // half of .directory-resizer-collapse's own 52px height
+  let top;
+  if(header && splitRect.height > 0){
+    const headerRect = header.getBoundingClientRect();
+    top = (headerRect.top + headerRect.bottom) / 2 - splitRect.top - chevronHalfHeight;
+  } else {
+    top = splitRect.height / 2 - chevronHalfHeight;
+  }
+  resizer.style.paddingTop = Math.max(8, top) + 'px';
+}
 
 // Draggable divider between the directory list and the profile panel
 // (2026-10-17) - sets #directoryLeft's flex-basis directly, which
@@ -4217,6 +4255,7 @@ function watchProfilePanelWidth(){
     for(const entry of entries){
       right.classList.toggle('narrow', entry.contentRect.width < 420);
     }
+    positionResizerChevron();
   });
   observer.observe(right);
 }
