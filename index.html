@@ -761,23 +761,29 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .toolbar-row2 .filter-bar{ flex: 1 1 auto; margin-top: 0; }
 /* Separates the count/sort row from the alumni listings below it.
-   Unlike .directory-right's dividers, .directory-left has no side
-   padding of its own (its children each set their own 28px inset
-   directly), so this needs no cancelling negative margin - that trick
-   was copied over from .profile-divider's context and was actually
-   overshooting .directory-left's own box on both sides, bleeding the
-   border-bottom line out into the resizer/profile panel (bugfix). */
+   .directory-left itself has no side padding (its children each set
+   their own 28px inset directly), so this reaches its right edge (the
+   resizer) with no extra margin needed there. Its LEFT edge, though,
+   is the true edge of the white content column (.listing-container) -
+   .directory-left's own box starts well inside that, inset by
+   .listing-container's own side padding - so a negative left margin
+   matching that exact padding (same clamp() formula, not a fixed px
+   guess) is still needed on this side alone, per request ("run to the
+   edge of the white content column"). */
 .directory-list-header{
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* Shorter row (per request - "too tall") - was 16px 28px. */
-  padding: 10px 28px;
+  /* Shorter row (per request - "too tall") - was 16px 28px. Left side is
+     28px PLUS the negative margin's own amount, so pulling the box's
+     left edge out to the true column edge doesn't also drag the actual
+     count/sort text out there with it - they stay put at the same
+     28px-from-content inset as before. */
+  padding: 10px 28px 10px calc(28px + clamp(16px, 3vw, 40px));
+  margin-left: calc(clamp(16px, 3vw, 40px) * -1);
   /* Thinner (per request) - was 2px, like the site's other dividers;
-     this one is now 1px. Runs the full width of #directoryLeft (which
-     has no side padding of its own) since this element carries no
-     side margin to pull it past that edge either way. */
+     this one is now 1px. */
   border-bottom: 1px solid var(--line);
   font-family: 'Inter', sans-serif;
   font-size: 12.5px;
@@ -1118,15 +1124,17 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .profile-info .alum-role{ margin-top: 8px; font-size: 16px; }
 .profile-info .alum-company{ font-size: 15px; margin-top: 4px; }
 .profile-info .alum-meta{ margin-top: 10px; font-size: 14px; }
-/* Edge-to-edge on the right only (per request: "start below the dragger
-   artifact") - the negative margin on both sides matches .directory-
-   right's own 28px padding, so this line reaches the column's actual
-   left/right edges (per request - runs to the edge of the white content
-   column, same as the other dividers) rather than stopping at the inset
-   content width. No margin-bottom either, so the expertise section right
-   below starts flush against this line instead of leaving a gap. */
+/* Edge-to-edge on both sides, per request ("run to the edge of the
+   white content column"). The left side only needs to cancel .directory-
+   right's own 28px padding, reaching the resizer boundary - there's no
+   further whitespace past that to bleed into, that's the resizer itself.
+   The right side needs to go further: past that same 28px padding AND
+   .listing-container's own side padding (same clamp() formula, not a
+   fixed px guess), since .directory-right's right edge sits well inside
+   the actual white column's true right edge. No margin-bottom either, so
+   the expertise section right below starts flush against this line. */
 .profile-divider{
-  margin: 20px -28px 0;
+  margin: 20px calc(-28px - clamp(16px, 3vw, 40px)) 0 -28px;
   border-top: 2px solid var(--line);
 }
 .profile-sections .alum-columns{ margin-top: 0; }
@@ -1665,11 +1673,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .alum-col{ flex: 1 1 140px; min-width: 0; padding-top: 16px; }
 /* Subtle (1px, not the site's usual 2px dividers - deliberately lighter
    here per request) separator between the expertise row above and Ask
-   Me About below. Negative side margins match .directory-right's 28px
-   padding, same edge-to-edge trick as .profile-divider. */
+   Me About below. Same edge-to-edge trick and reasoning as
+   .profile-divider just above - left side cancels .directory-right's
+   own padding only, right side goes further to reach the white column's
+   true right edge. */
 .profile-section-divider{
   border-top: 1px solid var(--line);
-  margin: 20px -28px;
+  margin: 20px calc(-28px - clamp(16px, 3vw, 40px)) 20px -28px;
 }
 /* "+N more" for an alum's other selected industries beyond the primary
    one shown - opens a small popover (not an inline expand) listing them
