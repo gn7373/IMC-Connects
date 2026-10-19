@@ -761,18 +761,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   flex-wrap: wrap;
 }
 .toolbar-row2 .filter-bar{ flex: 1 1 auto; margin-top: 0; }
-/* border-bottom + the matching -28px margin/padding pair (2026-10-17,
-   per request) separates the count/sort row from the alumni listings
-   below it, and - like every other divider on this page - runs the
-   full width of its container (.directory-left) rather than just the
-   inset content width. */
+/* Separates the count/sort row from the alumni listings below it.
+   Unlike .directory-right's dividers, .directory-left has no side
+   padding of its own (its children each set their own 28px inset
+   directly), so this needs no cancelling negative margin - that trick
+   was copied over from .profile-divider's context and was actually
+   overshooting .directory-left's own box on both sides, bleeding the
+   border-bottom line out into the resizer/profile panel (bugfix). */
 .directory-list-header{
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 28px;
-  margin: 0 -28px;
   border-bottom: 2px solid var(--line);
   font-family: 'Inter', sans-serif;
   font-size: 12.5px;
@@ -809,12 +810,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   position: relative;
 }
 .directory-left{
-  /* Width is adjustable (sizeableLeftWidth(), set as an inline
-     flex-basis on this element) - 42% is just the starting point
-     (2026-10-17, was 35% - widened so names have more natural room
-     before the resize floor ever has to kick in). */
-  flex: 0 0 42%;
-  min-width: 280px;
+  /* Width is adjustable (initDirectoryResizer(), set as an inline
+     flex-basis on this element) - 45% is just the starting point, per
+     request (~45/55 default split). */
+  flex: 0 0 45%;
+  min-width: 300px;
   display: flex;
   flex-direction: column;
   /* Right edge only now (2026-10-17, was left+right) - the left one
@@ -882,7 +882,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .directory-resizer.dragging .directory-resizer-collapse{ border-color: var(--accent); color: var(--accent); }
 .directory-right{
   flex: 1 1 auto;
-  min-width: 320px;
+  min-width: 480px;
   overflow-y: auto;
   padding: 24px 28px 48px;
 }
@@ -1030,19 +1030,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 0;
 }
 .profile-back-btn:hover{ color: var(--ink); }
-/* justify-content:flex-end (2026-10-17, per request) - pushes this row
-   to the right edge of .profile-info, which (since .profile-info fills
-   whatever's left of .directory-right beside the fixed-width portrait)
-   is the same right edge .directory-right's own content box ends at -
-   the same edge the toolbar's Review & Submit button sits against
-   (matching 6vw right padding on both), so the add-to-list button's
-   right edge now lines up with Review & Submit's. */
-.profile-availability{ display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
-/* align-items:stretch (2026-10-17, was flex-start) so .profile-info
-   takes on the portrait's full 220px height - that's what lets its own
-   top/middle/bottom children (below) pin to the portrait's top and
-   bottom edges instead of just sitting at its top. */
-.profile-header{ display: flex; gap: 28px; align-items: stretch; }
+/* justify-content:flex-end (per request) - pushes this row to the right
+   edge of .profile-info, which (since .profile-info fills whatever's
+   left of .directory-right beside the fixed-width portrait) is the same
+   right edge .directory-right's own content box ends at - the same edge
+   the toolbar's Review & Submit button sits against (matching 6vw right
+   padding on both), so the add-to-list button's right edge lines up with
+   Review & Submit's. Sits beneath the identity block now (margin-top),
+   not pinned above it, per request. */
+.profile-availability{ display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 16px; }
+/* Top-aligned (2026-10-17) - the identity block (name/role/company/
+   location+LinkedIn) is a single stack beside the portrait, with
+   availability+Add-to-list beneath it, so the column no longer needs to
+   stretch to the portrait's full height. */
+.profile-header{ display: flex; gap: 28px; align-items: flex-start; }
 /* Portrait + text stack vertically once the panel gets narrow (resized
    small, or on a mobile detail view) - toggled by a ResizeObserver on
    #directoryRight (watchProfilePanelWidth()) rather than a plain media
@@ -1066,30 +1067,23 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   justify-content: center;
   color: var(--line-strong);
 }
-/* The 3-row text column beside the portrait (2026-10-17) - top row
-   (spots-available + add-to-list) pins to the portrait's top edge,
-   bottom row (location + LinkedIn) pins to its bottom edge, and the
-   name/role/company group floats in the middle, via space-between on a
-   column that's now exactly as tall as the portrait (see
-   align-items:stretch above). */
+/* Identity block beside the portrait: name/role/company/location+
+   LinkedIn stack in one group (.profile-info-identity), with
+   availability+Add-to-list beneath it (.profile-availability, margin-top
+   above) - name is the visual focal point, per request. */
 .profile-info{
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  /* flex:1 1 auto (2026-10-17) - without a grow factor this only took
-     its own content's width, falling well short of .directory-right's
-     right edge; grabbing the rest of .profile-header's width is what
-     lets .profile-availability's flex-end actually land flush with the
+  /* flex:1 1 auto - without a grow factor this only took its own content
+     width, falling well short of .directory-right's right edge; grabbing
+     the rest of .profile-header's width is what lets
+     .profile-availability's flex-end actually land flush with the
      toolbar's Review & Submit button, per request. */
   flex: 1 1 auto;
   min-width: 0;
 }
-.profile-info-bottom{ display: flex; align-items: center; min-height: 1px; }
-/* Nudged down from the top row (2026-10-17, per request) - on top of
-   the automatic space-between gap above it. */
-.profile-info-middle{ margin-top: 10px; }
-/* Semi-bold (2026-10-17, was regular weight) - matches
-   .directory-entry-name's own left-column formatting, per request. */
+/* Semi-bold - matches .directory-entry-name's own left-column
+   formatting, per request. */
 .profile-name{
   font-family: 'Baskerville', 'Libre Baskerville', serif;
   font-weight: 600;
@@ -1099,11 +1093,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .profile-info .alum-role{ margin-top: 8px; font-size: 16px; }
 .profile-info .alum-company{ font-size: 15px; margin-top: 4px; }
-/* No margin-top here any more (2026-10-17) - .alum-meta now lives inside
-   .profile-info-bottom, its own flex item at the bottom of the column
-   (see .profile-info below), so the gap above it comes from
-   justify-content:space-between, not a fixed margin. */
-.profile-info .alum-meta{ font-size: 14px; }
+.profile-info .alum-meta{ margin-top: 10px; font-size: 14px; }
 /* Edge-to-edge (2026-10-17, per request) - the negative horizontal
    margin matches .directory-right's own fixed 28px side padding, so
    this line reaches the column's actual left/right edges instead of
@@ -1413,6 +1403,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-right{
     display: none;
     max-width: none;
+    /* Desktop's 480px floor (keeps the split-view profile panel usable)
+       would otherwise force this full-screen mobile view wider than the
+       viewport on phones narrower than 480px, causing horizontal
+       overflow - reset to 0 here since this is no longer a side panel. */
+    min-width: 0;
     position: fixed;
     top: var(--content-top, 70px);
     left: 0;
@@ -3797,19 +3792,17 @@ function renderProfilePanel(){
     <div class="profile-header">
       <div class="profile-portrait" aria-hidden="true">${PORTRAIT_PLACEHOLDER_SVG}</div>
       <div class="profile-info">
-        <div class="profile-info-top profile-availability">
+        <div class="profile-info-identity">
+          <div class="profile-name">${a.name}</div>
+          ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
+          <div class="alum-company">${companyHtml(a.company)}</div>
+          ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
+        </div>
+        <div class="profile-availability">
           ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
           <button class="add-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name} from my list` : `Add ${a.name} to my list`}">
             ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>
           </button>
-        </div>
-        <div class="profile-info-middle">
-          <div class="profile-name">${a.name}</div>
-          ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
-          <div class="alum-company">${companyHtml(a.company)}</div>
-        </div>
-        <div class="profile-info-bottom">
-          ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
         </div>
       </div>
     </div>
@@ -4070,7 +4063,7 @@ function minDirectoryListWidthForNames(){
   return Math.ceil((widest * 1.08) + padding) + 12;
 }
 // The drag-time floor above only fires mid-drag - it did nothing for
-// the *default* 42% split, which on a long enough name (e.g. "Carmen
+// the *default* 45% split, which on a long enough name (e.g. "Carmen
 // Gutierrez de la Roza") was still narrow enough to wrap, same bug in a
 // different trigger. Called whenever the column might have just gotten
 // narrower without a drag: after the profile opens, after the list
@@ -4079,10 +4072,19 @@ function minDirectoryListWidthForNames(){
 // (never fights a width the user deliberately dragged wider), and no-ops
 // entirely while the profile is collapsed, where the list is already
 // full-width.
+// Bugfix: a resize event firing while the browsing page itself isn't the
+// current view (e.g. the landing page is shown, so #view-listing is
+// display:none) used to measure a not-yet-laid-out 0px-wide column as
+// "too narrow" and latch the floor width into #directoryLeft's inline
+// style - inert while collapsed, so it silently overrode the real 45%
+// default the next time a profile was opened. A real rendered width is
+// never 0 (min-width:300px alone prevents that), so treat 0 as "not
+// actually visible yet" and skip.
 function enforceDirectoryListMinWidth(){
   const split = document.getElementById('directorySplit');
   const left = document.getElementById('directoryLeft');
   if(!split || !left || split.classList.contains('profile-collapsed')) return;
+  if(left.getBoundingClientRect().width === 0) return;
   const floor = minDirectoryListWidthForNames();
   if(left.getBoundingClientRect().width < floor){
     left.style.flexBasis = floor + 'px';
@@ -4096,10 +4098,10 @@ function initDirectoryResizer(){
   if(!resizer || !left || !split) return;
   let dragging = false;
   let nameFloor = 0; // recomputed at the start of each drag, see above
-  const rightMinWidth = 320; // matches .directory-right's min-width in CSS
+  const rightMinWidth = 480; // matches .directory-right's min-width in CSS
 
   function setLeftWidth(px){
-    const minWidth = Math.max(parseFloat(getComputedStyle(left).minWidth) || 280, nameFloor);
+    const minWidth = Math.max(parseFloat(getComputedStyle(left).minWidth) || 300, nameFloor);
     const splitWidth = split.getBoundingClientRect().width;
     const maxWidth = splitWidth - rightMinWidth - 16; // 16 = the resizer's own width
     left.style.flexBasis = Math.max(minWidth, Math.min(px, maxWidth)) + 'px';
@@ -4127,7 +4129,7 @@ function initDirectoryResizer(){
 
   // Double-click/double-tap the divider resets the split back to its
   // default widths (clearing the inline flex-basis falls back to
-  // .directory-left's CSS default of 35%), per request.
+  // .directory-left's CSS default of 45%), per request.
   resizer.addEventListener('dblclick', () => {
     left.style.flexBasis = '';
   });
