@@ -774,7 +774,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   justify-content: space-between;
   /* Shorter row (per request - "too tall") - was 16px 28px. */
   padding: 10px 28px;
-  border-bottom: 2px solid var(--line);
+  /* Thinner (per request) - was 2px, like the site's other dividers;
+     this one is now 1px. Runs the full width of #directoryLeft (which
+     has no side padding of its own) since this element carries no
+     side margin to pull it past that edge either way. */
+  border-bottom: 1px solid var(--line);
   font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   color: var(--muted);
@@ -3727,7 +3731,7 @@ let pendingShuffle = false;
 function renderDirectoryList(filtered){
   const list = document.getElementById('directoryList');
   const countEl = document.getElementById('directoryCount');
-  if(countEl) countEl.textContent = `${filtered.length} alumni`;
+  if(countEl) countEl.textContent = `${filtered.length} alumni available`;
   const shuffle = pendingShuffle;
   pendingShuffle = false;
   list.innerHTML = '';
