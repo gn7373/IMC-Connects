@@ -1119,16 +1119,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .profile-info .alum-company{ font-size: 15px; margin-top: 4px; }
 .profile-info .alum-meta{ margin-top: 10px; font-size: 14px; }
 /* Edge-to-edge on the right only (per request: "start below the dragger
-   artifact") - the right negative margin still matches .directory-
-   right's own 28px padding, reaching the column's actual right edge, but
-   the left side no longer bleeds past the normal content inset - it
-   used to run flush against the resizer/dragger's own edge, which read
-   as continuing underneath it; starting at the same inset as the
-   Industry Expertise text below keeps it clearly separate from the
-   dragger. No margin-bottom either, so the expertise section right
+   artifact") - the negative margin on both sides matches .directory-
+   right's own 28px padding, so this line reaches the column's actual
+   left/right edges (per request - runs to the edge of the white content
+   column, same as the other dividers) rather than stopping at the inset
+   content width. No margin-bottom either, so the expertise section right
    below starts flush against this line instead of leaving a gap. */
 .profile-divider{
-  margin: 20px -28px 0 0;
+  margin: 20px -28px 0;
   border-top: 2px solid var(--line);
 }
 .profile-sections .alum-columns{ margin-top: 0; }
