@@ -987,9 +987,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    open, location just isn't shown on the card at all). Sized to match
    .alum-company (13.5px) in this left-column context only - the profile
    panel's own badge keeps its usual smaller size. */
-/* Subtle vertical dividers between this card's columns (per request,
-   replacing the old shared border-bottom between whole rows) - sit in
-   the grid's own 14px gap, not adding any extra width. */
 .directory-entry-location-inline{
   display: flex;
   align-items: center;
@@ -999,16 +996,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   font-family: 'Inter', sans-serif;
   font-size: 13.5px;
   color: var(--muted);
-  border-left: 1px solid var(--line);
-  padding-left: 10px;
 }
 .directory-entry-right{
   display: flex;
   align-items: center;
   gap: 10px;
   justify-self: end;
-  border-left: 1px solid var(--line);
-  padding-left: 10px;
 }
 .directory-entry-spots .capacity-badge{ font-size: 13.5px; }
 .directory-entry-chevron{ color: var(--muted); flex-shrink: 0; }
@@ -3895,6 +3888,29 @@ function renderProfilePanel(){
   });
 
   collapseAskMeAboutOverflow();
+  positionExpertiseDivider();
+}
+
+// Pushes the Industry/Marketing Expertise divider down whenever the
+// resizer's collapse chevron (vertically centered on the whole panel's
+// height, not tied to the profile header) would otherwise land at or
+// below where that divider normally sits - per request, Industry and
+// Marketing Expertise must start below the chevron's own bottom edge.
+// Never moves the chevron itself (that's centered on the divider line,
+// per a separate request) - only adds extra top margin to the divider
+// when needed, on top of its normal 20px. Measured fresh each call
+// rather than assumed, since the chevron's position depends on the
+// viewport's height, not anything about the profile content.
+function positionExpertiseDivider(){
+  const divider = document.querySelector('.profile-divider');
+  const header = document.querySelector('.profile-header');
+  const chevron = document.querySelector('.directory-resizer-collapse');
+  if(!divider || !header || !chevron) return;
+  const defaultGap = 20; // matches .profile-divider's own base margin-top
+  const headerBottom = header.getBoundingClientRect().bottom;
+  const chevronBottom = chevron.getBoundingClientRect().bottom;
+  const neededGap = Math.max(defaultGap, (chevronBottom - headerBottom) + defaultGap);
+  divider.style.marginTop = neededGap + 'px';
 }
 
 // Delegated rather than bound per-render (renderProfilePanel replaces
@@ -4090,7 +4106,7 @@ function sizeDirectorySplit(){
 let directorySplitResizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(directorySplitResizeTimer);
-  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); }, 100);
+  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); positionExpertiseDivider(); }, 100);
 });
 
 // Draggable divider between the directory list and the profile panel
@@ -4233,6 +4249,7 @@ function watchProfilePanelWidth(){
     for(const entry of entries){
       right.classList.toggle('narrow', entry.contentRect.width < 420);
     }
+    positionExpertiseDivider();
   });
   observer.observe(right);
 }
