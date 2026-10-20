@@ -58,11 +58,36 @@
 *{ box-sizing: border-box; }
 body{
   margin:0;
+  /* Full-height app shell (per request) - header/toolbar take their own
+     natural height, #view-listing (when it's the active view) stretches
+     to fill whatever's left via the flex chain below, rather than JS
+     measuring and setting an inline pixel height. min-height (not
+     height) so the landing/info/category pages, which are taller than
+     one screen, still just grow the page and scroll normally - only
+     #view-listing's own flex:1 pulls it up to exactly fill the gap. */
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   background-color: #fff;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.15 0 0 0 0 0.15 0 0 0 0 0.4 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   color: var(--ink);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+/* Only while the browsing page is the active view (toggled in JS - see
+   showListing() and its sibling show*() functions) - min-height alone
+   doesn't cap #view-listing's own height, since flex-grow only
+   guarantees a MINIMUM fill, not a maximum; it'll happily grow taller
+   than 100dvh if its own content (the full alumni list) wants more
+   room, same as any other view. A hard height + overflow:hidden here is
+   what actually constrains that, handing the "where does the extra
+   content go" question down to .directory-left's own overflow-y:auto
+   instead of the page. Every other view keeps the plain min-height
+   version above - they're meant to grow past one screen and let the
+   page scroll normally. */
+body.listing-active{
+  height: 100dvh;
+  overflow: hidden;
 }
 :focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
 #submitBtn:focus-visible{ outline-color: var(--success); }
@@ -83,6 +108,9 @@ header.site{
   background: #fff;
   color: var(--ink);
   position: relative;
+  /* Natural height only, never stretched by body's own flex - #view-
+     listing is the one flexible piece (see its own comment). */
+  flex: 0 0 auto;
 }
 .hero-top{
   width: 100%;
@@ -145,8 +173,13 @@ header.site{
   gap: 28px;
 }
 .hero-logo{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
-  font-weight: 600;
+  font-family: 'Libre Baskerville', serif;
+  /* 700, not 600 (per request - consistent webfont rendering across
+     devices) - Libre Baskerville only actually ships Regular/Bold/
+     Italic weights; asking for 600 (a weight it doesn't have) left the
+     browser to pick whichever of those it felt was "closest",
+     inconsistently from device to device. */
+  font-weight: 700;
   font-size: 15px;
   letter-spacing: 0.01em;
   color: var(--ink);
@@ -292,7 +325,7 @@ header.site{
   border: none;
   color: var(--ink);
   font-size: 15px;
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   font-weight: 500;
   letter-spacing: normal;
   text-transform: none;
@@ -377,7 +410,7 @@ header.site{
   gap: 12px;
 }
 .review-card-name{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   font-weight: 500;
   font-size: 19px;
 }
@@ -501,7 +534,7 @@ header.site{
 .about-body strong{
   color: #453F3A;
   text-decoration: underline;
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   display: inline-block;
   background: var(--paper);
   border: 1px solid var(--line-strong);
@@ -561,7 +594,7 @@ header.site{
 
 /* ---------- LANDING HERO: "explore your path" ---------- */
 header.site h1{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   font-weight: 400;
   font-style: normal;
   font-size: clamp(64px, 5vw, 82px);
@@ -691,7 +724,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
 }
 #heroSub h2{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   font-weight: 500;
   font-size: clamp(29px, 4vw, 45px);
   text-transform: uppercase;
@@ -728,7 +761,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   border: none;
   border-top: 2px solid var(--line);
   padding: 20px 0;
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   font-size: 18px;
   font-style: italic;
   color: var(--ink);
@@ -761,7 +794,31 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 /* Textured image (per request), tiled since the margin area's height
    varies with content/viewport - #F4F2EE stays as the background-color
    fallback for the moment before it loads (or if it fails to). */
-#view-listing{ background-color: #F4F2EE; background-image: url("bg-texture.jpg"); background-repeat: repeat; }
+/* Fills whatever's left below the masthead (see body's own comment) -
+   display:flex here (not the default block) is what lets its own
+   children (the toolbar, natural height, and the directory/profile
+   card below it) participate in that same fill-remaining-space chain,
+   down to .directory-split itself. display is switched to 'flex' in JS
+   (showListing()) rather than plain '' specifically because of this. */
+#view-listing{
+  background-color: #F4F2EE;
+  background-image: url("bg-texture.jpg");
+  background-repeat: repeat;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* The directory/profile card's own wrapper (not the toolbar's - that's
+   nested inside .directory-toolbar, a grandchild, so this direct-child
+   selector reaches only the one we want) - continues the fill-
+   remaining-space chain down into .directory-split. */
+#view-listing > .listing-container{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
 /* MARGIN, not padding (bugfix, per request - "the margins are not
    visible at all") - padding paints as part of the box, so the white
    background used to fill the side gutter too, completely hiding the
@@ -857,12 +914,17 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   align-items: stretch;
   overflow: hidden;
   position: relative;
+  /* Fills the rest of #view-listing's own height (set via pure CSS flex
+     now, not a JS-measured inline height - see body's comment). */
+  flex: 1 1 auto;
+  min-height: 0;
 }
 .directory-left{
   /* Width is adjustable (initDirectoryResizer(), set as an inline
-     flex-basis on this element) - 32% is just the starting point, per
-     request (~32/68 default split). */
-  flex: 0 0 32%;
+     flex-basis on this element) - clamp() is just the starting point,
+     so the default scales with viewport width instead of a flat
+     percentage, per the responsive-hierarchy spec (2026-10-20). */
+  flex: 0 0 clamp(340px, 31vw, 480px);
   min-width: 300px;
   display: flex;
   flex-direction: column;
@@ -972,7 +1034,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 14px;
-  padding: 16px 28px;
+  padding: 13px 28px;
   margin-bottom: 10px;
   cursor: pointer;
   /* Plain 1px border on all 4 sides by default (bugfix - the left side
@@ -1010,18 +1072,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    for long names - per explicit request for this list. Semi-bold per
    request (2026-10-17; was briefly full bold - toned down one step). */
 .directory-entry-name{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
-  font-weight: 600;
-  font-size: 19px;
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 700; /* Libre Baskerville only ships 400/700 - 600 falls back inconsistently across browsers */
+  font-size: 17px;
   line-height: 1.25;
   color: var(--ink);
 }
-/* Slightly smaller specifically in compact mode - when the profile
-   panel is open, the list column is much narrower, so this (together
-   with the reduced horizontal padding above and the resize floor in
-   initDirectoryResizer) keeps names reliably on one line instead of
-   wrapping, per request (2026-10-17). */
-.directory-split:not(.profile-collapsed) .directory-entry-name{ font-size: 17px; }
+/* Directory-card-scoped role/company sizing (2026-10-20 density pass) -
+   .alum-role/.alum-company are shared with the profile pane (see
+   .profile-info .alum-role/.alum-company below), so these overrides are
+   scoped to .directory-entry-info specifically rather than changing the
+   shared base rule. */
+.directory-entry-info .alum-role{ font-size: 14px; margin-top: 3px; }
+.directory-entry-info .alum-company{ font-size: 13px; margin-top: 1px; }
 /* Location + spots-available (2026-10-17, revised again) - location is
    its own centered grid column; spots-available now groups with the
    chevron in the right-hand track instead of sitting beside location,
@@ -1108,34 +1171,34 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    .directory-right's additional fixed 28px padding on top of that - the
    negative margin-right cancels that extra inset so the two actually
    land on the same edge, not just the same relative distance within two
-   differently-padded containers. Same x-position as before, but now
-   vertically aligned with the name/role/company block (per request -
-   "align vertically with the person's name and job info") via
-   .profile-top-row below, instead of being a separate full-width row
-   above it. */
-.profile-availability{ display: flex; align-items: flex-start; justify-content: flex-end; gap: 12px; margin-right: -28px; flex-shrink: 0; }
-/* Name/role/company beside availability+Add-to-list, both starting at
-   the same y - replaces the old separate full-width availability row
-   above the identity block. */
-.profile-top-row{ display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-/* Stretch (per request - name/role/company/location should sit near
-   the bottom of the portrait) - makes .profile-info exactly as tall as
-   the portrait, which its own justify-content:flex-end below measures
-   against. */
-.profile-header{ display: flex; gap: 28px; align-items: stretch; }
+   differently-padded containers. Back to its own full-width row ABOVE
+   the identity block (2026-10-20 responsive-hierarchy spec) - its
+   position is then stable regardless of name/title length, since it no
+   longer shares a baseline with text that can wrap to 2 lines. */
+.profile-availability{ display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-right: -28px; flex-shrink: 0; }
+/* Gap below the action row, above the identity block - since the
+   column no longer relies on justify-content:flex-end to space things
+   out, this is now the only thing separating them. */
+.profile-info-identity{ margin-top: 10px; }
+/* Top-anchored, not vertically centered in the portrait's height (per
+   spec - "eliminate excessive blank space, do not vertically center the
+   identity block in a large hero area") - default column flow (no
+   justify-content override) just stacks action row, then identity,
+   then location/LinkedIn, from the top. */
+.profile-header{ display: flex; gap: 28px; align-items: flex-start; }
 /* Portrait + text stack vertically once the panel gets narrow (resized
    small, or on a mobile detail view) - toggled by a ResizeObserver on
    #directoryRight (watchProfilePanelWidth()) rather than a plain media
    query, since the panel's width changes from dragging the divider, not
    just from the viewport changing. */
 .directory-right.narrow .profile-header{ flex-direction: column; align-items: flex-start; }
-.directory-right.narrow .profile-portrait{ width: 195px; height: 233px; }
+.directory-right.narrow .profile-portrait{ width: 145px; height: 173px; }
 /* 1.5x larger (per request) - was 156x185 (which itself was reduced
    from 176x220 on 2026-10-17 to tighten the header row). */
 .profile-portrait{
   flex-shrink: 0;
-  width: 234px;
-  height: 278px;
+  width: 172px;
+  height: 205px;
   border-radius: 8px;
   background: var(--paper);
   border: 1px solid var(--line-strong);
@@ -1158,39 +1221,31 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    exhausted every known extension for this alum's photo without one
    actually loading (i.e. no photo has been uploaded for them yet). */
 .profile-portrait-fallback{ display: none; }
-/* Bottom-anchored as a whole (per request - name/role/company/location
-   should sit near the bottom of the portrait) via justify-content:
-   flex-end - simpler than the earlier absolute-positioning version,
-   and structurally can't overflow past .profile-header's own bottom
-   edge the way that version could: a flex column anchored to its own
-   end only ever grows UPWARD if its content needs more room, never down
-   past where it's anchored. */
+/* Top-anchored column (2026-10-20 spec) - action row, then identity
+   block, then location/LinkedIn, in natural top-down flow. flex:1 1
+   auto still grabs the rest of .profile-header's width, which is what
+   lets .profile-availability's own justify-content:flex-end land flush
+   with the toolbar's Review & Submit button. */
 .profile-info{
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  /* flex:1 1 auto - without a grow factor this only took its own content
-     width, falling well short of .directory-right's right edge; grabbing
-     the rest of .profile-header's width is what lets
-     .profile-availability's flex-end actually land flush with the
-     toolbar's Review & Submit button, per request. */
   flex: 1 1 auto;
   min-width: 0;
 }
-/* Semi-bold - matches .directory-entry-name's own left-column
-   formatting, per request. */
+/* name+title+company as one tight cluster (2026-10-20 spec exact
+   values) - no default heading margin, so .alum-role's own margin-top
+   is the only gap between them. */
 .profile-name{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
-  font-weight: 600;
-  font-size: 26px;
-  line-height: 1.15;
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 700; /* Libre Baskerville only ships 400/700 - 600 falls back inconsistently across browsers */
+  font-size: 27px;
+  line-height: 1.05;
+  margin: 0;
   color: var(--ink);
 }
-/* Tightened (per request - "name, role and company feel like one
-   section") - was 8px/4px. */
-.profile-info .alum-role{ margin-top: 2px; font-size: 16px; }
-.profile-info .alum-company{ font-size: 15px; margin-top: 2px; }
-.profile-info .alum-meta{ margin-top: 10px; font-size: 14px; }
+.profile-info .alum-role{ margin-top: 2px; font-size: 15px; line-height: 1.2; }
+.profile-info .alum-company{ font-size: 14px; line-height: 1.2; margin-top: 1px; }
+.profile-info .alum-meta{ margin-top: 7px; font-size: 14px; }
 /* Edge-to-edge on both sides, per request ("run to the edge of the
    white content column"). .directory-right's own 28px padding is the
    only inset to cancel on either side now - .listing-container itself
@@ -1217,7 +1272,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   border:none; outline:none; background:transparent;
   /* Reduced to match the filter/sort buttons' own text size (per
      request) - was 16px. */
-  font-size: 13.5px; width:100%; font-family: 'Baskerville', 'Libre Baskerville', serif; font-style: italic;
+  font-size: 13.5px; width:100%; font-family: 'Libre Baskerville', serif; font-style: italic;
   color: var(--ink);
 }
 /* Darker than the usual --muted (2026-10-17, per request - "increase
@@ -1268,6 +1323,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .pins-toggle-btn:hover{ background: var(--accent-deep); border-color: var(--accent-deep); }
 .pins-toggle-btn.active{ background: var(--success-on-light); border-color: var(--success-on-light); color: #fff; }
+/* Muted (not disabled - it still opens the, then-empty, list) while
+   nothing is shortlisted yet, so the "N/5" count reads as informational
+   rather than a false sense of progress. */
+.pins-toggle-btn.is-empty{ background: var(--paper); border-color: var(--line-strong); color: var(--muted); }
+.pins-toggle-btn.is-empty:hover{ background: var(--paper); border-color: var(--line-strong); }
+.pins-toggle-btn.is-empty .pins-count{ color: var(--muted); }
 .pins-count{ color: rgba(255,255,255,0.8); }
 
 .result-line{
@@ -1636,7 +1697,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .alum-capacity{ margin-top: 12px; }
 
 .alum-name{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   font-weight: 400;
   font-size: 27px;
   letter-spacing: -0.005em;
@@ -1716,19 +1777,18 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .alum-availability-line .format-icon{ margin-top: 2px; }
 /* Shared small-caps section label - Industry/Experience/Marketing
    Expertise/Ask me about all use this same treatment, matching the
-   reference page's labeled-field look. font-size matches
-   .profile-info .alum-role (16px), per request. */
+   reference page's labeled-field look. 15px per the 2026-10-20 type
+   scale (12/13/14/15/17/27px). */
 .field-label{
   display: block;
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
-  font-size: 16px;
+  font-family: 'Libre Baskerville', serif;
+  font-size: 15px;
   letter-spacing: 0.01em;
   text-transform: none;
   color: var(--accent-deep);
   margin-bottom: 6px;
   font-weight: 700;
 }
-.ask-me-about .field-label{ margin-bottom: 8px; }
 /* Industry Expertise + Marketing Expertise side by side in one row
    (2026-10-17, revised again) - Ask Me About is a separate full-width
    row below (see .profile-section-divider), not a 3rd column here, and
@@ -1743,7 +1803,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 /* padding-top gives the column text its own breathing room below the
    (flush) horizontal divider above it. */
-.alum-col{ flex: 1 1 140px; min-width: 0; padding-top: 12px; }
+.alum-col{ flex: 1 1 140px; min-width: 0; padding-top: 14px; }
 /* Subtle (1px, not the site's usual 2px dividers - deliberately lighter
    here per request) separator between the expertise row above and Ask
    Me About below. Same edge-to-edge trick and reasoning as
@@ -2004,7 +2064,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   flex-shrink: 0;
 }
 .pins-drawer-header h2{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   font-weight: 500;
   font-size: 21px;
   margin: 0;
@@ -3934,6 +3994,7 @@ function applySort(list){
 function renderGrid(){
   const filtered = applySort(alumni.filter(matchesFilters));
   renderDirectoryList(filtered);
+  updateClearButtonVisibility();
 
   if(filtered.length === 0){
     selectedAlumId = null;
@@ -3952,6 +4013,17 @@ function renderGrid(){
 // animation on every card, and clears it back to false so the next
 // unrelated render is plain.
 let pendingShuffle = false;
+
+// Shows "Clear all" only once a filter is actually active (per the
+// responsive-hierarchy spec, 2026-10-20) - an always-visible clear
+// button reads as clutter when there's nothing to clear. Search text
+// doesn't count; this tracks the filter pills specifically.
+function updateClearButtonVisibility(){
+  const btn = document.getElementById('clearFiltersBtn');
+  if(!btn) return;
+  const hasActiveFilter = FILTERABLE.some(key => filterState[key] && filterState[key].size > 0);
+  btn.style.display = hasActiveFilter ? '' : 'none';
+}
 
 // The left-hand list - name/role/company/location/availability only,
 // no pin button (that lives solely on the profile panel now) and no
@@ -4106,18 +4178,16 @@ function renderProfilePanel(){
         <span class="profile-portrait-fallback">${PORTRAIT_PLACEHOLDER_SVG}</span>
       </div>
       <div class="profile-info">
-        <div class="profile-top-row">
-          <div class="profile-info-identity">
-            <div class="profile-name">${a.name}</div>
-            ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
-            <div class="alum-company">${companyHtml(a.company)}</div>
-          </div>
-          <div class="profile-availability">
-            ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
-            <button class="add-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name} from my list` : `Add ${a.name} to my list`}">
-              ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>
-            </button>
-          </div>
+        <div class="profile-availability">
+          ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
+          <button class="add-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name} from my list` : `Add ${a.name} to my list`}">
+            ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>
+          </button>
+        </div>
+        <div class="profile-info-identity">
+          <div class="profile-name">${a.name}</div>
+          ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
+          <div class="alum-company">${companyHtml(a.company)}</div>
         </div>
         ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
       </div>
@@ -4329,27 +4399,17 @@ window.addEventListener('resize', () => {
 // drift at some viewport width. No-ops below 1024px, where the split
 // view isn't in effect (single-column directory scrolls with the page
 // instead).
+// Desktop's own height comes from pure CSS flex now (body/#view-listing/
+// .directory-split's own flex:1;min-height:0 chain, per request - no
+// more JS-measured inline height). Still needed for the MOBILE full-
+// screen detail view though - that's position:fixed, so it isn't a flex
+// child of anything that would otherwise tell it where the content
+// starts, and has to be told via this custom property instead.
 function sizeDirectorySplit(){
   const split = document.getElementById('directorySplit');
   if(!split) return;
-  // Measured as #directorySplit's own distance from the viewport top,
-  // not summed from the masthead's height - that stayed accurate when
-  // this was the only thing above the split, but the 2026-10-17 shared
-  // toolbar (plus the status/pin-cap banners) now also sits above it,
-  // and summing each piece's height by hand is exactly the kind of
-  // guess that drifts. Measuring the split's own position is correct
-  // regardless of how many pieces are stacked above it. Set as a custom
-  // property (not just an inline height) because the mobile detail view
-  // needs the same number - it's a position:fixed panel anchored with
-  // `top: var(--content-top)`, not a child of a sized .directory-split,
-  // so it has no other way to know where the content starts.
   const contentTop = split.getBoundingClientRect().top;
   document.documentElement.style.setProperty('--content-top', contentTop + 'px');
-  if(window.innerWidth < 1024){
-    split.style.height = '';
-    return;
-  }
-  split.style.height = Math.max(window.innerHeight - contentTop, 300) + 'px';
 }
 let directorySplitResizeTimer;
 window.addEventListener('resize', () => {
@@ -4469,7 +4529,7 @@ function initDirectoryResizer(){
 
   // Double-click/double-tap the divider resets the split back to its
   // default widths (clearing the inline flex-basis falls back to
-  // .directory-left's CSS default of 32%), per request.
+  // .directory-left's CSS clamp() default), per request.
   resizer.addEventListener('dblclick', () => {
     left.style.flexBasis = '';
   });
@@ -4623,7 +4683,13 @@ function renderPinCardsInto(containerId, ids, opts){
 function renderPinsDrawer(){
   const isReview = pinsDrawerMode === 'review';
   document.getElementById('pinsDrawerCount').textContent = isReview ? `(${shortlist.length}/${MAX_PICKS})` : `(${cart.length})`;
-  document.getElementById('pinsCount').textContent = cart.length ? ` (${cart.length})` : '';
+  // Toolbar button shows the shortlist count against its real cap
+  // (N/5), not the unlimited add-list size, so students can see at a
+  // glance how close they are to a submittable selection; muted when
+  // empty rather than disabled outright, since the button still opens
+  // the (then-empty) list.
+  document.getElementById('pinsCount').textContent = ` (${shortlist.length}/${MAX_PICKS})`;
+  document.getElementById('pinsToggleBtn').classList.toggle('is-empty', shortlist.length === 0);
 
   const empty = cart.length === 0;
   document.getElementById('pinsDrawerEmpty').style.display = empty ? '' : 'none';
@@ -4940,6 +5006,7 @@ function showInfo(tab, fromHistory){
   document.getElementById('view-listing').style.display = 'none';
   document.getElementById('view-info').style.display = '';
   document.getElementById('view-claim-form').style.display = 'none';
+  document.body.classList.remove('listing-active');
   selectInfoTab(tab);
   if(!fromHistory) pushHistory({view:'info', tab, viewBeforeInfo, lastCategoryKey, subTitleBeforeInfo});
 }
@@ -4965,6 +5032,7 @@ function showLanding(fromHistory){
   document.getElementById('view-listing').style.display = 'none';
   document.getElementById('view-info').style.display = 'none';
   document.getElementById('view-claim-form').style.display = 'none';
+  document.body.classList.remove('listing-active');
   if(!fromHistory) pushHistory({view:'landing'});
 }
 
@@ -4994,6 +5062,7 @@ function showCategoryPicker(key, fromHistory){
   document.getElementById('view-listing').style.display = 'none';
   document.getElementById('view-info').style.display = 'none';
   document.getElementById('view-claim-form').style.display = 'none';
+  document.body.classList.remove('listing-active');
 
   const options = collectFilterOptions();
   const values = [...(options[key] || [])].sort();
@@ -5023,9 +5092,13 @@ function showListing(contextLabel, fromHistory, categoryKey, categoryValue){
   document.querySelector('header.site').classList.add('masthead-mode');
   document.getElementById('subTitle').textContent = contextLabel ? contextLabel : 'All available alumni';
   document.getElementById('view-category').style.display = 'none';
-  document.getElementById('view-listing').style.display = '';
+  // 'flex', not '' - #view-listing's own CSS relies on being a flex
+  // container (not the block default) for its fill-remaining-height
+  // chain down to .directory-split (see its own comment).
+  document.getElementById('view-listing').style.display = 'flex';
   document.getElementById('view-info').style.display = 'none';
   document.getElementById('view-claim-form').style.display = 'none';
+  document.body.classList.add('listing-active');
   document.getElementById('directorySplit').classList.remove('mobile-detail-open');
   // Every time the browsing page is (re)entered, start with the full-
   // width directory and the profile panel closed, per request - not just
@@ -5061,6 +5134,7 @@ function showClaimForm(formUrl, fromHistory){
   document.getElementById('view-listing').style.display = 'none';
   document.getElementById('view-info').style.display = 'none';
   document.getElementById('view-claim-form').style.display = '';
+  document.body.classList.remove('listing-active');
   const separator = formUrl.includes('?') ? '&' : '?';
   document.getElementById('claimFormFrame').src = `${formUrl}${separator}embedded=true`;
   if(!fromHistory) pushHistory({view:'claimForm', formUrl, subTitleBeforeClaimForm});
