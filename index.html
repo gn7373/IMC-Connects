@@ -903,7 +903,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    request) - the resizer hairline itself stays 16px wide; this just
    overflows it a bit, same as before. */
 .directory-resizer-collapse{
-  width: 28px;
+  /* Thinner (per request) - was 28px. */
+  width: 20px;
   height: 52px;
   border-radius: 10px;
   border: 1.5px solid var(--line-strong);
@@ -1088,8 +1089,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    used to sit - no margin-top needed, it's the first thing in normal
    flow. */
 .profile-availability{ display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
-/* Stretch (per request - name/role/company should align with the
-   bottom 1/3 of the portrait) - makes .profile-info exactly as tall as
+/* Stretch (per request - name/role/company/location should sit near
+   the bottom of the portrait) - makes .profile-info exactly as tall as
    the portrait, which .profile-info-identity's own absolute positioning
    below measures itself against. */
 .profile-header{ display: flex; gap: 28px; align-items: stretch; }
@@ -1152,19 +1153,17 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      via .profile-header's align-items:stretch. */
   position: relative;
 }
-/* Positioned (not just margin-top'd) so its top edge lands at exactly
-   2/3 of the portrait's height, i.e. "the bottom third of the image",
-   per request - a fixed px guess would drift as soon as the portrait's
-   own size changes (it already has 3 different sizes across
-   breakpoints), where a percentage of .profile-info's own height
-   (stretched to match the portrait) stays correct at any of them
-   without needing separate per-breakpoint values. Free to run past
-   .profile-info's own bottom edge if the text itself needs more than a
-   third's worth of room - only its start point is pinned, not its
-   height. */
+/* Bottom-anchored (2026-10-19, corrected per request - "location and
+   LinkedIn should sit just slightly above the bottom edge of the
+   image", not the block starting a fixed 2/3 down and spilling past it
+   regardless of its own height). Anchoring the block's own BOTTOM
+   edge near the portrait's bottom means it grows upward as needed
+   instead of overflowing past it - the last line (location+LinkedIn)
+   is always right where it should be, however tall the name/role/
+   company lines above it turn out to be. */
 .profile-info-identity{
   position: absolute;
-  top: 66.667%;
+  bottom: 8px;
   left: 0;
   right: 0;
 }
@@ -4030,11 +4029,11 @@ function positionExpertiseDivider(){
   divider.style.marginTop = defaultGap + 'px';
   // margin-top on .profile-divider is relative to .profile-header's own
   // box (278px tall, matching the portrait) - .profile-info-identity is
-  // positioned absolutely now (aligned to the portrait's bottom third)
-  // and can run past that box's bottom edge if the name/role/company/
-  // location text needs more room than that last third does, so the
-  // margin needed to clear it is measured from the HEADER's edge, not
-  // from wherever the identity block itself starts.
+  // bottom-anchored near the portrait's own bottom edge now, so it
+  // should rarely run past the header's box, but a very long name/role/
+  // company stack can still push its top (and therefore nothing below
+  // it) past the header's own top - safe to keep this measured from
+  // whichever of the two extends further, same as before.
   const headerBoxBottom = header.getBoundingClientRect().bottom;
   const identityBottom = identity ? identity.getBoundingClientRect().bottom : headerBoxBottom;
   const chevronBottom = chevron.getBoundingClientRect().bottom;
