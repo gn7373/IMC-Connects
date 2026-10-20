@@ -194,8 +194,9 @@ header.site{
      just a visually-similar one ("nav bar and logo position need to be
      consistent across all pages", per request). */
   padding: clamp(18px, 2.5vh, 32px) 6vw clamp(8px, 1.2vh, 14px);
-  /* Same light-gray separator as the landing page's nav row. */
-  border-bottom: 2px solid #CFCFCF;
+  /* Same light-gray separator as the landing page's nav row - thinner
+     now (per request), matching that page's own thinner divider. */
+  border-bottom: 1px solid #CFCFCF;
 }
 #heroSub.compact .back-btn,
 #heroSub.compact h2{ display: none; }
@@ -774,18 +775,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   border-radius: 12px;
 }
 /* Shared toolbar - search, all 5 filters, Clear all, Review & Submit.
-   Its own separate card now (per request), not seamlessly joined to the
-   directory/profile split below it - top/bottom margins instead of a
-   shared border, so the beige margin shows between the two the same way
-   it does on the sides. */
+   Back to being seamlessly joined to the directory/profile card below
+   it (per request - "nevermind, should not be their own card, restore
+   to how it was") - a shared border instead of top/bottom margins. */
 .directory-toolbar > .listing-container{
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding-top: 18px;
   padding-bottom: 18px;
-  margin-top: 14px;
-  margin-bottom: 14px;
+  border-bottom: 2px solid var(--line);
 }
 /* .search-box's own `flex: 1 1 280px` sets a WIDTH basis in its other
    context (a row-direction flex parent) - .directory-toolbar is
