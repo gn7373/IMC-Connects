@@ -745,21 +745,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    "measure, don't assume" approach used for the hero tower sizing) so
    the two panels fill exactly the space below the nav, no page-level
    scroll. */
-/* Shared centered container (2026-10-17, per request) - caps the
-   browsing page at 1280px with responsive side margins via this one
-   clamp(), instead of each piece below (toolbar, list rows, profile
-   panel) carrying its own full-viewport 6vw inset. Those now use a
-   smaller, fixed internal padding instead - "reduce unnecessary
-   horizontal padding" - since this container is what provides the
-   actual page margin now. */
-/* Outer margins use the requested swatch color; inner centered
-   container stays white so the toolbar/directory/profile read as a
-   distinct section against it. */
+/* Matches the masthead's own left/right bounds exactly (per request -
+   "directory column should start where the IMC CONNECTS logo starts,
+   profile column should end where the nav bar ends") - same flat 6vw
+   .hero-nav-inner itself uses, not a centered max-width column. The
+   previous max-width:1280px/clamp() version (which this replaced) read
+   as "compressed" and left large, ever-growing cream margins on a wide
+   monitor once the viewport passed 1280px - fluid 6vw never does that,
+   it just keeps pace with the viewport at any width. Directory-left's
+   flex-basis is a plain percentage of this container's width, so the
+   32/68 directory/profile split ratio holds regardless of how wide
+   this container itself ends up being. */
 #view-listing{ background: #F4F2EE; }
 .listing-container{
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 clamp(16px, 3vw, 40px);
+  padding: 0 6vw;
   background: #fff;
 }
 /* Shared toolbar - search, all 5 filters, Clear all, Review & Submit -
@@ -1189,12 +1188,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    right's own 28px padding, reaching the resizer boundary - there's no
    further whitespace past that to bleed into, that's the resizer itself.
    The right side needs to go further: past that same 28px padding AND
-   .listing-container's own side padding (same clamp() formula, not a
-   fixed px guess), since .directory-right's right edge sits well inside
-   the actual white column's true right edge. No margin-bottom either, so
-   the expertise section right below starts flush against this line. */
+   .listing-container's own side padding (same 6vw .listing-container
+   itself uses, not a fixed px guess), since .directory-right's right
+   edge sits well inside the actual white column's true right edge. No
+   margin-bottom either, so the expertise section right below starts
+   flush against this line. */
 .profile-divider{
-  margin: 20px calc(-28px - clamp(16px, 3vw, 40px)) 0 -28px;
+  margin: 20px calc(-28px - 6vw) 0 -28px;
   border-top: 2px solid var(--line);
 }
 .profile-sections .alum-columns{ margin-top: 0; }
@@ -1739,7 +1739,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    true right edge. */
 .profile-section-divider{
   border-top: 1px solid var(--line);
-  margin: 16px calc(-28px - clamp(16px, 3vw, 40px)) 16px -28px;
+  margin: 16px calc(-28px - 6vw) 16px -28px;
 }
 /* "+N more" for an alum's other selected industries beyond the primary
    one shown - opens a small popover (not an inline expand) listing them
