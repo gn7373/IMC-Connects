@@ -3215,13 +3215,111 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
   return optionsList;
 }
 
+// North America's own further breakdown (per request) - "East Coast,
+// Midwest, West Coast, South, Canada", nested one level inside the
+// North America region using the exact same accordion pattern (see
+// buildAccordionItem below) rather than a separate UI concept. Mapped
+// by hand against the real city values actually in the data; anything
+// that doesn't match a specific sub-region (e.g. a bare "USA" with no
+// city) falls through and is still shown, just directly in North
+// America's own list rather than nested under one of the five - better
+// than silently dropping it or guessing a region for it.
+const NA_SUBREGIONS = ["East Coast", "Midwest", "West Coast", "South", "Canada"];
+const NA_SUBREGION_BY_CITY = {
+  "boston": "East Coast", "cambridge": "East Coast", "new york": "East Coast",
+  "washington, d.c.": "East Coast", "pittsburgh": "East Coast",
+  "chicago": "Midwest", "minneapolis": "Midwest", "urbana": "Midwest",
+  "deerfield": "Midwest",
+  "los angeles": "West Coast", "bay area": "West Coast",
+  "san francisco bay area": "West Coast", "salt lake city": "West Coast",
+  "denver": "West Coast", "phoenix": "West Coast",
+  "atlanta": "South", "houston": "South", "miami": "South"
+};
+function naSubregionForCity(value){
+  const lower = (value || "").trim().toLowerCase();
+  if(NA_SUBREGION_BY_CITY[lower]) return NA_SUBREGION_BY_CITY[lower];
+  if(lower === "canada" || lower.endsWith(", canada")) return "Canada";
+  return null;
+}
+
+// Generic single accordion row (a clickable header + a panel that's
+// hidden until clicked), shared by both the top-level region list and
+// North America's own nested sub-region list below - closeSiblingsIn is
+// whichever element directly contains this row's siblings, so each
+// level's accordion only ever closes items at its OWN level, never
+// reaching into a different level's already-open state.
+function buildAccordionItem(label, activeCount, panelEl, closeSiblingsIn){
+  const itemWrap = document.createElement('div');
+  itemWrap.className = 'location-region';
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'location-region-toggle';
+  toggle.innerHTML = `<span>${label}</span>${activeCount ? `<span class="filter-dropdown-count">(${activeCount})</span>` : ''}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+  toggle.classList.toggle('has-selection', activeCount > 0);
+  toggle.addEventListener('click', () => {
+    const willOpen = !itemWrap.classList.contains('open');
+    closeSiblingsIn.querySelectorAll('.location-region.open').forEach(el => el.classList.remove('open'));
+    itemWrap.classList.toggle('open', willOpen);
+  });
+  itemWrap.appendChild(toggle);
+  itemWrap.appendChild(panelEl);
+  return itemWrap;
+}
+
+// North America's panel: instead of one flat checkbox list, a second
+// level of the same accordion holding its 5 sub-regions, plus (per
+// request, see naSubregionForCity above) a trailing plain checkbox list
+// for anything that didn't map to one of those 5.
+function buildNorthAmericaPanel(values, onAnyChange){
+  const wrap = document.createElement('div');
+  wrap.className = 'location-regions location-subregions';
+
+  const bySubregion = {};
+  NA_SUBREGIONS.forEach(s => bySubregion[s] = []);
+  const unmatched = [];
+  values.forEach(v => {
+    const sub = naSubregionForCity(v);
+    if(sub) bySubregion[sub].push(v);
+    else unmatched.push(v);
+  });
+
+  NA_SUBREGIONS.forEach(sub => {
+    const subValues = bySubregion[sub];
+    const subActiveCount = subValues.filter(v => filterState.city.has(v)).length;
+    const subPanel = document.createElement('div');
+    subPanel.className = 'location-region-panel';
+    let subToggleEl;
+    if(subValues.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'location-region-empty';
+      empty.textContent = 'No alumni listed here yet.';
+      subPanel.appendChild(empty);
+    } else {
+      subPanel.appendChild(buildFilterCheckboxGroup('city', subValues, () => {
+        updateDropdownCountBadge(subToggleEl, subValues.filter(v => filterState.city.has(v)).length);
+        onAnyChange();
+      }));
+    }
+    const subItem = buildAccordionItem(sub, subActiveCount, subPanel, wrap);
+    subToggleEl = subItem.querySelector('.location-region-toggle');
+    wrap.appendChild(subItem);
+  });
+
+  if(unmatched.length){
+    wrap.appendChild(buildFilterCheckboxGroup('city', unmatched, onAnyChange));
+  }
+
+  return wrap;
+}
+
 // Location's own panel: 4 fixed region headers (North America, Europe,
 // Asia, Latin America), each a clickable row that reveals its own
-// nested checkbox list only once clicked - the cities/countries inside
-// stay hidden until then, per request. Reuses buildFilterCheckboxGroup
-// for each region's nested list, scoped to just that region's values.
-// Accordion behavior (per request) - opening one closes any other
-// region already open, rather than letting several stack up at once.
+// nested list only once clicked - the cities/countries inside stay
+// hidden until then, per request. North America's own list is a further
+// nested accordion (see buildNorthAmericaPanel above); the other three
+// stay a flat checkbox list via buildFilterCheckboxGroup. Accordion
+// behavior (per request) - opening one closes any other region already
+// open, rather than letting several stack up at once.
 function buildLocationRegionGroup(values, onAnyChange){
   const wrap = document.createElement('div');
   wrap.className = 'location-regions';
@@ -3235,39 +3333,31 @@ function buildLocationRegionGroup(values, onAnyChange){
 
   LOCATION_REGIONS.forEach(region => {
     const regionValues = byRegion[region];
-    const regionWrap = document.createElement('div');
-    regionWrap.className = 'location-region';
-
-    const regionToggle = document.createElement('button');
-    regionToggle.type = 'button';
-    regionToggle.className = 'location-region-toggle';
     const regionActiveCount = regionValues.filter(v => filterState.city.has(v)).length;
-    regionToggle.innerHTML = `<span>${region}</span>${regionActiveCount ? `<span class="filter-dropdown-count">(${regionActiveCount})</span>` : ''}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
-    regionToggle.classList.toggle('has-selection', regionActiveCount > 0);
 
     const regionPanel = document.createElement('div');
     regionPanel.className = 'location-region-panel';
+    let regionToggleEl;
     if(regionValues.length === 0){
       const empty = document.createElement('div');
       empty.className = 'location-region-empty';
       empty.textContent = 'No alumni listed here yet.';
       regionPanel.appendChild(empty);
+    } else if(region === "North America"){
+      regionPanel.appendChild(buildNorthAmericaPanel(regionValues, () => {
+        updateDropdownCountBadge(regionToggleEl, regionValues.filter(v => filterState.city.has(v)).length);
+        onAnyChange();
+      }));
     } else {
       regionPanel.appendChild(buildFilterCheckboxGroup('city', regionValues, () => {
-        updateDropdownCountBadge(regionToggle, regionValues.filter(v => filterState.city.has(v)).length);
+        updateDropdownCountBadge(regionToggleEl, regionValues.filter(v => filterState.city.has(v)).length);
         onAnyChange();
       }));
     }
 
-    regionToggle.addEventListener('click', () => {
-      const willOpen = !regionWrap.classList.contains('open');
-      wrap.querySelectorAll('.location-region.open').forEach(el => el.classList.remove('open'));
-      regionWrap.classList.toggle('open', willOpen);
-    });
-
-    regionWrap.appendChild(regionToggle);
-    regionWrap.appendChild(regionPanel);
-    wrap.appendChild(regionWrap);
+    const regionItem = buildAccordionItem(region, regionActiveCount, regionPanel, wrap);
+    regionToggleEl = regionItem.querySelector('.location-region-toggle');
+    wrap.appendChild(regionItem);
   });
 
   return wrap;
