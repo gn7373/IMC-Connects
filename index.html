@@ -311,6 +311,40 @@ header.site{
   padding: 12px 6vw 60px;
 }
 
+/* ---------- EMBEDDED CLAIM FORM ---------- */
+.claim-form-intro{
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 12px 6vw 0;
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+.claim-form-frame-wrap{
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px 6vw 60px;
+}
+.claim-form-frame{
+  width: 100%;
+  /* Google's own embedded-form pages are a fixed-ish width design that
+     reliably needs around this much vertical room for a form with a
+     handful of short-answer questions - there's no reliable way to ask
+     the iframe its own content height across origins, so this is a
+     reasonable fixed floor rather than a measured value (unlike most
+     sizing elsewhere in this app). Comfortably scrolls inside the
+     iframe itself if a given form needs more. */
+  height: 1200px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+@media (max-width: 700px){
+  .claim-form-frame{ height: 1400px; }
+}
+
 /* ---------- REVIEW YOUR PINNED ALUMNI ---------- */
 .review-intro{
   color: var(--muted);
@@ -2241,6 +2275,23 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
         <button class="feedback-send" id="feedbackSend">Send feedback</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Embeds the Google Form in-site (2026-10-19, per request) - submitting
+     used to open the form in a new tab, meaning students left the site
+     entirely to finish signing up. The form's own "embedded=true" mode
+     (same prefill query params as before, just with that one added) is
+     built for exactly this: it renders inside this iframe, including
+     Google's own post-submission confirmation screen once they submit,
+     so the whole flow - and the "thanks" message - stays on this page,
+     never navigating the parent window away. -->
+<div id="view-claim-form" style="display:none">
+  <div class="claim-form-intro">
+    <p>Fill out the form below to submit your picks - you'll see a confirmation message right here once it's been recorded.</p>
+  </div>
+  <div class="claim-form-frame-wrap">
+    <iframe id="claimFormFrame" class="claim-form-frame" title="Alumni coffee chat sign-up form" src="" loading="lazy">Loading…</iframe>
   </div>
 </div>
 
@@ -4521,16 +4572,18 @@ function buildPrefillUrl(){
 
 function goSubmitNewPicks(){
   const url = buildPrefillUrl();
-  window.open(url, '_blank', 'noopener');
-  markAsSubmitted();
   closeResubmitModal();
+  if(pinsDrawerOpen) closePinsDrawer();
+  showClaimForm(url);
+  markAsSubmitted();
 }
 function goEditOriginalResponse(){
   // No prefill - this sends them to the bare form, where Google's own
   // "edit your response" flow takes over if they're signed into the same
   // account they used before.
-  window.open(CLAIM_FORM.baseUrl, '_blank', 'noopener');
   closeResubmitModal();
+  if(pinsDrawerOpen) closePinsDrawer();
+  showClaimForm(CLAIM_FORM.baseUrl);
 }
 function openResubmitModal(){ document.getElementById('resubmitModal').style.display = ''; }
 function closeResubmitModal(){ document.getElementById('resubmitModal').style.display = 'none'; }
@@ -4716,10 +4769,11 @@ function loadData(){
 // ------------------------------------------------------------
 // VIEW ROUTING — landing screen, category picker, filtered listing
 // ------------------------------------------------------------
-let currentView = 'landing';      // 'landing' | 'category' | 'listing' | 'info'
+let currentView = 'landing';      // 'landing' | 'category' | 'listing' | 'info' | 'claimForm'
 let lastCategoryKey = null;       // which category (if any) led into the current listing
 let viewBeforeInfo = null;        // where Back should return to after visiting About/FAQ/Feedback
 let subTitleBeforeInfo = null;    // the listing's context label, if that's where we came from
+let subTitleBeforeClaimForm = null; // same, but for Back from the embedded claim form
 
 const INFO_TAB_LABELS = { about: 'About', faq: 'FAQ', feedback: 'Feedback' };
 
@@ -4737,6 +4791,7 @@ function showInfo(tab, fromHistory){
   document.getElementById('view-category').style.display = 'none';
   document.getElementById('view-listing').style.display = 'none';
   document.getElementById('view-info').style.display = '';
+  document.getElementById('view-claim-form').style.display = 'none';
   selectInfoTab(tab);
   if(!fromHistory) pushHistory({view:'info', tab, viewBeforeInfo, lastCategoryKey, subTitleBeforeInfo});
 }
@@ -4761,6 +4816,7 @@ function showLanding(fromHistory){
   document.getElementById('view-category').style.display = 'none';
   document.getElementById('view-listing').style.display = 'none';
   document.getElementById('view-info').style.display = 'none';
+  document.getElementById('view-claim-form').style.display = 'none';
   if(!fromHistory) pushHistory({view:'landing'});
 }
 
@@ -4789,6 +4845,7 @@ function showCategoryPicker(key, fromHistory){
   document.getElementById('view-category').style.display = '';
   document.getElementById('view-listing').style.display = 'none';
   document.getElementById('view-info').style.display = 'none';
+  document.getElementById('view-claim-form').style.display = 'none';
 
   const options = collectFilterOptions();
   const values = [...(options[key] || [])].sort();
@@ -4820,6 +4877,7 @@ function showListing(contextLabel, fromHistory, categoryKey, categoryValue){
   document.getElementById('view-category').style.display = 'none';
   document.getElementById('view-listing').style.display = '';
   document.getElementById('view-info').style.display = 'none';
+  document.getElementById('view-claim-form').style.display = 'none';
   document.getElementById('directorySplit').classList.remove('mobile-detail-open');
   // Every time the browsing page is (re)entered, start with the full-
   // width directory and the profile panel closed, per request - not just
@@ -4830,6 +4888,34 @@ function showListing(contextLabel, fromHistory, categoryKey, categoryValue){
   renderPinsDrawer();
   sizeDirectorySplit();
   if(!fromHistory) pushHistory({view:'listing', contextLabel, categoryKey, categoryValue});
+}
+
+// Embeds the sign-up Google Form in-site (2026-10-19, per request) -
+// "embedded=true" is the Form's own supported mode for exactly this;
+// it keeps rendering inside this iframe (including Google's own post-
+// submission confirmation screen) rather than ever navigating the
+// parent page away. formUrl already carries whatever prefill params
+// the caller built (buildPrefillUrl() for a fresh submission, or the
+// bare base form for "edit my response") - this just adds embedded=true
+// on top and swaps the view.
+function showClaimForm(formUrl, fromHistory){
+  window.scrollTo(0, 0);
+  if(currentView !== 'claimForm'){
+    subTitleBeforeClaimForm = document.getElementById('subTitle').textContent;
+  }
+  currentView = 'claimForm';
+  document.getElementById('heroLanding').style.display = 'none';
+  document.getElementById('heroSub').style.display = '';
+  document.getElementById('heroSub').classList.add('compact');
+  document.querySelector('header.site').classList.add('masthead-mode');
+  document.getElementById('subTitle').textContent = 'Submit your picks';
+  document.getElementById('view-category').style.display = 'none';
+  document.getElementById('view-listing').style.display = 'none';
+  document.getElementById('view-info').style.display = 'none';
+  document.getElementById('view-claim-form').style.display = '';
+  const separator = formUrl.includes('?') ? '&' : '?';
+  document.getElementById('claimFormFrame').src = `${formUrl}${separator}embedded=true`;
+  if(!fromHistory) pushHistory({view:'claimForm', formUrl, subTitleBeforeClaimForm});
 }
 
 function goToAllAlumni(){
@@ -4864,6 +4950,11 @@ document.getElementById('backBtn').addEventListener('click', () => {
     } else {
       showLanding();
     }
+  } else if(currentView === 'claimForm'){
+    // Always came from the listing page (the only place Review & Submit
+    // and "edit my response" appear) - subTitleBeforeClaimForm keeps
+    // whatever context label (category filter, etc.) that listing had.
+    showListing(subTitleBeforeClaimForm);
   }
 });
 
@@ -4894,6 +4985,9 @@ window.addEventListener('popstate', (e) => {
     lastCategoryKey = state.lastCategoryKey;
     subTitleBeforeInfo = state.subTitleBeforeInfo;
     showInfo(state.tab, true);
+  } else if(state.view === 'claimForm'){
+    subTitleBeforeClaimForm = state.subTitleBeforeClaimForm;
+    showClaimForm(state.formUrl, true);
   }
 });
 history.replaceState({view:'landing'}, '', location.href);
