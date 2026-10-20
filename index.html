@@ -1085,10 +1085,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 0;
 }
 .profile-back-btn:hover{ color: var(--ink); }
-/* Now at the TOP of the column (per request), where the identity block
-   used to sit - no margin-top needed, it's the first thing in normal
-   flow. */
-.profile-availability{ display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
+/* At the TOP of the column (where the identity block used to sit), and
+   right-aligned (per request) so Add to my list's own right edge lines
+   up with the toolbar's Review & Submit button. The toolbar sits in its
+   own .listing-container directly (clamp() padding), while this row is
+   nested inside .directory-right's additional fixed 28px padding on top
+   of that - the negative margin-right cancels that extra inset so the
+   two actually land on the same edge, not just the same relative
+   distance within two differently-padded containers. */
+.profile-availability{ display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-right: -28px; }
 /* Stretch (per request - name/role/company/location should sit near
    the bottom of the portrait) - makes .profile-info exactly as tall as
    the portrait, which .profile-info-identity's own absolute positioning
@@ -3880,16 +3885,31 @@ function renderDirectoryList(filtered){
   enforceDirectoryListMinWidth();
 }
 
-// Up/Down arrow-key navigation across the list rows (2026-10-17) - moves
-// focus to the next/previous row and selects it, same as arrowing
-// through a native listbox. Delegated once on the list container (whose
-// own node survives every render, even though its rows are rebuilt each
-// time) rather than bound per-row.
-document.getElementById('directoryList').addEventListener('keydown', (e) => {
+// Up/Down arrow-key navigation across the list rows - moves focus to
+// the next/previous row and selects it, same as arrowing through a
+// native listbox. Works from the moment the directory is on screen
+// (2026-10-19, per request), not just once a row already has focus -
+// delegated on `document` rather than #directoryList so it still fires
+// when focus is somewhere else entirely (or nowhere - the body) and
+// falls back to whichever alum is already selected (the default first
+// one, on a fresh landing) as the starting point instead of requiring
+// a prior click. Still backs off while someone's actually typing/
+// interacting with an input, a dropdown, or the pins drawer, so it
+// never hijacks arrow keys from those.
+document.addEventListener('keydown', (e) => {
   if(e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+  if(currentView !== 'listing') return;
+  const active = document.activeElement;
+  const typingEl = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT' || active.isContentEditable);
+  if(typingEl) return;
+  if(active && active.closest('.filter-dropdown, .pins-drawer, .resubmit-modal')) return;
   const entries = [...document.querySelectorAll('.directory-entry')];
-  const currentIndex = entries.indexOf(document.activeElement);
-  if(currentIndex === -1) return;
+  if(!entries.length) return;
+  let currentIndex = entries.indexOf(active);
+  if(currentIndex === -1){
+    currentIndex = entries.findIndex(el => Number(el.dataset.id) === selectedAlumId);
+  }
+  if(currentIndex === -1) currentIndex = -1; // ArrowDown from here lands on index 0
   e.preventDefault();
   const nextIndex = e.key === 'ArrowDown'
     ? Math.min(currentIndex + 1, entries.length - 1)
