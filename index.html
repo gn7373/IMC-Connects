@@ -2926,17 +2926,19 @@ function normalizeCityValue(raw){
   return [trimmed];
 }
 
-// Buckets every normalized city/location value under one of three
+// Buckets every normalized city/location value under one of four
 // top-level Location filter options, per request. Classification is by
-// the trailing ", Country" normalizeCityValue leaves on non-US values
-// (ASIA_COUNTRIES / LATAM_COUNTRIES below), plus a short override list
-// for well-known non-US cities that are sometimes written bare (no
-// country suffix). Anything that doesn't match either - including a
-// bare US city (no comma) and any other country not called out below,
-// e.g. Canada/UK/Europe - defaults to "United States", since that's
-// this list's effective catch-all bucket, not a claim those places are
-// in the US. Revisit this default if alumni outside those three
-// regions become common enough to warrant a 4th option.
+// the trailing ", Country" normalizeCityValue leaves on non-North-
+// American values (ASIA_COUNTRIES / LATAM_COUNTRIES / EUROPE_COUNTRIES
+// below), plus a short override list for well-known cities that are
+// sometimes written bare (no country suffix). Anything that doesn't
+// match any of those - including a bare US/Canada city (no comma) and
+// any other country not called out below - defaults to "North America",
+// since that's this list's effective catch-all bucket, not a claim
+// those places are in the US specifically (Canada rides this same
+// catch-all, deliberately - see "Toronto, Canada" in the real data).
+// Revisit this default if alumni outside these four regions become
+// common enough to warrant a 5th option.
 const ASIA_COUNTRIES = [
   "china", "japan", "south korea", "korea", "india", "singapore",
   "indonesia", "malaysia", "thailand", "vietnam", "philippines",
@@ -2950,9 +2952,17 @@ const LATAM_COUNTRIES = [
   "costa rica", "panama", "guatemala", "honduras", "el salvador",
   "nicaragua", "dominican republic", "cuba"
 ];
-// Bare (no-comma) city names known to be outside the US - without this,
-// a city like "Singapore" would hit the no-comma fallback and read as
-// a US city.
+const EUROPE_COUNTRIES = [
+  "uk", "united kingdom", "england", "scotland", "wales",
+  "northern ireland", "ireland", "france", "germany", "spain",
+  "italy", "portugal", "netherlands", "belgium", "switzerland",
+  "austria", "sweden", "norway", "denmark", "finland", "poland",
+  "greece", "czech republic", "hungary", "romania", "ukraine",
+  "iceland", "luxembourg", "croatia"
+];
+// Bare (no-comma) city/country names known to be outside North America
+// - without this, a name like "Singapore" or "Chile" would hit the
+// no-comma fallback and read as North American.
 const CITY_REGION_OVERRIDES = {
   "singapore": "Asia", "hong kong": "Asia", "tokyo": "Asia", "seoul": "Asia",
   "mumbai": "Asia", "delhi": "Asia", "bangalore": "Asia", "shanghai": "Asia",
@@ -2960,9 +2970,14 @@ const CITY_REGION_OVERRIDES = {
   "mexico city": "Latin America", "sao paulo": "Latin America",
   "são paulo": "Latin America", "bogota": "Latin America",
   "bogotá": "Latin America", "buenos aires": "Latin America",
-  "santiago": "Latin America", "lima": "Latin America"
+  "santiago": "Latin America", "lima": "Latin America",
+  "chile": "Latin America", "mexico": "Latin America",
+  "brazil": "Latin America", "colombia": "Latin America",
+  "london": "Europe", "paris": "Europe", "berlin": "Europe",
+  "madrid": "Europe", "rome": "Europe", "amsterdam": "Europe",
+  "dublin": "Europe", "uk": "Europe", "united kingdom": "Europe"
 };
-const LOCATION_REGIONS = ["United States", "Asia", "Latin America"];
+const LOCATION_REGIONS = ["North America", "Europe", "Asia", "Latin America"];
 function regionForCity(value){
   const trimmed = (value || "").trim();
   const lower = trimmed.toLowerCase();
@@ -2972,10 +2987,11 @@ function regionForCity(value){
     const country = trimmed.slice(commaIdx + 1).trim().toLowerCase();
     if(ASIA_COUNTRIES.includes(country)) return "Asia";
     if(LATAM_COUNTRIES.includes(country)) return "Latin America";
+    if(EUROPE_COUNTRIES.includes(country)) return "Europe";
     const cityPart = trimmed.slice(0, commaIdx).trim().toLowerCase();
     if(CITY_REGION_OVERRIDES[cityPart]) return CITY_REGION_OVERRIDES[cityPart];
   }
-  return "United States";
+  return "North America";
 }
 
 // A name written into the Form with a parenthetical aside (e.g. a former
@@ -3196,11 +3212,13 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
   return optionsList;
 }
 
-// Location's own panel: 3 fixed region headers (United States, Asia,
-// Latin America), each a clickable row that reveals its own nested
-// checkbox list only once clicked - the cities/countries inside stay
-// hidden until then, per request. Reuses buildFilterCheckboxGroup for
-// each region's nested list, scoped to just that region's values.
+// Location's own panel: 4 fixed region headers (North America, Europe,
+// Asia, Latin America), each a clickable row that reveals its own
+// nested checkbox list only once clicked - the cities/countries inside
+// stay hidden until then, per request. Reuses buildFilterCheckboxGroup
+// for each region's nested list, scoped to just that region's values.
+// Accordion behavior (per request) - opening one closes any other
+// region already open, rather than letting several stack up at once.
 function buildLocationRegionGroup(values, onAnyChange){
   const wrap = document.createElement('div');
   wrap.className = 'location-regions';
@@ -3208,7 +3226,7 @@ function buildLocationRegionGroup(values, onAnyChange){
   const byRegion = {};
   LOCATION_REGIONS.forEach(r => byRegion[r] = []);
   values.forEach(v => {
-    const region = LOCATION_REGIONS.includes(regionForCity(v)) ? regionForCity(v) : "United States";
+    const region = LOCATION_REGIONS.includes(regionForCity(v)) ? regionForCity(v) : "North America";
     byRegion[region].push(v);
   });
 
@@ -3239,7 +3257,9 @@ function buildLocationRegionGroup(values, onAnyChange){
     }
 
     regionToggle.addEventListener('click', () => {
-      regionWrap.classList.toggle('open');
+      const willOpen = !regionWrap.classList.contains('open');
+      wrap.querySelectorAll('.location-region.open').forEach(el => el.classList.remove('open'));
+      regionWrap.classList.toggle('open', willOpen);
     });
 
     regionWrap.appendChild(regionToggle);
