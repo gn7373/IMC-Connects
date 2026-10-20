@@ -16,36 +16,47 @@
    ============================================================ */
 
 :root{
-  /* "Explore your path. Pin the people who interest you." design system.
-     Purple is the primary interaction color, not a wash - most of the
-     interface should still read as navy/white/lavender. --success and
-     --success-on-light are reused for the "pinned/selected" state (the
-     old cart-era name stuck) and map to the interactive violet, since
-     pinning is now the site's one selection signal. */
-  --paper: #F9F5FE;
-  /* Warm cream for the alumni directory's page background specifically -
-     kept distinct from --paper (the lavender used for the landing hero
-     and card fills) so cards read as their own surface against it. */
-  --cream: #FDFBF4;
-  --ink: #000000;
-  --accent: #401F68;
-  --accent-deep: #000000;
+  /* Soft off-white / lavender editorial system (2026-10-20) - the
+     directory/profile workspace's own palette. Named tokens below are
+     the ones the design spec calls out directly (surfaces, selection,
+     capacity); the legacy aliases further down (--ink, --accent,
+     --paper, --line, etc.) are kept so every other already-tuned rule
+     in this file - landing hero, about/FAQ, pins drawer - picks up the
+     same system automatically instead of needing a rule-by-rule
+     rewrite, and so nothing other than color actually changes. */
+  --page-bg: #F6F3EE;
+  --workspace-bg: #FCFBF9;
+  --surface: #FEFDFC;
+  --selected-bg: #F1ECFA;
+  --lavender-chip: #F0EAFB;
+  --soft-green: #EEF3E8;
+  --purple: #4E2A84;
+  --deep-purple: #35205F;
+  --text: #171717;
+  --muted-text: #67627A;
+  --border: rgba(53,32,95,0.12);
+  --border-strong: rgba(53,32,95,0.22);
+
+  /* Legacy aliases - every existing rule reads off these, so remapping
+     them is what actually carries the new palette through the rest of
+     the site. */
+  --paper: var(--lavender-chip);
+  --cream: var(--page-bg);
+  --ink: var(--text);
+  --accent: var(--purple);
+  --accent-deep: var(--deep-purple);
   --accent-light: #DAD2F4;
-  --accent-tint: #EFEAFD;
-  --success: #401F68;
-  --success-on-light: #401F68;
-  /* A real green (2026-10-17), used only for "added to my list" cards in
-   the directory - kept separate from --success/--success-on-light above,
-   which this app deliberately maps to purple everywhere else. */
+  --accent-tint: var(--selected-bg);
+  --success: var(--purple);
+  --success-on-light: var(--purple);
+  /* A real green, used only for "added to my list" cards in the
+     directory - kept separate from --success/--success-on-light above,
+     which this app deliberately maps to purple everywhere else. */
   --list-added: #2E7D4F;
-  --list-added-tint: #E6F4EA;
-  /* Gray, not light purple (2026-10-17, per request) - every divider/
-     edge line in the app (card borders, panel borders, filter-dropdown
-     borders, etc.) reads off these two tokens, so this one change covers
-     all of them. */
-  --line: #E1E1E1;
-  --line-strong: #C9C9C9;
-  --muted: #5C5A82;
+  --list-added-tint: var(--soft-green);
+  --line: var(--border);
+  --line-strong: var(--border-strong);
+  --muted: var(--muted-text);
   --warn: #E87518;
   /* Secondary accents - used sparingly for pins/icons/small marks only,
      never for large surfaces. */
@@ -225,8 +236,13 @@ header.site{
      .hero-nav's own top/padding-bottom exactly - that's what actually
      makes the logo land at the same y-coordinate on both pages, not
      just a visually-similar one ("nav bar and logo position need to be
-     consistent across all pages", per request). */
-  padding: clamp(18px, 2.5vh, 32px) 6vw clamp(8px, 1.2vh, 14px);
+     consistent across all pages", per request). Horizontal inset
+     (2026-10-20) matches .workspace's own formula exactly (max(32px,
+     (100vw-1480px)/2)) rather than a flat 6vw, so Review & Submit's
+     right edge - flush with .workspace's own right edge via its
+     margin-left:auto - always lines up with this nav row's right edge
+     too, structurally, not by coincidence at one viewport width. */
+  padding: clamp(18px, 2.5vh, 32px) max(32px, calc((100vw - 1480px) / 2)) clamp(8px, 1.2vh, 14px);
   /* Same light-gray separator as the landing page's nav row - thinner
      now (per request), matching that page's own thinner divider. */
   border-bottom: 1px solid #CFCFCF;
@@ -801,9 +817,27 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    down to .directory-split itself. display is switched to 'flex' in JS
    (showListing()) rather than plain '' specifically because of this. */
 #view-listing{
-  background-color: #F4F2EE;
-  background-image: url("bg-texture.jpg");
-  background-repeat: repeat;
+  background-color: var(--page-bg);
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* The unified workspace card (2026-10-20) - search, filters, directory
+   and profile all share this one centered, rounded surface instead of
+   two separately-margined white cards. Width/margin (not the more
+   common max-width+padding pairing) is what keeps its side inset a
+   flat 32px up to 1544px wide, then centers it with equal margins
+   beyond that - #heroSub.compact mirrors this exact formula (see its
+   own comment) so the masthead's right edge and Review & Submit's
+   right edge always land on the same line. */
+.workspace{
+  width: calc(100% - 64px);
+  max-width: 1480px;
+  margin-inline: auto;
+  background: var(--workspace-bg);
+  border-radius: 14px;
+  overflow: hidden;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -811,25 +845,23 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 /* The directory/profile card's own wrapper (not the toolbar's - that's
    nested inside .directory-toolbar, a grandchild, so this direct-child
-   selector reaches only the one we want) - continues the fill-
-   remaining-space chain down into .directory-split. */
-#view-listing > .listing-container{
+   selector (now scoped to .workspace, its parent since the 2026-10-20
+   unified-card pass) reaches only the one we want) - continues the
+   fill-remaining-space chain down into .directory-split. */
+.workspace > .listing-container{
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
 }
-/* MARGIN, not padding (bugfix, per request - "the margins are not
-   visible at all") - padding paints as part of the box, so the white
-   background used to fill the side gutter too, completely hiding the
-   textured margin behind it. Margin leaves that gutter empty instead,
-   actually exposing #view-listing's background there. Halved to 3vw
-   (was 6vw, per request - "reduce each of the current margins in half
-   by extending the directory accordingly"). */
+/* PADDING, not margin (2026-10-20) - now that .workspace is one flat
+   surface rather than a white card floating over a textured margin,
+   the 24px inset just needs to push the content in, not expose
+   anything behind it. This single value is the only horizontal inset
+   either .listing-container instance carries - search/filters and the
+   directory/profile split both line up against the same edge. */
 .listing-container{
-  margin: 0 3vw;
-  background: #fff;
-  border-radius: 12px;
+  padding: 0 24px;
 }
 /* Shared toolbar - search, all 5 filters, Clear all, Review & Submit.
    Back to being seamlessly joined to the directory/profile card below
@@ -838,21 +870,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .directory-toolbar > .listing-container{
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding-top: 18px;
-  padding-bottom: 18px;
-  border-bottom: 2px solid var(--line);
+  gap: 12px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
 }
 /* .search-box's own `flex: 1 1 280px` sets a WIDTH basis in its other
    context (a row-direction flex parent) - .directory-toolbar is
    column-direction now, where that same flex-basis would instead set a
    280px HEIGHT, blowing the search row up to 280px tall. Override back
-   to a plain block here. Inset 28px on both sides (per request - "align
-   with #alumni available", which sits that same 28px in from the card
-   edge via its own padding) rather than running the full card width -
-   the default stretch (column-flex's own default) still sizes it,
-   margin just pulls both edges in symmetrically. */
-.directory-toolbar .search-box{ flex: none; max-width: none; margin: 0 28px; }
+   to a plain block here; .listing-container's own 24px padding is the
+   only inset now (2026-10-20 - this used to carry its own extra 28px
+   margin on top of a *different* outer inset, back when the two
+   schemes weren't unified). */
+.directory-toolbar .search-box{ flex: none; max-width: none; }
 /* Flat flex row (2026-10-20 - filters and Review & Submit must be true
    flex siblings, not nested in a separate .filter-bar wrapper) - filter
    pills, Clear all and Review & Submit are all direct children here;
@@ -867,7 +898,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   align-items: center;
   gap: 10px;
   flex-wrap: nowrap;
-  margin-left: 28px;
 }
 /* Separates the count/sort row from the alumni listings below it.
    Runs the width of #directoryLeft itself (which has no side padding of
@@ -881,7 +911,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   justify-content: space-between;
   /* Shorter row (per request, twice now - "too tall") - was 16px, then
      10px, 28px throughout. */
-  padding: 6px 28px;
+  padding: 6px 24px;
   /* Thinner (per request) - was 2px, like the site's other dividers;
      this one is now 1px. */
   border-bottom: 1px solid var(--line);
@@ -1011,7 +1041,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   overflow: hidden;
   /* Trimmed top/bottom (was 24px/48px, then 16px/20px, per request -
      "shouldn't need to scroll, everything should fit"). */
-  padding: 12px 28px 12px;
+  padding: 12px 24px 12px;
 }
 /* Collapsing the profile panel (2026-10-17): hides it and the resizer,
    the directory expands to fill the width. Selection and the stored
@@ -1040,17 +1070,17 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 14px;
-  padding: 13px 28px;
+  padding: 13px 24px;
   margin-bottom: 10px;
   cursor: pointer;
   /* Plain 1px border on all 4 sides by default (bugfix - the left side
      used to default to transparent, so the card only had a visible edge
      on 3 of its 4 sides until selected). .selected/.in-list below widen
      just the left side and color it as their own accent, overriding this. */
-  border: 1px solid var(--line);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(32, 27, 29, 0.05);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(53, 32, 95, 0.04);
   width: 100%;
   text-align: left;
   font: inherit;
@@ -1146,7 +1176,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   animation: directoryEntryShuffle 320ms cubic-bezier(.22,.8,.32,1) both;
 }
 .directory-empty{
-  padding: 48px 28px;
+  padding: 48px 24px;
   color: var(--muted);
   font-style: italic;
   font-family: 'Inter', sans-serif;
@@ -1205,8 +1235,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   width: 172px;
   height: 205px;
   border-radius: 8px;
-  background: var(--paper);
-  border: 1px solid var(--line-strong);
+  /* Neutral, not lavender (2026-10-20 - "no purple/lavender highlight
+     or colored background around the photo") - the placeholder (shown
+     before a real photo loads, or if one's missing) reads as part of
+     the same neutral surface as the rest of the profile, anchored by
+     layout/spacing alone, not a tint. */
+  background: var(--workspace-bg);
+  border: 1px solid var(--border-strong);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1248,20 +1283,26 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    margin-bottom either, so the expertise section right below starts
    flush against this line. */
 .profile-divider{
-  margin: 20px -28px 0 -28px;
+  margin: 20px -24px 0 -24px;
   border-top: 2px solid var(--line);
 }
 .profile-sections .alum-columns{ margin-top: 0; }
+/* Enclosed field (2026-10-20), replacing the old underline style - a
+   real bordered/rounded box matching the rest of the workspace's
+   surfaces, rather than a bare line under the text. */
 .search-box{
   flex: 1 1 280px;
-  border-bottom: 1.5px solid var(--ink);
-  padding-bottom: 8px;
+  height: 40px;
+  padding: 0 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
   display: flex;
   align-items: center;
   gap: 10px;
   transition: border-color 150ms ease;
 }
-.search-box:focus-within{ border-bottom-color: var(--accent); }
+.search-box:focus-within{ border-color: var(--purple); }
 .search-box input{
   border:none; outline:none; background:transparent;
   /* Reduced to match the filter/sort buttons' own text size (per
@@ -1315,6 +1356,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   color: #fff;
   flex-shrink: 0;
   margin-left: auto;
+  /* Bleeds past .listing-container's own 24px padding (same pattern as
+     .profile-divider/.profile-section-divider elsewhere in this file)
+     so its right edge lands on the workspace's true right edge - the
+     same edge #heroSub.compact's matching max()-formula padding puts
+     the nav row on - rather than stopping short at the section's
+     regular content inset. */
+  margin-right: -24px;
   white-space: nowrap;
 }
 .pins-toggle-btn:hover{ background: var(--accent-deep); border-color: var(--accent-deep); }
@@ -1680,7 +1728,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 /* Colors sampled from the "spots available" reference screenshot
    (2026-10-15) - muted sage/tan/gray instead of the brighter
    green/orange/purple-tint this used before. */
-.capacity-badge-open{ background: #E2E5DA; color: #535C55; }
+.capacity-badge-open{ background: var(--soft-green); color: #535C55; }
 .capacity-badge-low{ background: #EEE6DA; color: #7C6B5C; }
 .capacity-badge-full{ background: #E2DFDC; color: #747681; }
 /* In the review-card (My Pins drawer), the badge sits next to the name
@@ -1806,7 +1854,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    padding on both sides. */
 .profile-section-divider{
   border-top: 1px solid var(--line);
-  margin: 16px -28px 16px -28px;
+  margin: 16px -24px 16px -24px;
 }
 /* "+N more" for an alum's other selected industries beyond the primary
    one shown - opens a small popover (not an inline expand) listing them
@@ -1890,6 +1938,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 3px 10px;
   line-height: 1.4;
 }
+/* Pale lavender is reserved for selected states and Ask Me About
+   specifically (2026-10-20 palette spec) - Industry/Marketing
+   Expertise stay compact and quiet with a neutral surface instead, so
+   lavender keeps reading as a single deliberate signal rather than a
+   wash over every pill on the page. */
+.industry-tags .topic-tag,
+.marketing-tags .topic-tag{ background: var(--workspace-bg); border: 1px solid var(--border); }
 
 .card-action{
   display: flex;
@@ -2388,6 +2443,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      divider, while the actual search/filter/button content stays
      nested in a .listing-container so it keeps its 1280px-centered
      position - see that class's own comment). -->
+<!-- Unified workspace card (2026-10-20 editorial-palette pass) - search,
+     filters, directory and profile all live inside this one centered,
+     rounded card (see .workspace's own comment) instead of two
+     separately-margined white cards on a textured page. -->
+<div class="workspace">
 <div class="directory-toolbar">
 <div class="listing-container">
   <div class="search-box">
@@ -2404,12 +2464,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 </div>
 </div><!-- /directory-toolbar -->
 
-<!-- Shared max-width container (2026-10-17, per request) - caps the
-     split-view (directory + profile) at 1280px, centered, with
-     responsive side margins, instead of spanning the raw viewport
-     edge-to-edge. Individual pieces below no longer carry their own 6vw
-     inset - this one padding value is now the only horizontal margin in
-     play. -->
 <div class="listing-container">
 <div id="statusArea"></div>
 
@@ -2451,6 +2505,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 </div>
 
 </div><!-- /listing-container -->
+</div><!-- /workspace -->
 
 </div><!-- /view-listing -->
 
