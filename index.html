@@ -1089,7 +1089,21 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   align-items: center;
   justify-content: center;
   color: var(--line-strong);
+  overflow: hidden;
 }
+/* Real photo, when the alum has one uploaded (see portraitImgHtml()) -
+   fills the same box the placeholder SVG used to center itself in,
+   cropped to it rather than distorted. */
+.profile-portrait-img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Hidden by default - only shown once handlePortraitImgError() has
+   exhausted every known extension for this alum's photo without one
+   actually loading (i.e. no photo has been uploaded for them yet). */
+.profile-portrait-fallback{ display: none; }
 /* Identity block beside the portrait: name/role/company/location+
    LinkedIn stack in one group (.profile-info-identity), with
    availability+Add-to-list beneath it (.profile-availability, margin-top
@@ -3666,6 +3680,38 @@ let selectedAlumId = null;
 
 const PORTRAIT_PLACEHOLDER_SVG = '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg>';
 
+// Real alum photos, from the "IMC Connects Photos" folder (deployed as
+// photos/ alongside the site - see the deploy workflow) - named
+// <slugified full name>.<ext>, e.g. "Aastha Desai" -> photos/
+// aastha_desai.jpg. Coverage is partial and growing as more get added,
+// so this tries every extension actually in use in that folder in turn
+// (via the image's own onerror) and falls back to the placeholder SVG
+// once all of them 404 - never assumes a particular alum has a photo.
+const PORTRAIT_EXTS = ['jpg', 'jpeg', 'png', 'jfif'];
+function slugifyAlumName(name){
+  return (name || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip accents
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+function portraitImgHtml(alum){
+  const slug = slugifyAlumName(alum.name);
+  if(!slug) return '';
+  return `<img class="profile-portrait-img" alt="" data-slug="${slug}" data-ext-idx="0" src="photos/${slug}.${PORTRAIT_EXTS[0]}" onerror="handlePortraitImgError(this)">`;
+}
+function handlePortraitImgError(img){
+  const nextIdx = parseInt(img.dataset.extIdx, 10) + 1;
+  if(nextIdx < PORTRAIT_EXTS.length){
+    img.dataset.extIdx = nextIdx;
+    img.src = `photos/${img.dataset.slug}.${PORTRAIT_EXTS[nextIdx]}`;
+  } else {
+    img.style.display = 'none';
+    const fallback = img.parentElement.querySelector('.profile-portrait-fallback');
+    if(fallback) fallback.style.display = 'flex';
+  }
+}
+
 // Sort (2026-10-17, revised again) - re-orders whatever matchesFilters
 // already narrowed the list down to, so it's always "relevant to
 // whatever filters have been applied" rather than a separate,
@@ -3851,7 +3897,10 @@ function renderProfilePanel(){
       <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
     </div>
     <div class="profile-header">
-      <div class="profile-portrait" aria-hidden="true">${PORTRAIT_PLACEHOLDER_SVG}</div>
+      <div class="profile-portrait" aria-hidden="true">
+        ${portraitImgHtml(a)}
+        <span class="profile-portrait-fallback">${PORTRAIT_PLACEHOLDER_SVG}</span>
+      </div>
       <div class="profile-info">
         <div class="profile-info-identity">
           <div class="profile-name">${a.name}</div>
