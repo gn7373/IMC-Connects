@@ -795,27 +795,17 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .toolbar-row2 .filter-bar{ flex: 1 1 auto; margin-top: 0; }
 /* Separates the count/sort row from the alumni listings below it.
-   .directory-left itself has no side padding (its children each set
-   their own 28px inset directly), so this reaches its right edge (the
-   resizer) with no extra margin needed there. Its LEFT edge, though,
-   is the true edge of the white content column (.listing-container) -
-   .directory-left's own box starts well inside that, inset by
-   .listing-container's own side padding - so a negative left margin
-   matching that exact padding (same clamp() formula, not a fixed px
-   guess) is still needed on this side alone, per request ("run to the
-   edge of the white content column"). */
+   Runs the width of #directoryLeft itself (which has no side padding of
+   its own, so no margin trick is needed on either side) - per request,
+   this should NOT bleed any further left than that into the page's
+   outer padding/margin, unlike the profile-side dividers. */
 .directory-list-header{
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* Shorter row (per request - "too tall") - was 16px 28px. Left side is
-     28px PLUS the negative margin's own amount, so pulling the box's
-     left edge out to the true column edge doesn't also drag the actual
-     count/sort text out there with it - they stay put at the same
-     28px-from-content inset as before. */
-  padding: 10px 28px 10px calc(28px + clamp(16px, 3vw, 40px));
-  margin-left: calc(clamp(16px, 3vw, 40px) * -1);
+  /* Shorter row (per request - "too tall") - was 16px 28px. */
+  padding: 10px 28px;
   /* Thinner (per request) - was 2px, like the site's other dividers;
      this one is now 1px. */
   border-bottom: 1px solid var(--line);
@@ -932,7 +922,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   flex: 1 1 auto;
   min-width: 480px;
   overflow-y: auto;
-  padding: 24px 28px 48px;
+  /* Trimmed top/bottom (was 24px/48px, per request - "shouldn't need to
+     scroll, everything should fit") - freed-up room the bigger portrait
+     below now needs. */
+  padding: 16px 28px 20px;
 }
 /* Collapsing the profile panel (2026-10-17): hides it and the resizer,
    the directory expands to fill the width. Selection and the stored
@@ -1107,15 +1100,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    query, since the panel's width changes from dragging the divider, not
    just from the viewport changing. */
 .directory-right.narrow .profile-header{ flex-direction: column; align-items: flex-start; }
-.directory-right.narrow .profile-portrait{ width: 130px; height: 155px; }
-/* Reduced from 176x220 (2026-10-17, per request - "tighten the
-   portrait/header section") - the whole header's height follows this
-   (see .profile-info's align-items:stretch tie-in above), so a smaller
-   portrait directly means less vertical whitespace in the row. */
+.directory-right.narrow .profile-portrait{ width: 195px; height: 233px; }
+/* 1.5x larger (per request) - was 156x185 (which itself was reduced
+   from 176x220 on 2026-10-17 to tighten the header row). */
 .profile-portrait{
   flex-shrink: 0;
-  width: 156px;
-  height: 185px;
+  width: 234px;
+  height: 278px;
   border-radius: 8px;
   background: var(--paper);
   border: 1px solid var(--line-strong);
@@ -1495,7 +1486,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-split.mobile-detail-open .directory-right{ display: block; }
   .profile-back-btn{ display: inline-block; }
   .profile-toolbar{ justify-content: space-between; }
-  .profile-portrait{ width: 120px; height: 150px; }
+  .profile-portrait{ width: 180px; height: 225px; }
   .profile-name{ font-size: 26px; }
   .profile-header{ gap: 18px; }
 }
@@ -1711,7 +1702,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 /* padding-top gives the column text its own breathing room below the
    (flush) horizontal divider above it. */
-.alum-col{ flex: 1 1 140px; min-width: 0; padding-top: 16px; }
+.alum-col{ flex: 1 1 140px; min-width: 0; padding-top: 12px; }
 /* Subtle (1px, not the site's usual 2px dividers - deliberately lighter
    here per request) separator between the expertise row above and Ask
    Me About below. Same edge-to-edge trick and reasoning as
@@ -1720,7 +1711,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    true right edge. */
 .profile-section-divider{
   border-top: 1px solid var(--line);
-  margin: 20px calc(-28px - clamp(16px, 3vw, 40px)) 20px -28px;
+  margin: 16px calc(-28px - clamp(16px, 3vw, 40px)) 16px -28px;
 }
 /* "+N more" for an alum's other selected industries beyond the primary
    one shown - opens a small popover (not an inline expand) listing them
@@ -4005,12 +3996,26 @@ function positionExpertiseDivider(){
   const divider = document.querySelector('.profile-divider');
   const header = document.querySelector('.profile-header');
   const chevron = document.querySelector('.directory-resizer-collapse');
-  if(!divider || !header || !chevron) return;
+  const right = document.getElementById('directoryRight');
+  if(!divider || !header || !chevron || !right) return;
   const defaultGap = 20; // matches .profile-divider's own base margin-top
+  // Reset to the default first so the measurements below (both the
+  // chevron gap and the overflow check) start from the same baseline
+  // every time, not compounding whatever extra gap a previous call left.
+  divider.style.marginTop = defaultGap + 'px';
   const headerBottom = header.getBoundingClientRect().bottom;
   const chevronBottom = chevron.getBoundingClientRect().bottom;
-  const neededGap = Math.max(defaultGap, (chevronBottom - headerBottom) + defaultGap);
-  divider.style.marginTop = neededGap + 'px';
+  const wantedExtra = Math.max(0, (chevronBottom - headerBottom) + defaultGap - defaultGap);
+  // Everything on this panel must fit without scrolling (per request) -
+  // that takes priority over clearing the chevron, so never add more
+  // extra gap than the panel actually has slack for at the default
+  // spacing. A profile short enough to need the full chevron-clearing
+  // gap anyway (the common case) gets it in full; a panel already
+  // nearly full at default spacing gets little or none, rather than
+  // being pushed into needing a scrollbar.
+  const slack = Math.max(0, right.getBoundingClientRect().height - right.scrollHeight);
+  const extra = Math.min(wantedExtra, slack);
+  divider.style.marginTop = (defaultGap + extra) + 'px';
 }
 
 // Delegated rather than bound per-render (renderProfilePanel replaces
