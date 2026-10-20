@@ -24,7 +24,7 @@
      in this file - landing hero, about/FAQ, pins drawer - picks up the
      same system automatically instead of needing a rule-by-rule
      rewrite, and so nothing other than color actually changes. */
-  --page-bg: #F6F3EE;
+  --page-bg: #F7F4EC;
   --workspace-bg: #FCFBF9;
   --surface: #FEFDFC;
   --selected-bg: #F1ECFA;
@@ -53,7 +53,10 @@
      directory - kept separate from --success/--success-on-light above,
      which this app deliberately maps to purple everywhere else. */
   --list-added: #2E7D4F;
-  --list-added-tint: var(--soft-green);
+  /* A richer, more distinct muted green (2026-10-20) than --soft-green
+     (which capacity badges use) - "added to my list" cards should read
+     as clearly different from the pale capacity-badge green. */
+  --list-added-tint: #DCE8D3;
   --line: var(--border);
   --line-strong: var(--border-strong);
   --muted: var(--muted-text);
@@ -1288,12 +1291,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .profile-info .alum-company{ font-size: 14px; line-height: 1.2; margin-top: 1px; }
 .profile-info .alum-meta{ margin-top: 7px; font-size: 14px; }
 /* Edge-to-edge on both sides, per request ("run to the edge of the
-   white content column"). .directory-right's own 28px padding is the
-   only inset to cancel on either side now - .listing-container itself
-   uses margin rather than padding (see its own comment), so it no
-   longer adds any further distance to bleed past on the right. No
-   margin-bottom either, so the expertise section right below starts
-   flush against this line. */
+   white content column") - .directory-right's own 24px padding is the
+   only inset to cancel on either side. The only divider left in the
+   profile (2026-10-20 - the one that used to sit above Ask Me About is
+   gone); its vertical position is set in JS (see
+   alignProfileDividerToChevron()) to land exactly on the resizer
+   chevron's own vertical center, not just wherever the header's
+   natural height happens to put it. */
 .profile-divider{
   margin: 20px -24px 0 -24px;
   border-top: 2px solid var(--line);
@@ -1803,7 +1807,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    card's own .alum-company size in some contexts) - "slightly smaller"
    than whichever parent (card or profile) it's actually in, per
    request, rather than a fixed px that isn't always smaller. */
-.alum-company-note, .alum-role-note{ display: block; font-size: 0.82em; margin-top: 1px; color: var(--muted); }
+.alum-role-note{ display: block; font-size: 0.82em; margin-top: 1px; color: var(--muted); }
+/* Inline, not block (2026-10-20, per request) - a genuine company
+   descriptor like "(Robotics company in SF Bay)" sits right after the
+   company name on the same line, slightly smaller/muted, rather than
+   wrapping to its own line the way .alum-role-note still does. */
+.alum-company-note{ font-size: 0.82em; margin-left: 4px; color: var(--muted); }
 .capacity-line{ font-size: 12px; margin-top: 8px; color: var(--muted); }
 .capacity-line strong{ color: var(--accent); font-weight: 600; }
 .capacity-line.full strong{ color: var(--warn); }
@@ -1842,11 +1851,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   font-weight: 700;
 }
 /* Industry Expertise + Marketing Expertise side by side in one row
-   (2026-10-17, revised again) - Ask Me About is a separate full-width
-   row below (see .profile-section-divider), not a 3rd column here, and
-   the gap between the two columns is plain spacing now, no vertical
-   divider - "subtle horizontal separators rather than tall vertical
-   dividers", per request. */
+   - Ask Me About is a separate full-width row below (plain spacing
+   only now - 2026-10-20, per request: the only divider in the profile
+   is .profile-divider itself, directly below the photo/job-info
+   section; the one that used to sit above Ask Me About is removed). */
 .alum-columns{
   display: flex;
   flex-direction: row;
@@ -1856,19 +1864,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 /* padding-top gives the column text its own breathing room below the
    (flush) horizontal divider above it. */
 .alum-col{ flex: 1 1 140px; min-width: 0; padding-top: 14px; }
-/* Subtle (1px, not the site's usual 2px dividers - deliberately lighter
-   here per request) separator between the expertise row above and Ask
-   Me About below. Same edge-to-edge trick and reasoning as
-   .profile-divider just above - cancels .directory-right's own 28px
-   padding on both sides. */
-.profile-section-divider{
-  border-top: 1px solid var(--line);
-  margin: 16px -24px 16px -24px;
-}
-/* "+N more" for an alum's other selected industries beyond the primary
-   one shown - opens a small popover (not an inline expand) listing them
-   under a headline, same interaction family as the filter dropdowns. */
-.industry-more-wrap{ position: relative; display: inline-block; }
+/* "+N more" / "Show less" for Industry Expertise (2026-10-20 - replaces
+   the old popover with an inline expand: clicking it reveals every
+   industry pill in place, wrapping naturally onto further lines,
+   rather than opening a floating list). Still used as a plain inline
+   pill-style button, just with no wrap/popover around it any more -
+   see collapseIndustryTagsInline(). */
 .industry-more-btn{
   display: inline-block;
   background: none;
@@ -1885,44 +1886,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   white-space: nowrap;
 }
 .industry-more-btn:hover{ color: var(--accent-deep); border-color: var(--accent); }
-.industry-more-popover{
-  display: none;
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  box-shadow: 0 14px 32px rgba(37,37,100,0.16);
-  padding: 14px 16px;
-  min-width: 200px;
-  max-width: 260px;
-  z-index: 20;
-  cursor: default;
-}
-.industry-more-wrap.open .industry-more-popover{ display: block; }
-.industry-more-popover-title{
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink);
-  margin-bottom: 8px;
-}
-.industry-more-popover-list{
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--muted);
-  line-height: 1.6;
-}
 .alum-labeled-line{ margin-top: 12px; }
 .topic-tags{
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
-/* Reserves space for 2 wrapped lines of pills (line height + padding/
-   border, times two, plus the one row gap between them) regardless of
-   how many pills an alum actually has, so cards line up in height
-   whether this area needs 1 line or 2. */
+/* Wraps freely to however many lines it needs (2026-10-20, per request -
+   no collapsing/fixed height here any more; only Industry Expertise
+   still collapses, see collapseIndustryTagsInline()). */
 .marketing-tags{ align-content: flex-start; }
 /* Light lavender fill per the reference image (2026-10-15) - was an
    outlined/unfilled pill before. Reuses --accent-tint rather than a new
@@ -3797,13 +3769,12 @@ function primaryIndustryOrderedList(a){
 function profileThreeColumnsHtml(a, visibleTopics){
   const cols = [];
 
-  // Industry Expertise - pills, all of them (2026-10-17, per request;
-  // used to show only the primary one as plain text with a flat "+N
-  // more" for the rest). Same measured 1-line-collapse the Marketing/
-  // Ask Me About pill rows already use - see collapsePillRowOverflow,
-  // wired up for this row too in collapseAskMeAboutOverflow() - rather
-  // than a fixed "show 1" rule, so it only folds into "+N more" once the
-  // pills actually don't fit.
+  // Industry Expertise - pills, all of them, rendered up front (the
+  // primary one first - see primaryIndustryOrderedList) and then
+  // measured/collapsed to a 1-line "+N more" (inline-expandable, not a
+  // popover) by collapseIndustryTagsInline(). Marketing Expertise and
+  // Ask Me About below are NOT collapsed at all (2026-10-20, per
+  // request) - they just wrap freely onto however many lines they need.
   const allIndustries = primaryIndustryOrderedList(a);
   if(allIndustries.length){
     cols.push(`<div class="alum-col"><span class="field-label">Industry Expertise</span><div class="topic-tags industry-tags">${allIndustries.map(v => `<span class="topic-tag">${applyTextRules(v)}</span>`).join('')}</div></div>`);
@@ -3821,7 +3792,6 @@ function profileThreeColumnsHtml(a, visibleTopics){
   if(!cols.length && !askMeAboutHtml) return '';
   let html = cols.length ? `<div class="alum-columns">${cols.join('')}</div>` : '';
   if(askMeAboutHtml){
-    if(html) html += `<div class="profile-section-divider"></div>`;
     html += askMeAboutHtml;
   }
   return html;
@@ -3952,11 +3922,15 @@ function formatDisplayLabel(value){
 // "Dyson, ex-Ulta Beauty") - see splitPrevNote - renders on its own
 // line, smaller, so the current company name itself stays the prominent
 // part. and->& / previously->prev applied to both.
+// Multi-role qualifiers like "(corporate job)" / "(my company)" say
+// which of an alum's several roles this is, not something descriptive
+// about the company itself - they stay as plain inline text (not
+// pulled out into the muted descriptor treatment below).
+const COMPANY_NOTE_EXCLUDE_RE = /^\(\s*(corporate job|my company)\s*\)$/i;
 function companyHtml(company){
   const {main, note} = splitPrevNote(company || '');
-  const mainHtml = applyTextRules(main);
-  if(!note) return mainHtml;
-  return `${mainHtml}<span class="alum-company-note">${applyTextRules(note)}</span>`;
+  if(!note || COMPANY_NOTE_EXCLUDE_RE.test(note.trim())) return applyTextRules(company || '');
+  return `${applyTextRules(main)}<span class="alum-company-note">${applyTextRules(note)}</span>`;
 }
 
 function capacityBadgeHtml(capacity, assumed){
@@ -4203,6 +4177,7 @@ function collapseProfilePanel(){
 function expandProfilePanel(){
   document.getElementById('directorySplit').classList.remove('profile-collapsed');
   enforceDirectoryListMinWidth();
+  alignProfileDividerToChevron();
 }
 
 function renderProfilePanel(){
@@ -4253,21 +4228,42 @@ function renderProfilePanel(){
     </div>
   `;
 
-  right.querySelectorAll('.industry-more-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const wrap = btn.closest('.industry-more-wrap');
-      const isOpen = wrap.classList.contains('open');
-      closeAllIndustryPopovers();
-      wrap.classList.toggle('open', !isOpen);
-      btn.setAttribute('aria-expanded', String(!isOpen));
-    });
-  });
-  right.querySelectorAll('.industry-more-popover').forEach(popover => {
-    popover.addEventListener('click', (e) => e.stopPropagation());
-  });
+  collapseIndustryTagsInline();
+  alignProfileDividerToChevron();
+}
 
-  collapseAskMeAboutOverflow();
+// Lines up .profile-divider's visible line with the resizer chevron's
+// own vertical center (per request - "align its vertical position
+// exactly with the center/vertex of the chevron... so the intersection
+// looks intentional"). The chevron is centered on the whole split's
+// height (viewport-dependent, via .directory-resizer's own
+// align-items:center), while the divider's natural position depends on
+// the header's content height - these only coincide through explicit
+// measurement, not by default layout. Resets to the base CSS margin
+// first so repeated calls measure from a known starting point, not a
+// previous call's own adjustment.
+function alignProfileDividerToChevron(){
+  const divider = document.querySelector('.profile-divider');
+  const chevron = document.getElementById('directoryCollapseBtn');
+  const header = document.querySelector('.profile-header');
+  if(!divider || !chevron || !header) return;
+  divider.style.marginTop = '';
+  // offsetParent is null anywhere up the hidden-ancestor chain (mobile
+  // view, or the profile panel still collapsed at render time, e.g.
+  // selectAlum() rendering before a separate expandProfilePanel() call)
+  // - bail rather than compute off a zeroed-out rect.
+  if(chevron.offsetParent === null || divider.offsetParent === null) return;
+  const chevronRect = chevron.getBoundingClientRect();
+  const headerBottom = header.getBoundingClientRect().bottom;
+  const dividerTop = divider.getBoundingClientRect().top;
+  const baseMarginTop = parseFloat(getComputedStyle(divider).marginTop) || 0;
+  const chevronMid = chevronRect.top + chevronRect.height / 2;
+  // Never let the divider move above the header's own bottom edge (a
+  // safety floor, not just the common case) - if the chevron's center
+  // ever comes out above that, fall back to sitting flush against the
+  // header instead of overlapping the photo/text.
+  const targetTop = Math.max(chevronMid, headerBottom);
+  divider.style.marginTop = (baseMarginTop + (targetTop - dividerTop)) + 'px';
 }
 
 // Delegated rather than bound per-render (renderProfilePanel replaces
@@ -4297,62 +4293,65 @@ document.getElementById('directoryCollapseBtn').addEventListener('click', (e) =>
 // cumulative), so it's safe to call again after a resize. Forces a
 // synchronous layout per container (offsetTop) - fine at this page's
 // scale (dozens of cards), but keep it to one pass.
-function collapsePillRowOverflow(containerSelector, popoverTitle){
-  document.querySelectorAll(containerSelector).forEach(container => {
-    const existingWrap = container.querySelector('.topic-tag-more-wrap');
-    if(existingWrap) existingWrap.remove();
+// Industry Expertise only (2026-10-20, per request - replaces the old
+// shared popover mechanism). Collapsed: the primary pill + "+N more".
+// Clicking it expands inline - every pill shown, wrapping naturally
+// onto further lines - and swaps the button to "Show less"; clicking
+// that re-collapses. Expand state lives on the container's own class
+// so a resize (which re-runs this to recheck how much fits on line 1)
+// doesn't un-expand something the student deliberately opened.
+function collapseIndustryTagsInline(){
+  document.querySelectorAll('.industry-tags').forEach(container => {
+    const existingBtn = container.querySelector('.industry-more-btn');
+    if(existingBtn) existingBtn.remove();
     const tags = [...container.querySelectorAll('.topic-tag')];
     tags.forEach(t => { t.style.display = ''; });
     if(!tags.length) return;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'industry-more-btn';
+
+    if(container.classList.contains('industry-expanded')){
+      // Every pill is already visible (left shown above) - just add
+      // "Show less" at the end, no line-fit measuring needed.
+      btn.textContent = 'Show less';
+      btn.setAttribute('aria-expanded', 'true');
+      container.appendChild(btn);
+      btn.addEventListener('click', () => {
+        container.classList.remove('industry-expanded');
+        collapseIndustryTagsInline();
+      });
+      return;
+    }
+
     const lineTop = tags[0].offsetTop;
     let overflowIndex = tags.findIndex(t => t.offsetTop > lineTop);
-    if(overflowIndex === -1) return; // everything already fits on one line
-    if(overflowIndex === 0) overflowIndex = 1; // always keep at least one real tag visible
+    if(overflowIndex === -1) return; // everything already fits on one line - no toggle needed
+    if(overflowIndex === 0) overflowIndex = 1; // always keep at least one real pill visible
 
-    const wrap = document.createElement('span');
-    wrap.className = 'industry-more-wrap topic-tag-more-wrap';
-    const moreBtn = document.createElement('button');
-    moreBtn.type = 'button';
-    moreBtn.className = 'industry-more-btn';
-    moreBtn.setAttribute('aria-expanded', 'false');
-    const popover = document.createElement('div');
-    popover.className = 'industry-more-popover';
-    popover.addEventListener('click', (e) => e.stopPropagation());
-    popover.innerHTML = `<div class="industry-more-popover-title">${popoverTitle}</div><div class="industry-more-popover-list"></div>`;
-    const list = popover.querySelector('.industry-more-popover-list');
-    wrap.appendChild(moreBtn);
-    wrap.appendChild(popover);
-    container.appendChild(wrap);
-
-    // The pill itself takes up room on line 1 - if adding it pushed it
-    // onto line 2, hide one more real tag and recheck, until it fits.
+    container.appendChild(btn);
+    btn.setAttribute('aria-expanded', 'false');
+    // The "+N more" pill itself takes up room on line 1 - if adding it
+    // pushed it onto line 2, hide one more real pill and recheck, until
+    // it fits.
     while(overflowIndex > 0){
       for(let i = overflowIndex; i < tags.length; i++) tags[i].style.display = 'none';
-      const hidden = tags.slice(overflowIndex);
-      moreBtn.textContent = `+${hidden.length} more`;
-      list.innerHTML = hidden.map(t => `<div>${t.textContent}</div>`).join('');
-      if(wrap.offsetTop <= lineTop) break;
+      btn.textContent = `+${tags.length - overflowIndex} more`;
+      if(btn.offsetTop <= lineTop) break;
       overflowIndex--;
     }
 
-    moreBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isOpen = wrap.classList.contains('open');
-      closeAllIndustryPopovers();
-      wrap.classList.toggle('open', !isOpen);
-      moreBtn.setAttribute('aria-expanded', String(!isOpen));
+    btn.addEventListener('click', () => {
+      container.classList.add('industry-expanded');
+      collapseIndustryTagsInline();
     });
   });
 }
-function collapseAskMeAboutOverflow(){
-  collapsePillRowOverflow('.ask-me-about .topic-tags', 'Also ask about:');
-  collapsePillRowOverflow('.marketing-tags', 'Also has expertise in:');
-  collapsePillRowOverflow('.industry-tags', 'Also worked in:');
-}
-let askMeAboutResizeTimer;
+let industryTagsResizeTimer;
 window.addEventListener('resize', () => {
-  clearTimeout(askMeAboutResizeTimer);
-  askMeAboutResizeTimer = setTimeout(collapseAskMeAboutOverflow, 150);
+  clearTimeout(industryTagsResizeTimer);
+  industryTagsResizeTimer = setTimeout(collapseIndustryTagsInline, 150);
 });
 
 // Keeps the hero headline at its tuned position, but never lets it
@@ -4453,7 +4452,7 @@ function sizeDirectorySplit(){
 let directorySplitResizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(directorySplitResizeTimer);
-  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); }, 100);
+  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); alignProfileDividerToChevron(); }, 100);
 });
 
 // Draggable divider between the directory list and the profile panel
@@ -4600,15 +4599,6 @@ function watchProfilePanelWidth(){
   observer.observe(right);
 }
 watchProfilePanelWidth();
-
-function closeAllIndustryPopovers(){
-  document.querySelectorAll('.industry-more-wrap.open').forEach(w => {
-    w.classList.remove('open');
-    w.querySelector('.industry-more-btn')?.setAttribute('aria-expanded', 'false');
-  });
-}
-document.addEventListener('click', () => closeAllIndustryPopovers());
-document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeAllIndustryPopovers(); });
 
 function showToast(msg, type, alignEl){
   const toast = document.getElementById('toast');
