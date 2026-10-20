@@ -1084,22 +1084,25 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 0;
 }
 .profile-back-btn:hover{ color: var(--ink); }
-/* justify-content:flex-start (per request) - sits directly under the
-   identity block's own left edge (location/LinkedIn), not pushed out to
-   the right edge where it no longer has anything to align with now that
-   it's beneath the identity block rather than beside it. */
-.profile-availability{ display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-top: 16px; }
-/* Top-aligned (2026-10-17) - the identity block (name/role/company/
-   location+LinkedIn) is a single stack beside the portrait, with
-   availability+Add-to-list beneath it, so the column no longer needs to
-   stretch to the portrait's full height. */
-.profile-header{ display: flex; gap: 28px; align-items: flex-start; }
+/* Now at the TOP of the column (per request), where the identity block
+   used to sit - no margin-top needed, it's the first thing in normal
+   flow. */
+.profile-availability{ display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
+/* Stretch (per request - name/role/company should align with the
+   bottom 1/3 of the portrait) - makes .profile-info exactly as tall as
+   the portrait, which .profile-info-identity's own absolute positioning
+   below measures itself against. */
+.profile-header{ display: flex; gap: 28px; align-items: stretch; }
 /* Portrait + text stack vertically once the panel gets narrow (resized
    small, or on a mobile detail view) - toggled by a ResizeObserver on
    #directoryRight (watchProfilePanelWidth()) rather than a plain media
    query, since the panel's width changes from dragging the divider, not
-   just from the viewport changing. */
+   just from the viewport changing. The bottom-third positioning below
+   only makes sense side-by-side with the portrait, so it's reset back
+   to plain flow here too. */
 .directory-right.narrow .profile-header{ flex-direction: column; align-items: flex-start; }
+.directory-right.narrow .profile-info{ position: static; }
+.directory-right.narrow .profile-info-identity{ position: static; margin-top: 16px; }
 .directory-right.narrow .profile-portrait{ width: 195px; height: 233px; }
 /* 1.5x larger (per request) - was 156x185 (which itself was reduced
    from 176x220 on 2026-10-17 to tighten the header row). */
@@ -1129,10 +1132,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    exhausted every known extension for this alum's photo without one
    actually loading (i.e. no photo has been uploaded for them yet). */
 .profile-portrait-fallback{ display: none; }
-/* Identity block beside the portrait: name/role/company/location+
-   LinkedIn stack in one group (.profile-info-identity), with
-   availability+Add-to-list beneath it (.profile-availability, margin-top
-   above) - name is the visual focal point, per request. */
+/* Availability+Add-to-list now sits at the top of the column (normal
+   flow, first child); the identity block (name/role/company/location+
+   LinkedIn) is pulled out of flow and positioned to align with the
+   bottom third of the portrait instead, per request - see
+   .profile-info-identity below. */
 .profile-info{
   display: flex;
   flex-direction: column;
@@ -1143,6 +1147,26 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      toolbar's Review & Submit button, per request. */
   flex: 1 1 auto;
   min-width: 0;
+  /* Positioning context for .profile-info-identity's "bottom third"
+     placement below - its height matches the portrait's own exactly,
+     via .profile-header's align-items:stretch. */
+  position: relative;
+}
+/* Positioned (not just margin-top'd) so its top edge lands at exactly
+   2/3 of the portrait's height, i.e. "the bottom third of the image",
+   per request - a fixed px guess would drift as soon as the portrait's
+   own size changes (it already has 3 different sizes across
+   breakpoints), where a percentage of .profile-info's own height
+   (stretched to match the portrait) stays correct at any of them
+   without needing separate per-breakpoint values. Free to run past
+   .profile-info's own bottom edge if the text itself needs more than a
+   third's worth of room - only its start point is pinned, not its
+   height. */
+.profile-info-identity{
+  position: absolute;
+  top: 66.667%;
+  left: 0;
+  right: 0;
 }
 /* Semi-bold - matches .directory-entry-name's own left-column
    formatting, per request. */
@@ -3944,17 +3968,17 @@ function renderProfilePanel(){
         <span class="profile-portrait-fallback">${PORTRAIT_PLACEHOLDER_SVG}</span>
       </div>
       <div class="profile-info">
-        <div class="profile-info-identity">
-          <div class="profile-name">${a.name}</div>
-          ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
-          <div class="alum-company">${companyHtml(a.company)}</div>
-          ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
-        </div>
         <div class="profile-availability">
           ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
           <button class="add-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name} from my list` : `Add ${a.name} to my list`}">
             ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>
           </button>
+        </div>
+        <div class="profile-info-identity">
+          <div class="profile-name">${a.name}</div>
+          ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
+          <div class="alum-company">${companyHtml(a.company)}</div>
+          ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
         </div>
       </div>
     </div>
@@ -3995,27 +4019,42 @@ function renderProfilePanel(){
 function positionExpertiseDivider(){
   const divider = document.querySelector('.profile-divider');
   const header = document.querySelector('.profile-header');
+  const identity = document.querySelector('.profile-info-identity');
   const chevron = document.querySelector('.directory-resizer-collapse');
   const right = document.getElementById('directoryRight');
   if(!divider || !header || !chevron || !right) return;
   const defaultGap = 20; // matches .profile-divider's own base margin-top
   // Reset to the default first so the measurements below (both the
-  // chevron gap and the overflow check) start from the same baseline
-  // every time, not compounding whatever extra gap a previous call left.
+  // overlap/chevron gaps and the overflow check) start from the same
+  // baseline every time, not compounding whatever a previous call left.
   divider.style.marginTop = defaultGap + 'px';
-  const headerBottom = header.getBoundingClientRect().bottom;
+  // margin-top on .profile-divider is relative to .profile-header's own
+  // box (278px tall, matching the portrait) - .profile-info-identity is
+  // positioned absolutely now (aligned to the portrait's bottom third)
+  // and can run past that box's bottom edge if the name/role/company/
+  // location text needs more room than that last third does, so the
+  // margin needed to clear it is measured from the HEADER's edge, not
+  // from wherever the identity block itself starts.
+  const headerBoxBottom = header.getBoundingClientRect().bottom;
+  const identityBottom = identity ? identity.getBoundingClientRect().bottom : headerBoxBottom;
   const chevronBottom = chevron.getBoundingClientRect().bottom;
-  const wantedExtra = Math.max(0, (chevronBottom - headerBottom) + defaultGap - defaultGap);
+  // Clearing the identity text (when it overflows the header's own box)
+  // is a hard floor, not subject to the "fits without scrolling"
+  // trade-off below - overlapping text under a divider line is worse
+  // than a scrollbar in the rare case both can't be had at once.
+  const identityFloor = Math.max(defaultGap, (identityBottom - headerBoxBottom) + defaultGap);
+  const wantedExtra = Math.max(0, (chevronBottom - headerBoxBottom) + defaultGap - identityFloor);
   // Everything on this panel must fit without scrolling (per request) -
-  // that takes priority over clearing the chevron, so never add more
-  // extra gap than the panel actually has slack for at the default
-  // spacing. A profile short enough to need the full chevron-clearing
-  // gap anyway (the common case) gets it in full; a panel already
-  // nearly full at default spacing gets little or none, rather than
-  // being pushed into needing a scrollbar.
+  // that takes priority over clearing the chevron (not over clearing
+  // the identity text, see above), so never add more extra gap than the
+  // panel actually has slack for at the identity floor. A profile short
+  // enough to need the full chevron-clearing gap anyway (the common
+  // case) gets it in full; a panel already nearly full gets little or
+  // none, rather than being pushed into needing a scrollbar.
+  divider.style.marginTop = identityFloor + 'px';
   const slack = Math.max(0, right.getBoundingClientRect().height - right.scrollHeight);
   const extra = Math.min(wantedExtra, slack);
-  divider.style.marginTop = (defaultGap + extra) + 'px';
+  divider.style.marginTop = (identityFloor + extra) + 'px';
 }
 
 // Delegated rather than bound per-render (renderProfilePanel replaces
