@@ -853,16 +853,22 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    the default stretch (column-flex's own default) still sizes it,
    margin just pulls both edges in symmetrically. */
 .directory-toolbar .search-box{ flex: none; max-width: none; margin: 0 28px; }
+/* Flat flex row (2026-10-20 - filters and Review & Submit must be true
+   flex siblings, not nested in a separate .filter-bar wrapper) - filter
+   pills, Clear all and Review & Submit are all direct children here;
+   Review & Submit's own margin-left:auto is what pushes it to the row's
+   far right edge, no measured/absolute positioning needed.
+   flex-wrap:nowrap is the desktop/laptop default - the existing
+   max-width:1023px breakpoint (where the whole split view collapses to
+   a single column anyway) is the one intentional point where this is
+   allowed to wrap instead. */
 .toolbar-row2{
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 10px;
+  flex-wrap: nowrap;
+  margin-left: 28px;
 }
-/* Left-inset to match where #alumni available sits (per request), same
-   28px as the search box above it - Review & Submit (the row's other
-   child) stays where it was, flush with the card's own right edge. */
-.toolbar-row2 .filter-bar{ flex: 1 1 auto; margin-top: 0; margin-left: 28px; }
 /* Separates the count/sort row from the alumni listings below it.
    Runs the width of #directoryLeft itself (which has no side padding of
    its own, so no margin trick is needed on either side) - per request,
@@ -1165,38 +1171,37 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 0;
 }
 .profile-back-btn:hover{ color: var(--ink); }
-/* Right-aligned (per request) so Add to my list's own right edge lines
-   up with the toolbar's Review & Submit button. The toolbar sits in its
-   own .listing-container directly, while this row is nested inside
-   .directory-right's additional fixed 28px padding on top of that - the
-   negative margin-right cancels that extra inset so the two actually
-   land on the same edge, not just the same relative distance within two
-   differently-padded containers. Back to its own full-width row ABOVE
-   the identity block (2026-10-20 responsive-hierarchy spec) - its
-   position is then stable regardless of name/title length, since it no
-   longer shares a baseline with text that can wrap to 2 lines. */
-.profile-availability{ display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-right: -28px; flex-shrink: 0; }
-/* Gap below the action row, above the identity block - since the
-   column no longer relies on justify-content:flex-end to space things
-   out, this is now the only thing separating them. */
-.profile-info-identity{ margin-top: 10px; }
-/* Top-anchored, not vertically centered in the portrait's height (per
-   spec - "eliminate excessive blank space, do not vertically center the
-   identity block in a large hero area") - default column flow (no
-   justify-content override) just stacks action row, then identity,
-   then location/LinkedIn, from the top. */
-.profile-header{ display: flex; gap: 28px; align-items: flex-start; }
+/* Structural two-column grid (2026-10-20) - photo column is a fixed
+   track, info column is the flexible rest; no position:absolute,
+   right:0 or negative/large auto margins anywhere in this block. The
+   action row, identity block and location/LinkedIn all live INSIDE the
+   info column, so they share its exact horizontal bounds and move with
+   it (dragging the divider, resizing the window) rather than being
+   measured or pinned against the outer panel. */
+.profile-header{
+  display: grid;
+  grid-template-columns: 172px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
 /* Portrait + text stack vertically once the panel gets narrow (resized
    small, or on a mobile detail view) - toggled by a ResizeObserver on
    #directoryRight (watchProfilePanelWidth()) rather than a plain media
    query, since the panel's width changes from dragging the divider, not
-   just from the viewport changing. */
-.directory-right.narrow .profile-header{ flex-direction: column; align-items: flex-start; }
+   just from the viewport changing. A single grid column makes the two
+   items stack top-to-bottom on their own, same as flex-direction:column
+   used to. */
+.directory-right.narrow .profile-header{ grid-template-columns: 1fr; }
 .directory-right.narrow .profile-portrait{ width: 145px; height: 173px; }
+.profile-info{ min-width: 0; }
+/* Capacity badge + Add/Added button - plain flex row, left-aligned
+   within the info column (no justify-content:flex-end / negative
+   margin against the outer panel). Sits directly above the identity
+   block via margin-bottom, same column, same horizontal bounds. */
+.profile-availability{ display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 10px; }
 /* 1.5x larger (per request) - was 156x185 (which itself was reduced
    from 176x220 on 2026-10-17 to tighten the header row). */
 .profile-portrait{
-  flex-shrink: 0;
   width: 172px;
   height: 205px;
   border-radius: 8px;
@@ -1221,17 +1226,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    exhausted every known extension for this alum's photo without one
    actually loading (i.e. no photo has been uploaded for them yet). */
 .profile-portrait-fallback{ display: none; }
-/* Top-anchored column (2026-10-20 spec) - action row, then identity
-   block, then location/LinkedIn, in natural top-down flow. flex:1 1
-   auto still grabs the rest of .profile-header's width, which is what
-   lets .profile-availability's own justify-content:flex-end land flush
-   with the toolbar's Review & Submit button. */
-.profile-info{
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-width: 0;
-}
 /* name+title+company as one tight cluster (2026-10-20 spec exact
    values) - no default heading margin, so .alum-role's own margin-top
    is the only gap between them. */
@@ -1296,6 +1290,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 0;
   color: var(--accent);
   text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 /* A vertical tab docked to the right edge of the viewport, centered on
    it - not part of the toolbar/search row any more (2026-10-15, per
@@ -1323,13 +1319,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .pins-toggle-btn:hover{ background: var(--accent-deep); border-color: var(--accent-deep); }
 .pins-toggle-btn.active{ background: var(--success-on-light); border-color: var(--success-on-light); color: #fff; }
-/* Muted (not disabled - it still opens the, then-empty, list) while
-   nothing is shortlisted yet, so the "N/5" count reads as informational
-   rather than a false sense of progress. */
-.pins-toggle-btn.is-empty{ background: var(--paper); border-color: var(--line-strong); color: var(--muted); }
-.pins-toggle-btn.is-empty:hover{ background: var(--paper); border-color: var(--line-strong); }
-.pins-toggle-btn.is-empty .pins-count{ color: var(--muted); }
-.pins-count{ color: rgba(255,255,255,0.8); }
 
 .result-line{
   margin-top: 14px;
@@ -1342,17 +1331,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 /* ---------- FILTER DROPDOWNS ---------- */
 /* Replaces the old left sidebar of always-visible checkbox groups - one
    pill button per filterable field, each opening its own small checkbox
-   popover, all in a single wrapping row under the search box (matching
-   the Concept Board's "Marketing Area / Industry / City" dropdown row). */
-.filter-bar{
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-top: 16px;
-}
-.filter-dropdowns{ display: flex; flex-wrap: wrap; gap: 10px; }
-.filter-dropdown{ position: relative; }
+   popover (matching the Concept Board's "Marketing Area / Industry /
+   City" dropdown row). display:contents (2026-10-20) - #filterPanel is
+   still a real element JS safely rebuilds (buildFilterPanel() targets
+   it directly), but it no longer introduces its own flex context: its
+   .filter-dropdown children become flex items of .toolbar-row2
+   directly, true siblings of Clear all and Review & Submit rather than
+   nested in a wrapper. */
+.filter-dropdowns{ display: contents; }
+/* flex-shrink:0 + nowrap (2026-10-20) - as a direct flex item of
+   .toolbar-row2 now (see .filter-dropdowns{display:contents} above),
+   this must hold its full single-line width rather than the browser's
+   default flex-shrink wrapping its label text mid-word to fit. */
+.filter-dropdown{ position: relative; flex-shrink: 0; }
 .filter-dropdown-toggle{
   display: inline-flex;
   align-items: center;
@@ -1361,6 +1352,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   border: 1.5px solid var(--ink);
   border-radius: 8px;
   cursor: pointer;
+  white-space: nowrap;
   /* Matches .sort-label-btn's own size now, both font and padding (per
      request) - was 13.5px/8px 14px. */
   font-size: 12.5px;
@@ -1555,6 +1547,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    full-screen "page" over it (.mobile-detail-open) with a Back control,
    rather than squeezing both panels side by side. */
 @media (max-width: 1023px){
+  /* The one intentional breakpoint where the toolbar is allowed to wrap
+     - everywhere wider, it's a single nowrap row. */
+  .toolbar-row2{ flex-wrap: wrap; }
   .directory-split{ flex-direction: column; height: auto; }
   .directory-left{ flex: 1 1 auto; max-width: none; }
   /* Resize/collapse are desktop-only concepts - mobile already has its
@@ -2402,13 +2397,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <input type="text" id="searchInput" placeholder="Search by name, company, or keyword…">
   </div>
   <div class="toolbar-row2">
-    <div class="filter-bar">
-      <div class="filter-dropdowns" id="filterPanel"></div>
-      <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
-    </div>
-    <button class="pins-toggle-btn" id="pinsToggleBtn">
-      Review &amp; Submit<span class="pins-count" id="pinsCount"></span>
-    </button>
+    <div class="filter-dropdowns" id="filterPanel"></div>
+    <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
+    <button class="pins-toggle-btn" id="pinsToggleBtn">Review &amp; Submit</button>
   </div>
 </div>
 </div><!-- /directory-toolbar -->
@@ -4213,22 +4204,6 @@ function renderProfilePanel(){
   });
 
   collapseAskMeAboutOverflow();
-  alignReviewSubmitButton();
-}
-
-// Review & Submit's right edge matches the sort button's right edge
-// (per request) - both measured live rather than assumed, since the
-// sort button's own position depends on #directoryLeft's width, which
-// varies (the 32/68 drag ratio, or full-width when the profile panel is
-// collapsed). Implemented as a margin-right on the button itself so
-// .filter-bar (its flex sibling) still gets whatever space is left.
-function alignReviewSubmitButton(){
-  const sortBtn = document.querySelector('.sort-label-btn');
-  const reviewBtn = document.getElementById('pinsToggleBtn');
-  if(!sortBtn || !reviewBtn) return;
-  reviewBtn.style.marginRight = '0px';
-  const diff = reviewBtn.getBoundingClientRect().right - sortBtn.getBoundingClientRect().right;
-  reviewBtn.style.marginRight = diff + 'px';
 }
 
 // Delegated rather than bound per-render (renderProfilePanel replaces
@@ -4414,7 +4389,7 @@ function sizeDirectorySplit(){
 let directorySplitResizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(directorySplitResizeTimer);
-  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); alignReviewSubmitButton(); }, 100);
+  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); }, 100);
 });
 
 // Draggable divider between the directory list and the profile panel
@@ -4557,7 +4532,6 @@ function watchProfilePanelWidth(){
     for(const entry of entries){
       right.classList.toggle('narrow', entry.contentRect.width < 420);
     }
-    alignReviewSubmitButton();
   });
   observer.observe(right);
 }
@@ -4683,13 +4657,6 @@ function renderPinCardsInto(containerId, ids, opts){
 function renderPinsDrawer(){
   const isReview = pinsDrawerMode === 'review';
   document.getElementById('pinsDrawerCount').textContent = isReview ? `(${shortlist.length}/${MAX_PICKS})` : `(${cart.length})`;
-  // Toolbar button shows the shortlist count against its real cap
-  // (N/5), not the unlimited add-list size, so students can see at a
-  // glance how close they are to a submittable selection; muted when
-  // empty rather than disabled outright, since the button still opens
-  // the (then-empty) list.
-  document.getElementById('pinsCount').textContent = ` (${shortlist.length}/${MAX_PICKS})`;
-  document.getElementById('pinsToggleBtn').classList.toggle('is-empty', shortlist.length === 0);
 
   const empty = cart.length === 0;
   document.getElementById('pinsDrawerEmpty').style.display = empty ? '' : 'none';
