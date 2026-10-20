@@ -756,7 +756,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    flex-basis is a plain percentage of this container's width, so the
    32/68 directory/profile split ratio holds regardless of how wide
    this container itself ends up being. */
-#view-listing{ background: #F4F2EE; }
+/* Textured image (per request), tiled since the margin area's height
+   varies with content/viewport - #F4F2EE stays as the background-color
+   fallback for the moment before it loads (or if it fails to). */
+#view-listing{ background-color: #F4F2EE; background-image: url("bg-texture.jpg"); background-repeat: repeat; }
 .listing-container{
   padding: 0 6vw;
   background: #fff;
