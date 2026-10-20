@@ -760,42 +760,54 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    varies with content/viewport - #F4F2EE stays as the background-color
    fallback for the moment before it loads (or if it fails to). */
 #view-listing{ background-color: #F4F2EE; background-image: url("bg-texture.jpg"); background-repeat: repeat; }
+/* MARGIN, not padding (bugfix, per request - "the margins are not
+   visible at all") - padding paints as part of the box, so the white
+   background used to fill the 6vw gutter too, completely hiding the
+   textured margin behind it. Margin leaves that gutter empty instead,
+   actually exposing #view-listing's background there - the toolbar and
+   the directory/profile split both use this class, so together they
+   now read as one continuous white card inset from the screen edges,
+   per request, rather than one effectively full-bleed and the other
+   not. Content alignment (logo/nav-matched) is unaffected either way -
+   directory-left/right never had their own padding from this
+   container, only from their own components. */
 .listing-container{
-  padding: 0 6vw;
+  margin: 0 6vw;
   background: #fff;
 }
-/* Shared toolbar - search, all 5 filters, Clear all, Review & Submit -
-   now spans the full page width above both panels (2026-10-17; was
-   inside .directory-left, with Review & Submit a separate rotated edge
-   tab). Revised again (2026-10-17) - the bar itself (background +
-   bottom divider) now runs the true full viewport width, edge-to-edge,
-   per request; the search/filter/button *content* stays put by sitting
-   inside its own nested .listing-container, which keeps it at the same
-   1280px-centered position it was already at. */
-.directory-toolbar{
-  background: #fff;
-  border-bottom: 2px solid var(--line);
-}
+/* Shared toolbar - search, all 5 filters, Clear all, Review & Submit.
+   The divider and background now live on the inner .listing-container
+   (the margin-inset "card" width) rather than this outer wrapper, so
+   the seam between the toolbar and the directory/profile below it reads
+   as part of the same card - not wider than it. */
 .directory-toolbar > .listing-container{
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding-top: 18px;
   padding-bottom: 18px;
+  border-bottom: 2px solid var(--line);
 }
 /* .search-box's own `flex: 1 1 280px` sets a WIDTH basis in its other
    context (a row-direction flex parent) - .directory-toolbar is
    column-direction now, where that same flex-basis would instead set a
    280px HEIGHT, blowing the search row up to 280px tall. Override back
-   to a plain block here. */
-.directory-toolbar .search-box{ flex: none; width: 100%; max-width: none; }
+   to a plain block here. Inset 28px on both sides (per request - "align
+   with #alumni available", which sits that same 28px in from the card
+   edge via its own padding) rather than running the full card width -
+   the default stretch (column-flex's own default) still sizes it,
+   margin just pulls both edges in symmetrically. */
+.directory-toolbar .search-box{ flex: none; max-width: none; margin: 0 28px; }
 .toolbar-row2{
   display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
 }
-.toolbar-row2 .filter-bar{ flex: 1 1 auto; margin-top: 0; }
+/* Left-inset to match where #alumni available sits (per request), same
+   28px as the search box above it - Review & Submit (the row's other
+   child) stays where it was, flush with the card's own right edge. */
+.toolbar-row2 .filter-bar{ flex: 1 1 auto; margin-top: 0; margin-left: 28px; }
 /* Separates the count/sort row from the alumni listings below it.
    Runs the width of #directoryLeft itself (which has no side padding of
    its own, so no margin trick is needed on either side) - per request,
@@ -1187,17 +1199,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .profile-info .alum-company{ font-size: 15px; margin-top: 4px; }
 .profile-info .alum-meta{ margin-top: 10px; font-size: 14px; }
 /* Edge-to-edge on both sides, per request ("run to the edge of the
-   white content column"). The left side only needs to cancel .directory-
-   right's own 28px padding, reaching the resizer boundary - there's no
-   further whitespace past that to bleed into, that's the resizer itself.
-   The right side needs to go further: past that same 28px padding AND
-   .listing-container's own side padding (same 6vw .listing-container
-   itself uses, not a fixed px guess), since .directory-right's right
-   edge sits well inside the actual white column's true right edge. No
+   white content column"). .directory-right's own 28px padding is the
+   only inset to cancel on either side now - .listing-container itself
+   uses margin rather than padding (see its own comment), so it no
+   longer adds any further distance to bleed past on the right. No
    margin-bottom either, so the expertise section right below starts
    flush against this line. */
 .profile-divider{
-  margin: 20px calc(-28px - 6vw) 0 -28px;
+  margin: 20px -28px 0 -28px;
   border-top: 2px solid var(--line);
 }
 .profile-sections .alum-columns{ margin-top: 0; }
@@ -1298,10 +1307,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   cursor: pointer;
   font-size: 13.5px;
   font-weight: 500;
-  /* The pill buttons themselves (Industry, Marketing Area, Location...)
-     are Baskerville - the dropdown contents (checkboxes, region labels)
-     stay Inter, per request. */
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  /* Sans-serif now (per request) - was Baskerville, matching the
+     dropdown contents (checkboxes, region labels) which were already
+     Inter. */
+  font-family: 'Inter', sans-serif;
   padding: 8px 14px;
   color: var(--ink);
 }
@@ -1429,7 +1438,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   font-style: italic;
   color: var(--muted);
 }
-.filter-checkboxes{ display:flex; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 13.5px; text-align: left; white-space: nowrap; }
+.filter-checkboxes{ display:flex; flex-direction: column; align-items: stretch; gap: 8px; font-size: 13.5px; text-align: left; white-space: nowrap; }
 .filter-checkbox-option{
   display:flex;
   align-items:center;
@@ -1439,11 +1448,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   text-align: left;
   font-family: 'Inter', sans-serif;
 }
+/* Thinner (was 2px) and now runs the full width of the card (per
+   request) - align-items:stretch above (was flex-start) is what lets
+   this border actually reach both edges instead of stopping at the
+   label's own checkbox+text content width. */
 .filter-select-all{
   font-weight: 600;
   padding-bottom: 8px;
   margin-bottom: 2px;
-  border-bottom: 2px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 .filter-checkbox-option input[type="checkbox"]{
   appearance: none;
@@ -1737,12 +1750,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 /* Subtle (1px, not the site's usual 2px dividers - deliberately lighter
    here per request) separator between the expertise row above and Ask
    Me About below. Same edge-to-edge trick and reasoning as
-   .profile-divider just above - left side cancels .directory-right's
-   own padding only, right side goes further to reach the white column's
-   true right edge. */
+   .profile-divider just above - cancels .directory-right's own 28px
+   padding on both sides. */
 .profile-section-divider{
   border-top: 1px solid var(--line);
-  margin: 16px calc(-28px - 6vw) 16px -28px;
+  margin: 16px -28px 16px -28px;
 }
 /* "+N more" for an alum's other selected industries beyond the primary
    one shown - opens a small popover (not an inline expand) listing them
