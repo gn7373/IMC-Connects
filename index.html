@@ -1223,12 +1223,24 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    used to. */
 .directory-right.narrow .profile-header{ grid-template-columns: 1fr; }
 .directory-right.narrow .profile-portrait{ width: 145px; height: 173px; }
-.profile-info{ min-width: 0; }
+.directory-right.narrow .profile-info-identity{ margin-top: 86px; } /* half of the 173px narrow portrait height */
+/* position:relative so .profile-availability (below) can be taken out
+   of flow without disturbing the identity block's own position - its
+   margin-top is what actually places the name, independent of the
+   action row's height. */
+.profile-info{ min-width: 0; position: relative; }
 /* Capacity badge + Add/Added button - plain flex row, left-aligned
    within the info column (no justify-content:flex-end / negative
-   margin against the outer panel). Sits directly above the identity
-   block via margin-bottom, same column, same horizontal bounds. */
-.profile-availability{ display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 10px; }
+   margin against the outer panel), same horizontal bounds as the
+   identity block below it. Absolutely positioned (2026-10-20) so its
+   own height doesn't push the identity block down - the name's
+   position is now set directly, at the photo's own vertical midpoint
+   (see .profile-info-identity), not "whatever's left after this row". */
+.profile-availability{ display: flex; align-items: center; justify-content: flex-start; gap: 12px; position: absolute; top: 0; left: 0; right: 0; }
+/* Name starts at the photo's own vertical midpoint (per request) -
+   205px portrait height / 2, independent of .profile-availability's
+   own (now absolutely-positioned, out-of-flow) height above it. */
+.profile-info-identity{ margin-top: 102px; }
 /* 1.5x larger (per request) - was 156x185 (which itself was reduced
    from 176x220 on 2026-10-17 to tighten the header row). */
 .profile-portrait{
@@ -1355,14 +1367,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 10px 20px;
   color: #fff;
   flex-shrink: 0;
+  /* Plain flex-row placement (2026-10-20) - margin-left:auto pushes it
+     to .toolbar-row2's own right edge, same edge the search bar above
+     it sits at (both share .listing-container's 24px padding) - no
+     bleed past that padding. */
   margin-left: auto;
-  /* Bleeds past .listing-container's own 24px padding (same pattern as
-     .profile-divider/.profile-section-divider elsewhere in this file)
-     so its right edge lands on the workspace's true right edge - the
-     same edge #heroSub.compact's matching max()-formula padding puts
-     the nav row on - rather than stopping short at the section's
-     regular content inset. */
-  margin-right: -24px;
   white-space: nowrap;
 }
 .pins-toggle-btn:hover{ background: var(--accent-deep); border-color: var(--accent-deep); }
@@ -2745,18 +2754,18 @@ const ROUND_LABEL = "Round opens now — claims close in one week";
 //    In your Form: ⋮ menu (top right) > "Get pre-filled link" > fill in
 //    sample text for each pinned-alum question > Get Link > copy the
 //    generated URL > read off the entry.NNNNNNN IDs from it.
-//    TODO before this goes live: pick5 below is a placeholder. The Form
-//    only had 4 name-capture fields (3 "picks" + the old wishlist field,
-//    now repurposed as pick4). Add a 5th short-answer field to the Form
-//    for the 5-pin cap, then swap in its real entry.NNNNNNN id here.
+//    2026-10-20: replaced with the real (non-pilot) Form - this one has
+//    its own leading "your name" field plus a trailing "wishlist" field,
+//    neither of which we prefill (the student fills their own name
+//    in-form; wishlist isn't tied to a pinned alum), only pick1-pick5.
 const CLAIM_FORM = {
-  baseUrl: "https://docs.google.com/forms/d/e/1FAIpQLSdlRfzLUJYo2KfjEMDCBXB_edWw1T-Ph2vXjCpBUmNROvvvVA/viewform",
+  baseUrl: "https://docs.google.com/forms/d/e/1FAIpQLSezBURcA-GQPf3Eaiij5PR8Sn09wICJa9MI54-0dX-4dnYGNw/viewform",
   entryIds: {
     pick1: "entry.1852338204",
     pick2: "entry.489928546",
     pick3: "entry.887053928",
-    pick4: "entry.632976243",
-    pick5: "entry.TODO_ADD_5TH_FORM_FIELD"
+    pick4: "entry.637410748",
+    pick5: "entry.154473741"
   }
 };
 
