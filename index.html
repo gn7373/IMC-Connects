@@ -538,6 +538,20 @@ header.site{
   max-width: 960px;
   margin: 64px auto 0;
 }
+/* Mobile-only (2026-10-21, per request - "main content begins about
+   28-36px below the title divider, not ~80-100px down") - the desktop
+   margin-top values above are tuned for a much taller title band/
+   masthead combo than mobile's own compact one. Title band itself:
+   ~110-125px tall on mobile (padding reduced to match, text sized down
+   to fit it), consistent across all three pages - desktop's own band
+   height is untouched. */
+@media (max-width: 767px){
+  .info-title-band-inner{ padding: 22px 20px; font-size: 26px; }
+  .info-layout{ padding: 0 20px 48px; }
+  #infoPanelAbout{ max-width: none; margin: 32px 0 0; }
+  #infoPanelFaq{ max-width: none; margin: 32px 0 0; gap: 12px; }
+  #infoPanelFeedback{ max-width: none; margin: 32px 0 0; }
+}
 
 /* ---------- EMBEDDED CLAIM FORM ---------- */
 .claim-form-intro{
@@ -727,6 +741,7 @@ header.site{
   font-size: 14px;
   cursor: pointer;
   padding: 0;
+  white-space: nowrap;
 }
 .review-back-btn:hover{ color: var(--ink); }
 @media (max-width: 700px){
@@ -740,7 +755,10 @@ header.site{
   /* 16px/1.4/14-16px padding/100-120px height (2026-10-21, per request) -
      was 20.25px/10px padding/100px min-height with no explicit line-height. */
   min-height: 110px;
-  background: var(--paper);
+  /* Cream white (2026-10-21, per request), was var(--paper)'s lavender
+     tint - reuses --workspace-bg, already this site's own cream-white
+     token, rather than a new hardcoded color. */
+  background: var(--workspace-bg);
   border: 1px solid var(--line-strong);
   color: var(--ink);
   font-family: 'Inter', sans-serif;
@@ -770,7 +788,8 @@ header.site{
 }
 
 .about-body{
-  color: var(--muted);
+  /* Black, not grey (2026-10-21, per request), was var(--muted). */
+  color: var(--ink);
   font-family: 'Inter', sans-serif;
   /* -2px (2026-10-21, per request), down from 20.25px, as part of
      fitting the whole About page in one view with no scroll. */
@@ -831,7 +850,8 @@ header.site{
 /* Sans-serif answers (unchanged), matching About's own body copy size
    now too (2026-10-21, per request) - was 20.25px. */
 .faq-a{
-  color: var(--muted);
+  /* Black, not grey (2026-10-21, per request), was var(--muted). */
+  color: var(--ink);
   font-family: 'Inter', sans-serif;
   font-size: 18.25px;
   line-height: 1.6;
@@ -2018,6 +2038,88 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .profile-name{ font-size: 26px; }
   .profile-header-inner{ gap: 18px; height: 225px; padding-top: 0; } /* matches the bigger mobile portrait - same fixed-row-height rationale as the base rule, just the mobile photo size; padding-top:0 since the side-by-side symmetric-gap scheme doesn't apply once stacked */
 }
+/* Mobile-only Browse pass (2026-10-21, per request - "do a mobile-only
+   responsive pass... do not alter the desktop design"). Nothing here
+   touches any rule above 767px. */
+@media (max-width: 767px){
+  .mobile-filters-toggle{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1.5px solid var(--ink);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .toolbar-row2.mobile-filters-open .mobile-filters-toggle{ border-color: var(--accent); color: var(--accent); }
+  /* Filters + Review & Submit share one row (per request - "keep Review
+     & Submit on the same compact toolbar row as Filters, aligned
+     right") - the 5 individual filter pills and Clear all are hidden by
+     default and only take over their own full-width row, stacked, once
+     the Filters button opens them (not a flyout popover - there are 5
+     of them, a stacked sheet reads better than one on top of another). */
+  .toolbar-row2{ flex-wrap: wrap; }
+  .filter-dropdowns{ display: none; order: 3; width: 100%; }
+  .clear-btn{ display: none; order: 4; }
+  .toolbar-row2.mobile-filters-open .filter-dropdowns{
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .toolbar-row2.mobile-filters-open .clear-btn{
+    display: inline-flex;
+    margin-top: 10px;
+    width: 100%;
+    justify-content: center;
+  }
+  .toolbar-row2.mobile-filters-open .filter-dropdown{ width: 100%; }
+  .toolbar-row2.mobile-filters-open .filter-dropdown-toggle{ width: 100%; justify-content: space-between; }
+  .pins-toggle-btn{ margin-left: auto; }
+
+  /* Directory cards: no desktop 3-column grid - name/role/company on
+     top, then a compact bottom row for Location and # spots left (per
+     request), nothing overlapping. Same 3 grid children as desktop
+     (.directory-entry-info/.directory-entry-location-inline/
+     .directory-entry-right), just reassigned to a 2-row layout via
+     grid-template-areas instead of 3 side-by-side columns - and forced
+     visible (!important) regardless of .profile-collapsed state, which
+     is a desktop-only concept mobile's own full-screen detail view
+     (.mobile-detail-open) doesn't track the same way. */
+  .directory-entry{
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    grid-template-areas: "info info" "loc right";
+    row-gap: 10px;
+    padding: 16px;
+  }
+  .directory-entry-info{ grid-area: info; }
+  .directory-entry-location-inline{
+    grid-area: loc;
+    justify-self: start;
+    display: flex !important;
+    /* A long city name (e.g. "San Francisco Bay Area") would otherwise
+       push the spots-left badge in the next column off the row's edge -
+       truncate instead, same reasoning .topic-tag already uses. */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .directory-entry-location-inline span{ overflow: hidden; text-overflow: ellipsis; }
+  .directory-entry-right{
+    grid-area: right;
+    justify-self: end;
+    display: flex !important;
+    flex-shrink: 0;
+  }
+}
 
 .alum-row{
   position: relative;
@@ -2314,9 +2416,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .add-btn:hover{ border-color: var(--success-on-light); color: var(--success-on-light); }
 .add-btn.added:hover{ border-color: var(--success-on-light); color: #fff; }
 /* Matches the filter controls' own size (2026-10-21, per request) -
-   scoped to .profile-add-btn specifically (not the shared .add-btn base,
-   which the resubmit modal's own button also uses and isn't part of
-   this request), was 13.5px/9px 16px. */
+   scoped to .profile-add-btn specifically, not the shared .add-btn base,
+   was 13.5px/9px 16px. */
 .profile-add-btn{ font-size: 12.5px; padding: 5px 12px; }
 
 /* Card select control - a round "+" that becomes a white check once the
@@ -2501,6 +2602,21 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   gap: 14px;
 }
 .pins-drawer-footer .submit-btn{ width: 100%; justify-content: center; }
+/* Review footer's "Continue to form" shares its row with "Edit my
+   list" instead of standing alone (2026-10-21, per request - "edit my
+   list and continue to form should both sit in 1 line and be the same
+   size") - overrides the shared full-width rule above back to a normal
+   inline-sized button, narrowed (less horizontal padding, no
+   letter-spacing) so the two fit comfortably on one line, and matched
+   to .review-back-btn's own 14px. */
+#pinsDrawerReviewFooter{ flex-wrap: nowrap; }
+#pinsDrawerReviewFooter .submit-btn{
+  width: auto;
+  flex-shrink: 0;
+  font-size: 14px;
+  padding: 8px 16px;
+  letter-spacing: normal;
+}
 .pins-drawer-continue-exploring{
   background: none;
   border: none;
@@ -2580,53 +2696,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   display:none;
 }
 
-.resubmit-modal{
-  position: fixed;
-  inset: 0;
-  background: rgba(32, 27, 29, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  z-index: 40;
-}
-.resubmit-modal-card{
-  background: var(--paper);
-  border-radius: 10px;
-  padding: 32px;
-  max-width: 420px;
-  width: 100%;
-  text-align: center;
-  box-shadow: 0 10px 30px rgba(32, 27, 29, 0.2);
-}
-.resubmit-modal-text{
-  font-size: 16px;
-  line-height: 1.55;
-  color: var(--ink);
-  margin: 0 0 24px;
-}
-.resubmit-modal-actions{
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.resubmit-modal-actions .submit-btn,
-.resubmit-modal-actions .add-btn{
-  width: 100%;
-  justify-content: center;
-}
-.resubmit-modal-cancel{
-  background: none;
-  border: none;
-  color: var(--muted);
-  font-size: 13.5px;
-  font-family: inherit;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-  margin-top: 16px;
-  padding: 0;
-}
 .toast.show{ display:block; }
 .toast.toast-success{ background: var(--success); white-space: nowrap; }
 
@@ -2802,7 +2871,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
         </div>
       </div>
       <div class="info-panel" id="infoPanelFeedback">
-        <textarea id="feedbackText" placeholder="In the spirit of customer centricity, please let us know what worked well, what could be better and what else you'd like to see!"></textarea>
+        <textarea id="feedbackText" placeholder="In the spirit of customer centricity, please share what worked well, what could be better and what else you'd like to see!"></textarea>
         <div class="feedback-error" id="feedbackError">Type something before sending.</div>
         <button class="feedback-send" id="feedbackSend">Send feedback</button>
       </div>
@@ -2846,7 +2915,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <input type="text" id="searchInput" placeholder="Search by name, company, or keyword…">
     <button type="button" class="search-clear-btn" id="searchClearBtn" aria-label="Clear search" style="display:none">×</button>
   </div>
-  <div class="toolbar-row2">
+  <div class="toolbar-row2" id="toolbarRow2">
+    <button type="button" class="mobile-filters-toggle" id="mobileFiltersToggle" aria-expanded="false" aria-controls="filterPanel">Filters</button>
     <div class="filter-dropdowns" id="filterPanel"></div>
     <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
     <button class="pins-toggle-btn" id="pinsToggleBtn">Review &amp; Submit</button>
@@ -2926,7 +2996,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   </div>
 
   <div class="pins-drawer-body" id="pinsDrawerReviewPane" style="display:none">
-    <p class="review-intro">These are the alumni you'd like to meet for a coffee chat. Pinning someone isn't a guaranteed match, but it's exactly what we'll use to try to pair you up.</p>
+    <p class="review-intro">These are the alumni you'd like to meet for a coffee chat.</p>
     <div id="reviewList" class="review-list"></div>
   </div>
   <div class="pins-drawer-footer" id="pinsDrawerReviewFooter" style="display:none">
@@ -2936,17 +3006,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 </aside>
 
 <div class="toast" id="toast"></div>
-
-<div class="resubmit-modal" id="resubmitModal" style="display:none">
-  <div class="resubmit-modal-card">
-    <p class="resubmit-modal-text">You've already submitted picks from this browser. Would you like to populate the form with your new selections, or edit your original response yourself?</p>
-    <div class="resubmit-modal-actions">
-      <button class="submit-btn" id="resubmitNewPicks">Use my new picks</button>
-      <button class="add-btn" id="resubmitEditOriginal">Edit my response myself</button>
-    </div>
-    <button class="resubmit-modal-cancel" id="resubmitCancel">Cancel</button>
-  </div>
-</div>
 
 <!-- Submits feedback straight into a Google Sheet, no email client
      needed - posts to the Form's response endpoint and targets a
@@ -3313,19 +3372,6 @@ const PLUS_ICON_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="non
 const CHECK_ICON_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5 12.5 10 17.5 19 7"/></svg>';
 const LINKEDIN_ICON_SVG = '<svg class="linkedin-icon" width="14" height="14" viewBox="0 0 24 24" fill="#0A66C2" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.446-2.136 2.94v5.666H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zM7.119 20.452H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>';
 
-// Tracks (per browser, not per person - there's no login system here) whether
-// this browser has already clicked Submit once, so a second submission can
-// offer to route through Google's own "edit your response" flow instead of
-// silently creating what looks like a duplicate.
-const HAS_SUBMITTED_KEY = "cmiConnectHasSubmittedPicks";
-function hasSubmittedBefore(){
-  try{ return localStorage.getItem(HAS_SUBMITTED_KEY) === "true"; }
-  catch(e){ return false; }
-}
-function markAsSubmitted(){
-  try{ localStorage.setItem(HAS_SUBMITTED_KEY, "true"); }
-  catch(e){ /* ignore - nothing we can do if storage is blocked */ }
-}
 
 const MULTI_FIELDS = ["format", "industries", "marketingAreas", "topics", "availability", "city"];
 const SINGLE_FIELDS = ["brandAgency"];
@@ -3653,6 +3699,21 @@ function closeAllFilterDropdowns(except){
     if(d !== except) d.classList.remove('open');
   });
 }
+// Mobile-only "Filters" button (2026-10-21, per request - "do not wrap
+// five desktop filter pills across multiple rows... replace them with
+// one Filters button that opens the existing filters in a mobile
+// sheet/panel") - reuses the exact same filter-dropdown pills/popovers
+// unchanged, just toggles a class that shows/hides the whole
+// .filter-dropdowns row (stacked, full-width - see the mobile CSS) and
+// "Clear all" alongside it. Desktop never sees this button at all
+// (display:none above 767px).
+const mobileFiltersToggle = document.getElementById('mobileFiltersToggle');
+mobileFiltersToggle.addEventListener('click', () => {
+  const willOpen = !document.getElementById('toolbarRow2').classList.contains('mobile-filters-open');
+  document.getElementById('toolbarRow2').classList.toggle('mobile-filters-open', willOpen);
+  mobileFiltersToggle.setAttribute('aria-expanded', String(willOpen));
+  if(!willOpen) closeAllFilterDropdowns();
+});
 document.addEventListener('click', (e) => {
   if(!e.target.closest('.filter-dropdown')) closeAllFilterDropdowns();
 });
@@ -4693,7 +4754,7 @@ document.addEventListener('keydown', (e) => {
   const active = document.activeElement;
   const typingEl = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT' || active.isContentEditable);
   if(typingEl) return;
-  if(active && active.closest('.filter-dropdown, .pins-drawer, .resubmit-modal')) return;
+  if(active && active.closest('.filter-dropdown, .pins-drawer')) return;
   const entries = [...document.querySelectorAll('.directory-entry')];
   if(!entries.length) return;
   let currentIndex = entries.indexOf(active);
@@ -5416,21 +5477,9 @@ function buildPrefillUrl(){
 
 function goSubmitNewPicks(){
   const url = buildPrefillUrl();
-  closeResubmitModal();
   if(pinsDrawerOpen) closePinsDrawer();
   showClaimForm(url);
-  markAsSubmitted();
 }
-function goEditOriginalResponse(){
-  // No prefill - this sends them to the bare form, where Google's own
-  // "edit your response" flow takes over if they're signed into the same
-  // account they used before.
-  closeResubmitModal();
-  if(pinsDrawerOpen) closePinsDrawer();
-  showClaimForm(CLAIM_FORM.baseUrl);
-}
-function openResubmitModal(){ document.getElementById('resubmitModal').style.display = ''; }
-function closeResubmitModal(){ document.getElementById('resubmitModal').style.display = 'none'; }
 
 document.getElementById('pinsDrawerContinueBtn').addEventListener('click', () => {
   if(shortlist.length === 0) return;
@@ -5443,14 +5492,7 @@ document.getElementById('pinsDrawerEditBtn').addEventListener('click', () => {
 });
 document.getElementById('reviewSubmitBtn').addEventListener('click', () => {
   if(shortlist.length === 0) return;
-  if(hasSubmittedBefore()) openResubmitModal();
-  else goSubmitNewPicks();
-});
-document.getElementById('resubmitNewPicks').addEventListener('click', goSubmitNewPicks);
-document.getElementById('resubmitEditOriginal').addEventListener('click', goEditOriginalResponse);
-document.getElementById('resubmitCancel').addEventListener('click', closeResubmitModal);
-document.getElementById('resubmitModal').addEventListener('click', (e) => {
-  if(e.target.id === 'resubmitModal') closeResubmitModal();
+  goSubmitNewPicks();
 });
 
 // Clear (x) button toggles with the field's own contents - shown
@@ -5676,6 +5718,7 @@ function selectInfoTab(tab){
   if(panel) panel.classList.add('active');
   sizeInfoLayout();
   positionFaqCards();
+  positionAboutText();
 }
 
 // Fills exactly down to the viewport's own bottom edge, measured from
@@ -5694,34 +5737,38 @@ function sizeInfoLayout(){
   layout.style.minHeight = `calc(100vh - ${top}px)`;
 }
 
-// FAQ cards span exactly from the masthead logo's own right edge to the
-// "About" nav tab's left edge (2026-10-21, per request) - not a
-// guessed/hardcoded width, since both of those are themselves
-// responsive (clamp()-based padding). No-ops below 1024px, where the
-// masthead's own compact layout doesn't apply (see #heroSub.compact).
-let positionFaqCardsResizeTimer;
-function positionFaqCards(){
-  const faqPanel = document.getElementById('infoPanelFaq');
-  if(!faqPanel) return;
-  faqPanel.style.marginLeft = '';
-  faqPanel.style.width = '';
-  faqPanel.style.maxWidth = '';
-  if(!faqPanel.classList.contains('active')) return;
+// Shared by FAQ and About (2026-10-21, per request for About - "the
+// descriptive text... should start at the S in imc connects logo and
+// end at the A in about on the nav bar", same trick FAQ's cards already
+// used) - spans exactly from the masthead logo's own right edge to the
+// "About" nav tab's left edge, not a guessed/hardcoded width, since
+// both of those are themselves responsive (clamp()-based padding).
+// No-ops below 1024px, where the masthead's own compact layout doesn't
+// apply (see #heroSub.compact).
+function positionPanelToNavBounds(panel){
+  if(!panel) return;
+  panel.style.marginLeft = '';
+  panel.style.width = '';
+  panel.style.maxWidth = '';
+  if(!panel.classList.contains('active')) return;
   if(window.innerWidth <= 1023) return;
   const logo = document.querySelector('#heroSub .masthead-logo');
   const aboutTab = document.querySelector('#heroSub .tab-link[data-nav="about"]');
-  const parent = faqPanel.parentElement;
+  const parent = panel.parentElement;
   if(!logo || !aboutTab || !parent) return;
   const startX = logo.getBoundingClientRect().right;
   const endX = aboutTab.getBoundingClientRect().left;
   const parentLeft = parent.getBoundingClientRect().left;
-  faqPanel.style.maxWidth = 'none';
-  faqPanel.style.marginLeft = (startX - parentLeft) + 'px';
-  faqPanel.style.width = (endX - startX) + 'px';
+  panel.style.maxWidth = 'none';
+  panel.style.marginLeft = (startX - parentLeft) + 'px';
+  panel.style.width = (endX - startX) + 'px';
 }
+let positionFaqCardsResizeTimer;
+function positionFaqCards(){ positionPanelToNavBounds(document.getElementById('infoPanelFaq')); }
+function positionAboutText(){ positionPanelToNavBounds(document.getElementById('infoPanelAbout')); }
 window.addEventListener('resize', () => {
   clearTimeout(positionFaqCardsResizeTimer);
-  positionFaqCardsResizeTimer = setTimeout(() => { sizeInfoLayout(); positionFaqCards(); }, 120);
+  positionFaqCardsResizeTimer = setTimeout(() => { sizeInfoLayout(); positionFaqCards(); positionAboutText(); }, 120);
 });
 
 function showLanding(fromHistory){
