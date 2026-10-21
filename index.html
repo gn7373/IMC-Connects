@@ -1063,11 +1063,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   min-height: 0;
 }
 .directory-left{
-  /* Width is adjustable (initDirectoryResizer(), set as an inline
-     flex-basis on this element) - clamp() is just the starting point,
-     so the default scales with viewport width instead of a flat
-     percentage, per the responsive-hierarchy spec (2026-10-20). */
-  flex: 0 0 clamp(340px, 31vw, 480px);
+  /* Fixed 50/50 split (2026-10-21, per request - "remove free
+     dragging") - was an adjustable clamp()-based width the resizer
+     below used to drag. Zero flex-basis with an equal flex-grow (1) on
+     both this and .directory-right (see below) means the available
+     width splits exactly in half between them, rather than a % basis
+     racing against the other side's own basis. */
+  flex: 1 1 0%;
   min-width: 300px;
   display: flex;
   flex-direction: column;
@@ -1087,16 +1089,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 10px 14px 48px;
   overflow-y: auto;
 }
-/* Draggable divider - see initDirectoryResizer(). A 16px hit target
-   (bigger than before, per request, for easier grabbing/visibility) that
-   draws a hairline down its middle, highlighting on hover/drag. The
-   collapse control lives directly on it now, as a small chevron button,
-   centered on the divider line (per request) - double-clicking/double-
-   tapping it resets the split back to the default widths. */
+/* Static divider (no longer draggable, 2026-10-21) - a 16px hit target
+   that draws a hairline down its middle. The collapse control lives
+   directly on it, as a small chevron button, centered on the divider
+   line with its own independent vertical position (per request) -
+   unrelated to the profile header's own divider position above. */
 .directory-resizer{
   flex: 0 0 16px;
   width: 16px;
-  cursor: col-resize;
+  /* No longer draggable (2026-10-21, per request - fixed 50/50 split);
+     this is now just a static hairline that hosts the collapse chevron. */
   position: relative;
   display: flex;
   align-items: center;
@@ -1115,8 +1117,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   background: var(--line);
   transform: translateX(-50%);
 }
-.directory-resizer:hover::before,
-.directory-resizer.dragging::before{ background: var(--accent); }
 /* Slightly bigger (2026-10-17, was 24x44 - "more discoverable", per
    request) - the resizer hairline itself stays 16px wide; this just
    overflows it a bit, same as before. */
@@ -1138,7 +1138,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .directory-resizer:hover .directory-resizer-collapse,
 .directory-resizer.dragging .directory-resizer-collapse{ border-color: var(--accent); color: var(--accent); }
 .directory-right{
-  flex: 1 1 auto;
+  /* Matches .directory-left's own zero-basis/equal-grow rule above, so
+     the two sides split the available width exactly 50/50 (2026-10-21). */
+  flex: 1 1 0%;
   min-width: 480px;
   /* No scrolling at all now (per request - "get rid of the scroll
      function in profile view completely"), was overflow-y:auto. The
@@ -1332,27 +1334,23 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    column, so they share its exact horizontal bounds and move with it
    (dragging the divider, resizing the window) rather than being
    measured or pinned against the outer panel.
-   height:205px (layout-stability pass) - an EXPLICIT fixed row height,
-   matching the photo's own height exactly, rather than letting the row
-   auto-size to whichever child is tallest. Without this, an alum with
-   an unusually long 2-line title/company could in theory push the row
-   taller than 205px, which would shove the divider (and everything
-   below it) down - a real, if rare, source of per-alum layout jump
-   this closes off entirely: the row's height can never vary, so the
-   divider's position is fixed by this container boundary alone, never
-   by photo-load timing or text length. overflow:visible is deliberate,
-   not an oversight - an extreme outlier title just overflows the row
-   visually rather than ever resizing it. padding supplies the same
-   24px horizontal inset .profile-header itself used to carry, plus a
-   20px gap before the divider line below. */
+   height is auto (2026-10-21, per request - replaces the former fixed
+   205px row) - the top/bottom whitespace around the photo is no longer
+   a flat constant, it's computed per-alum by positionProfileHeaderPhoto()
+   below so the photo's top lines up with the clicked directory card's
+   own visible top, with an equal gap mirrored below the photo down to
+   the divider. That function sets .profile-portrait's margin-top and
+   this element's own padding-bottom inline, to the same px value, each
+   time an alum is selected - this rule just supplies the horizontal
+   24px inset; the vertical gaps are 0/0 until JS sets them. */
 .profile-header-inner{
   display: grid;
   grid-template-columns: 172px minmax(0, 1fr);
   gap: 28px;
   align-items: start;
-  height: 205px;
+  height: auto;
   overflow: visible;
-  padding: 0 24px 20px;
+  padding: 0 24px 0;
 }
 /* Portrait + text stack vertically once the panel gets narrow (resized
    small, or on a mobile detail view) - toggled by a ResizeObserver on
@@ -2081,13 +2079,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 3px 10px;
   line-height: 1.4;
 }
-/* Pale lavender is reserved for selected states and Ask Me About
-   specifically (2026-10-20 palette spec) - Industry/Marketing
-   Expertise stay compact and quiet with a neutral surface instead, so
-   lavender keeps reading as a single deliberate signal rather than a
-   wash over every pill on the page. */
-.industry-tags .topic-tag,
-.marketing-tags .topic-tag{ background: var(--workspace-bg); border: 1px solid var(--border); }
+/* Lavender fill restored to Industry/Marketing Expertise (2026-10-21,
+   per request) - both now share .topic-tag's own default lavender
+   (--accent-tint) fill, same as Ask Me About, instead of the neutral
+   surface override this used to carry. */
 
 .card-action{
   display: flex;
@@ -4352,7 +4347,7 @@ function renderDirectoryList(filtered){
         <svg class="directory-entry-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
       </div>
     `;
-    btn.addEventListener('click', () => selectAlum(a.id, {openMobileDetail: true, reopenProfile: true}));
+    btn.addEventListener('click', () => selectAlum(a.id, {openMobileDetail: true, reopenProfile: true, originEl: btn}));
     list.appendChild(btn);
   });
   enforceDirectoryListMinWidth();
@@ -4390,7 +4385,7 @@ document.addEventListener('keydown', (e) => {
     : Math.max(currentIndex - 1, 0);
   const nextEntry = entries[nextIndex];
   nextEntry.focus();
-  selectAlum(Number(nextEntry.dataset.id), {});
+  selectAlum(Number(nextEntry.dataset.id), {originEl: nextEntry});
 });
 
 // Selecting an entry never rebuilds the list (so its scroll position is
@@ -4422,6 +4417,12 @@ function selectAlum(id, opts){
     document.getElementById('directoryRight').scrollTop = 0;
   }
   if(opts.reopenProfile) expandProfilePanel();
+  // Photo-to-card alignment is computed here, AFTER the panel has
+  // actually been unhidden above (expandProfilePanel/openMobileDetail) -
+  // measuring any earlier, while the panel is still display:none
+  // (profile-collapsed, or the mobile detail view not yet open), would
+  // read every rect as zero and silently produce a 0 gap.
+  if(!alreadySelected) positionProfileHeaderPhoto(opts.originEl);
 }
 
 function closeMobileDetail(){
@@ -4429,9 +4430,8 @@ function closeMobileDetail(){
 }
 
 // Collapsing/expanding the profile panel (2026-10-17) - only toggles a
-// class, so the selected alum and the stored divider width (see
-// initDirectoryResizer) are both untouched and exactly as they were
-// once the panel reopens, per request.
+// class, so the selected alum is untouched and exactly as it was once
+// the panel reopens, per request.
 function collapseProfilePanel(){
   document.getElementById('directorySplit').classList.add('profile-collapsed');
 }
@@ -4559,6 +4559,82 @@ function updateProfileSections(a){
 // (confirmed: ~120px at a common 900px-tall window). The divider now
 // just sits at its natural position, directly below the content, with
 // no JS involved at all.
+
+// Photo-to-selected-card alignment (2026-10-21, per request) - the
+// profile photo's top lines up with the clicked directory card's own
+// visible top IN THE PANE at the moment of selection, not a live,
+// continuously-updating scroll-follow (explicitly not that, per the
+// clarifying follow-up: "this is the initial/aligned layout
+// relationship, not a live scroll-following behavior" - so scrolling
+// the list afterward never moves an already-open photo). The same gap
+// is then mirrored below the photo as the whitespace down to the
+// divider, so the photo sits with equal top/bottom breathing room
+// inside the header - the divider's own position is simply wherever
+// that symmetric box ends, never derived from the resizer chevron
+// (which keeps its own independent, unrelated vertical position on the
+// divider track). Called once per actual alum switch (from
+// renderProfilePanel, which itself only runs on a real selection change,
+// never a re-click) - not on scroll, not on resize, matching the
+// "initial relationship" framing.
+function positionProfileHeaderPhoto(originEl){
+  const header = document.querySelector('.profile-header-inner');
+  const portrait = document.querySelector('.profile-portrait');
+  const identityWrap = document.querySelector('.profile-identity-wrap');
+  const availability = document.querySelector('.profile-availability');
+  if(!header || !portrait || !identityWrap || !availability) return;
+
+  // Reset any previous alum's inline offsets before measuring, so a
+  // stale gap doesn't skew this alum's own measurement.
+  portrait.style.marginTop = '';
+  header.style.paddingBottom = '';
+  identityWrap.style.marginTop = '';
+
+  // Mobile's full-screen detail view and the dragged-narrow stacked
+  // layout both lay the photo and info out in a single column (and, on
+  // mobile, the directory card that was clicked isn't even on screen at
+  // the same time) - none of this side-by-side whitespace math applies
+  // there.
+  const right = document.getElementById('directoryRight');
+  if(window.innerWidth <= 1023 || right?.classList.contains('narrow')) return;
+
+  let gap = 0;
+  if(originEl && originEl.isConnected){
+    const entryTop = originEl.getBoundingClientRect().top;
+    const headerTop = header.getBoundingClientRect().top;
+    gap = entryTop - headerTop;
+  }
+  // Sanity clamp - keeps the header from ballooning if the clicked card
+  // happened to sit far down a scrolled list; alignment is "approximate"
+  // by design once a card that far from the header is involved.
+  gap = Math.max(0, Math.min(gap, 96));
+
+  portrait.style.marginTop = gap + 'px';
+  header.style.paddingBottom = gap + 'px';
+
+  // Name block's top lands at approximately the photo's own vertical
+  // midpoint (per request) - the capacity/Add row stays above it
+  // (untouched, still flush at the header's own top), role/company/
+  // location stay tightly stacked below it exactly as before.
+  const photoHeight = portrait.getBoundingClientRect().height;
+  const availabilityHeight = availability.getBoundingClientRect().height;
+  const naturalNameTop = availabilityHeight + 12; // 12 = .profile-availability's own margin-bottom
+  const desiredNameTop = gap + (photoHeight / 2);
+  identityWrap.style.marginTop = Math.max(0, desiredNameTop - naturalNameTop) + 'px';
+}
+let profileHeaderPhotoResizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(profileHeaderPhotoResizeTimer);
+  profileHeaderPhotoResizeTimer = setTimeout(() => {
+    // Only acts when a resize crosses INTO mobile/narrow territory, to
+    // clear the (now meaningless, possibly layout-breaking) inline
+    // offsets - never recomputes a new gap for an unrelated plain
+    // desktop resize, which would be a live scroll/resize-following
+    // behavior the user explicitly asked this NOT to have.
+    const right = document.getElementById('directoryRight');
+    const outOfRange = window.innerWidth <= 1023 || right?.classList.contains('narrow');
+    if(outOfRange) positionProfileHeaderPhoto(null);
+  }, 120);
+});
 
 // Delegated rather than bound per-render (renderProfilePanel replaces
 // the panel's innerHTML on every call, which would otherwise mean
@@ -4798,60 +4874,12 @@ function enforceDirectoryListMinWidth(){
   }
 }
 
-function initDirectoryResizer(){
-  const resizer = document.getElementById('directoryResizer');
-  const left = document.getElementById('directoryLeft');
-  const split = document.getElementById('directorySplit');
-  if(!resizer || !left || !split) return;
-  let dragging = false;
-  let nameFloor = 0; // recomputed at the start of each drag, see above
-  const rightMinWidth = 480; // matches .directory-right's min-width in CSS
-
-  function setLeftWidth(px){
-    const minWidth = Math.max(parseFloat(getComputedStyle(left).minWidth) || 300, nameFloor);
-    const splitWidth = split.getBoundingClientRect().width;
-    const maxWidth = splitWidth - rightMinWidth - 16; // 16 = the resizer's own width
-    left.style.flexBasis = Math.max(minWidth, Math.min(px, maxWidth)) + 'px';
-  }
-
-  resizer.addEventListener('pointerdown', (e) => {
-    dragging = true;
-    nameFloor = minDirectoryListWidthForNames();
-    resizer.classList.add('dragging');
-    resizer.setPointerCapture(e.pointerId);
-    document.body.style.userSelect = 'none';
-  });
-  resizer.addEventListener('pointermove', (e) => {
-    if(!dragging) return;
-    setLeftWidth(e.clientX - split.getBoundingClientRect().left);
-  });
-  function stopDrag(){
-    if(!dragging) return;
-    dragging = false;
-    resizer.classList.remove('dragging');
-    document.body.style.userSelect = '';
-  }
-  resizer.addEventListener('pointerup', stopDrag);
-  resizer.addEventListener('pointercancel', stopDrag);
-
-  // Double-click/double-tap the divider resets the split back to its
-  // default widths (clearing the inline flex-basis falls back to
-  // .directory-left's CSS clamp() default), per request.
-  resizer.addEventListener('dblclick', () => {
-    left.style.flexBasis = '';
-  });
-
-  // Arrow-key nudging, matching the resizer's role="separator" semantics.
-  resizer.addEventListener('keydown', (e) => {
-    if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-    nameFloor = minDirectoryListWidthForNames();
-    const current = left.getBoundingClientRect().width;
-    if(e.key === 'ArrowLeft'){ setLeftWidth(current - 24); }
-    else { setLeftWidth(current + 24); }
-    e.preventDefault();
-  });
-}
-initDirectoryResizer();
+// Dragging removed entirely (2026-10-21, per request - "remove free
+// dragging", split stays a fixed 50/50 via .directory-left's own CSS).
+// The resizer element itself is kept only as the static hairline that
+// hosts the collapse chevron (see directoryCollapseBtn's own listener
+// further below) - no pointer/keyboard resize handlers bound to it any
+// more.
 
 // Portrait + text in the profile header stack vertically once the
 // panel itself gets narrow (dragged small, or the mobile detail view) -
