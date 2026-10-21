@@ -1249,7 +1249,29 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .sort-label-btn:hover{ border-color: var(--accent); color: var(--accent); }
 .sort-dropdown.open .sort-label-btn{ border-color: var(--accent); color: var(--accent); }
 .sort-dropdown.open .sort-label-btn svg{ transform: rotate(180deg); }
-.sort-dropdown .filter-dropdown-panel{ left: auto; right: 0; }
+.sort-dropdown .filter-dropdown-panel{ left:auto; right:0; }
+
+/* Sort should read as the compact sibling of the filter popovers, not a
+   large standalone menu. Override the generic filter panel's 240px floor
+   and roomy padding only for Sort. */
+.sort-dropdown .sort-panel{
+  min-width: 178px;
+  width: max-content;
+  max-width: calc(100vw - 40px);
+  padding: 8px 10px;
+  border-radius: 10px;
+  max-height: none;
+  overflow: visible;
+}
+.sort-dropdown .sort-option{
+  padding: 7px 8px;
+  font-size: 13px;
+  line-height: 1.2;
+}
+.sort-dropdown .sort-option.sort-clear{
+  margin-bottom: 3px;
+  padding-bottom: 8px;
+}
 .directory-split{
   display: flex;
   align-items: stretch;
@@ -1631,6 +1653,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .profile-portrait-img{
   width: 100%;
   height: 100%;
+  min-height: 100%;
   object-fit: cover;
   display: block;
 }
@@ -1808,7 +1831,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .filter-dropdown-toggle svg{ transition: transform 150ms ease; flex-shrink: 0; }
 .filter-dropdown.open .filter-dropdown-toggle{ border-color: var(--accent); color: var(--accent); }
 .filter-dropdown.open .filter-dropdown-toggle svg{ transform: rotate(180deg); }
-.filter-dropdown-toggle .filter-dropdown-count{ color: var(--accent); font-weight: 600; }
+.filter-dropdown-toggle .filter-dropdown-count{ display:none !important; }
 /* Once anything's checked inside it, the whole tab turns solid purple -
    not just the small count badge - so an active filter is obvious at a
    glance across the row. */
@@ -2093,7 +2116,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     justify-content: center;
   }
   .toolbar-row2.mobile-filters-open .filter-dropdown{ width: 100%; }
-  .toolbar-row2.mobile-filters-open .filter-dropdown-toggle{ width: 100%; justify-content: space-between; }
+  .toolbar-row2.mobile-filters-open .filter-dropdown-toggle{
+    width:100%;
+    justify-content:space-between;
+    font-size:13px !important;
+  }
+  .toolbar-row2.mobile-filters-open .filter-checkboxes,
+  .toolbar-row2.mobile-filters-open .filter-checkbox-option,
+  .toolbar-row2.mobile-filters-open .location-outside-us-toggle{
+    font-size:13px !important;
+  }
   .pins-toggle-btn{ margin-left: auto; }
 
   /* Directory cards: no desktop 3-column grid - name/role/company on
@@ -2752,6 +2784,530 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   cursor: pointer;
   padding: 0;
 }
+
+/* ============================================================
+   MOBILE REDESIGN — 2026-10-21 v3
+   6-mobile page.png is the spacing/layout reference.
+   Directory uses generic person icons; profile keeps real photo.
+   ============================================================ */
+.mobile-profile-retract,
+.mobile-profile-backdrop,
+.mobile-profile-meta-row,
+.directory-entry-photo{ display:none; }
+
+@media (max-width: 767px){
+  body.listing-active{
+    height:auto !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+  }
+  body.mobile-drawer-open{
+    height:100dvh !important;
+    overflow:hidden !important;
+  }
+
+  /* Compact universal masthead. */
+  #heroSub.compact{
+    padding-left:20px !important;
+    padding-right:20px !important;
+  }
+  #heroSub.compact .hero-logo{ font-size:11px !important; }
+  #heroSub.compact .hero-logo .logo-cmi{ font-size:1.72em !important; }
+
+  /* Browse controls: match the reference gutters, not edge-to-edge. */
+  .directory-toolbar .listing-container{
+    width:100% !important;
+    max-width:none !important;
+    margin:0 !important;
+    padding:14px 20px 16px !important;
+  }
+  .search-box{
+    width:100% !important;
+    min-width:0 !important;
+    height:58px !important;
+    min-height:58px !important;
+    flex:0 0 58px !important;
+    box-sizing:border-box !important;
+    padding:0 17px !important;
+    border-radius:14px !important;
+  }
+  .search-box input{
+    min-width:0 !important;
+    font-size:13.5px !important;
+  }
+  .toolbar-row2{
+    margin-top:13px !important;
+    gap:12px !important;
+    flex-wrap:wrap !important;
+  }
+  .mobile-filters-toggle{
+    min-height:40px !important;
+    padding:8px 18px !important;
+    border-radius:20px !important;
+    font-size:13px !important;
+  }
+  .pins-toggle-btn{
+    min-height:40px !important;
+    margin-left:auto !important;
+    padding:8px 18px !important;
+    font-size:13px !important;
+  }
+
+  /* Directory: normal document scroll. */
+  #view-listing,
+  .directory-split{ overflow:visible !important; }
+  .directory-list{
+    overflow:visible !important;
+    min-height:auto !important;
+    padding:10px 20px 48px !important;
+  }
+  .workspace{
+    width:100% !important;
+    max-width:none !important;
+    margin:0 !important;
+    padding:0 !important;
+    border-radius:0 !important;
+  }
+  .workspace .listing-container{
+    width:100% !important;
+    max-width:none !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+  .directory-list-header-inner{
+    padding:9px 20px !important;
+  }
+
+  /* Directory cards: generic icon only, using the reference proportions. */
+  .directory-entry{
+    grid-template-columns:72px minmax(0,1fr) auto !important;
+    grid-template-rows:auto auto !important;
+    grid-template-areas:
+      "photo info info"
+      "photo loc right" !important;
+    column-gap:12px !important;
+    row-gap:8px !important;
+    width:100% !important;
+    padding:10px 12px !important;
+    margin-bottom:10px !important;
+    border-radius:10px !important;
+  }
+  .directory-entry-photo{
+    grid-area:photo;
+    display:flex !important;
+    width:72px !important;
+    height:84px !important;
+    align-self:start;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    border-radius:8px;
+    background:var(--selected-bg);
+  }
+  .directory-entry-photo img{
+    display:none;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+  .directory-entry-photo.has-photo img{ display:block !important; }
+  .directory-entry-photo.has-photo .directory-entry-photo-fallback{ display:none !important; }
+  .directory-entry-photo-fallback{
+    width:34px !important;
+    height:34px !important;
+    display:flex !important;
+    align-items:center;
+    justify-content:center;
+    color:var(--muted);
+  }
+  .directory-entry-photo-fallback svg{
+    width:34px !important;
+    height:34px !important;
+  }
+  .directory-entry-info{
+    grid-area:info;
+    min-width:0;
+  }
+  .directory-entry-name{
+    font-size:16.5px !important;
+    line-height:1.18 !important;
+  }
+  .directory-entry-info .alum-role{
+    font-size:12.7px !important;
+    line-height:1.2 !important;
+    margin-top:3px !important;
+  }
+  .directory-entry-info .alum-company{
+    font-size:12.2px !important;
+    line-height:1.2 !important;
+    margin-top:2px !important;
+  }
+  .directory-entry-location-inline{
+    grid-area:loc !important;
+    display:flex !important;
+    justify-self:stretch !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    font-size:12px !important;
+  }
+  .directory-entry-location-inline .format-value{
+    min-width:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+  .directory-entry-right{
+    grid-area:right !important;
+    display:flex !important;
+    justify-self:end !important;
+    gap:6px !important;
+    flex-shrink:0 !important;
+  }
+  .directory-entry-spots .capacity-badge{
+    font-size:11.5px !important;
+    white-space:nowrap !important;
+  }
+
+  /* Filter drawers stay vertical/downward on mobile. */
+  .toolbar-row2.mobile-filters-open .filter-dropdowns{
+    margin-top:12px !important;
+  }
+  .toolbar-row2.mobile-filters-open .filter-dropdown-toggle,
+  .toolbar-row2.mobile-filters-open .filter-checkboxes,
+  .toolbar-row2.mobile-filters-open .filter-checkbox-option,
+  .toolbar-row2.mobile-filters-open .location-outside-us-toggle{
+    font-size:13px !important;
+  }
+  .filter-dropdown-panel{
+    max-width:calc(100vw - 40px) !important;
+  }
+  .sort-dropdown .sort-panel{
+    min-width:178px !important;
+    width:max-content !important;
+    padding:8px 10px !important;
+  }
+  .sort-dropdown .sort-option{
+    padding:7px 8px !important;
+    font-size:13px !important;
+  }
+
+  /* Real backdrop: dims the page and closes the drawer when tapped. */
+  .mobile-profile-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    padding:0;
+    margin:0;
+    border:0;
+    background:rgba(26,30,31,.56);
+    z-index:900;
+    cursor:pointer;
+  }
+  #view-listing.mobile-detail-open .mobile-profile-backdrop{
+    display:block;
+  }
+  #view-listing.mobile-detail-open .directory-toolbar{
+    display:none !important;
+  }
+
+  /* Drawer deliberately occupies only the right portion of the phone. */
+  .directory-right{
+    display:block !important;
+    position:fixed !important;
+    top:0 !important;
+    left:auto !important;
+    right:0 !important;
+    bottom:0 !important;
+    width:clamp(250px, 68vw, 390px) !important;
+    min-width:0 !important;
+    max-width:none !important;
+    padding:0 0 28px !important;
+    overflow-y:auto !important;
+    overflow-x:visible !important;
+    background:var(--workspace-bg) !important;
+    border-left:1px solid var(--border-strong) !important;
+    border-radius:18px 0 0 18px !important;
+    box-shadow:-12px 0 30px rgba(24,23,34,.24) !important;
+    z-index:1000 !important;
+    transform:translateX(calc(100% + 24px)) !important;
+    transition:transform 280ms cubic-bezier(.22,.8,.32,1) !important;
+  }
+  .directory-split.mobile-detail-open .directory-right{
+    transform:translateX(0) !important;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .directory-right{ transition:none !important; }
+  }
+
+  /* No hamburger/menu inside profile view. */
+  .mobile-profile-retract{
+    display:none !important;
+    align-items:center;
+    justify-content:center;
+    position:fixed !important;
+    right:clamp(250px, 68vw, 390px) !important;
+    top:50% !important;
+    width:32px !important;
+    height:58px !important;
+    transform:translateY(-50%) !important;
+    padding:0 !important;
+    border:1px solid var(--border-strong) !important;
+    border-right:0 !important;
+    border-radius:12px 0 0 12px !important;
+    background:var(--workspace-bg) !important;
+    color:var(--accent) !important;
+    z-index:1101 !important;
+    box-shadow:-5px 2px 12px rgba(53,32,95,.14) !important;
+    cursor:pointer;
+  }
+  #view-listing.mobile-detail-open .mobile-profile-retract{
+    display:flex !important;
+  }
+
+  /* Profile: photo + identity; metadata/spots; add button; divider. */
+  .profile-toolbar,
+  .profile-back-btn{ display:none !important; }
+  .profile-header{
+    width:100% !important;
+    padding:42px 20px 18px !important;
+    border-bottom:1px solid var(--border-strong) !important;
+    background:var(--workspace-bg) !important;
+  }
+  .profile-header-inner,
+  .directory-right.narrow .profile-header-inner{
+    display:grid !important;
+    grid-template-columns:88px minmax(0,1fr) !important;
+    grid-template-rows:auto auto auto !important;
+    grid-template-areas:
+      "portrait identity"
+      "meta meta"
+      "add add" !important;
+    column-gap:14px !important;
+    row-gap:13px !important;
+    width:100% !important;
+    height:auto !important;
+    min-height:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
+    align-items:start !important;
+  }
+  .profile-info,
+  .profile-identity-wrap,
+  .profile-availability{
+    display:contents !important;
+  }
+  .profile-portrait,
+  .directory-right.narrow .profile-portrait{
+    grid-area:portrait !important;
+    width:88px !important;
+    height:auto !important;
+    min-height:112px !important;
+    min-width:88px !important;
+    margin:0 !important;
+    border-radius:9px !important;
+    overflow:hidden !important;
+    align-self:stretch !important;
+  }
+  .profile-info-identity{
+    grid-area:identity !important;
+    min-width:0 !important;
+    max-height:none !important;
+    overflow:visible !important;
+    align-self:start !important;
+  }
+  .profile-name{
+    margin:0 !important;
+    font-size:20px !important;
+    line-height:1.08 !important;
+  }
+  .profile-info .alum-role{
+    margin-top:6px !important;
+    font-size:13px !important;
+    line-height:1.22 !important;
+  }
+  .profile-info .alum-company{
+    margin-top:2px !important;
+    font-size:12.5px !important;
+    line-height:1.22 !important;
+    overflow-wrap:anywhere !important;
+  }
+  .profile-identity-wrap{ margin-top:0 !important; }
+
+  /* Mobile metadata: left-anchored location, mathematically centered
+     LinkedIn, right-anchored spots. The two outer tracks are equal, so
+     LinkedIn stays centered between the row endpoints regardless of label
+     lengths. A long city may wrap to two lines; the other two stay
+     vertically centered against that taller row. */
+  .profile-info .alum-meta,
+  .profile-availability .capacity-badge-wrap{
+    display:none !important;
+  }
+  .mobile-profile-meta-row{
+    grid-area:meta !important;
+    display:grid !important;
+    /* Left item hugs the left edge, right item hugs the right edge, and
+       LinkedIn sits centered in the actual remaining space BETWEEN them. */
+    grid-template-columns:minmax(0,max-content) minmax(42px,1fr) max-content !important;
+    align-items:center !important;
+    width:100% !important;
+    column-gap:8px !important;
+    min-width:0 !important;
+    font-family:'Inter', sans-serif !important;
+    font-size:10px !important;
+    line-height:1.18 !important;
+    color:var(--muted) !important;
+  }
+  .mobile-profile-meta-location{
+    justify-self:start !important;
+    min-width:0 !important;
+    max-width:72px !important;
+    white-space:normal !important;
+    overflow-wrap:normal !important;
+  }
+  .mobile-profile-meta-location .format-value{
+    display:flex !important;
+    align-items:baseline !important;
+    gap:4px !important;
+    min-width:0 !important;
+    white-space:normal !important;
+    line-height:1.18 !important;
+  }
+  .mobile-profile-meta-location .format-value.two-line-location{
+    align-items:center !important;
+  }
+  .mobile-profile-meta-location .format-icon{
+    flex:0 0 auto !important;
+    margin-top:0 !important;
+    width:10px !important;
+    height:10px !important;
+  }
+  .mobile-profile-meta-linkedin{
+    justify-self:center !important;
+    align-self:center !important;
+    white-space:nowrap !important;
+    font-size:10px !important;
+  }
+  .mobile-profile-meta-linkedin .alum-linkedin{
+    display:inline-flex !important;
+    align-items:center !important;
+    gap:3px !important;
+    white-space:nowrap !important;
+    font-size:10px !important;
+  }
+  .mobile-profile-meta-linkedin svg{
+    width:10px !important;
+    height:10px !important;
+  }
+  .mobile-profile-meta-spots{
+    justify-self:end !important;
+    align-self:center !important;
+    white-space:nowrap !important;
+    min-width:0 !important;
+  }
+  .mobile-profile-meta-spots .capacity-icon{
+    display:none !important;
+  }
+  .mobile-profile-meta-spots .capacity-badge{
+    font-size:10px !important;
+    line-height:1 !important;
+    padding:5px 6px !important;
+    white-space:nowrap !important;
+  }
+  .profile-add-btn{
+    grid-area:add !important;
+    justify-self:start !important;
+    margin:0 !important;
+    min-height:36px !important;
+    padding:8px 14px !important;
+    font-size:12.5px !important;
+  }
+
+  /* Equal three-section rhythm. Industry and Marketing each end with a
+     divider; spacing from pills -> divider and divider -> next heading is
+     identical, so alumni with different pill counts still feel standardized. */
+  .profile-sections{
+    padding:20px 20px 32px !important;
+  }
+  .profile-sections .alum-columns{
+    display:block !important;
+    margin:0 !important;
+  }
+  .profile-sections .alum-col{
+    min-height:0 !important;
+    height:auto !important;
+    margin:0 !important;
+  }
+  .profile-sections .alum-columns > .alum-col{
+    padding:0 0 22px !important;
+    margin:0 0 22px !important;
+    border-bottom:1px solid var(--border) !important;
+  }
+  .profile-sections .ask-me-about{
+    margin:0 !important;
+    padding:0 !important;
+  }
+  .profile-sections .industry-tags,
+  .profile-sections .marketing-tags,
+  .profile-sections .topic-tags{
+    min-height:0 !important;
+    height:auto !important;
+    margin-top:9px !important;
+  }
+  .profile-sections .field-label{
+    display:block !important;
+    margin:0 !important;
+    font-size:15px !important;
+    font-weight:700 !important;
+    color:var(--ink) !important;
+  }
+  .profile-sections .topic-tags{
+    gap:7px !important;
+  }
+  .profile-sections .topic-tag{
+    padding:6px 9px !important;
+    font-size:11.5px !important;
+    line-height:1.2 !important;
+  }
+
+  /* Secondary pages remain one continuous cream-white surface. */
+  #view-info,
+  .info-title-band,
+  .info-layout{ background:var(--page-bg) !important; }
+  .info-title-band-inner{
+    width:100% !important;
+    padding:24px 20px 0 !important;
+  }
+  .info-layout{ padding:0 20px 44px !important; }
+  #infoPanelAbout,
+  #infoPanelFaq,
+  #infoPanelFeedback{ margin-top:18px !important; }
+
+  /* Landing: narrower CTA and artwork pulled into the hero composition. */
+  .hero-copy{
+    margin-top:14px !important;
+    padding-left:20px !important;
+    padding-right:20px !important;
+  }
+  .landing-option{
+    min-width:0 !important;
+    width:148px !important;
+    padding:12px 18px !important;
+  }
+  .hero-illustration{
+    width:100% !important;
+    margin:0 !important;
+    padding:0 0 0 26px !important;
+    justify-content:flex-end !important;
+  }
+  .hero-illustration img{
+    width:100% !important;
+    max-width:100% !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -2939,6 +3495,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 </div>
 </div><!-- /directory-toolbar -->
 
+<button type="button" class="mobile-profile-backdrop" id="mobileProfileBackdrop" aria-label="Close profile"></button>
+<button type="button" class="mobile-profile-retract" id="mobileProfileRetract" aria-label="Retract profile">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+</button>
+
 <!-- Unified workspace card (2026-10-20 editorial-palette pass) - the
      directory/profile split lives inside this centered, square-cornered
      card (see .workspace's own comment); the toolbar above it is
@@ -3049,7 +3610,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-15-19";
+const BUILD_VERSION = "2026-10-21-mobile-redesign-13";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -3129,6 +3690,47 @@ const KNOWN_OPTIONS = {
 // covers the rare comma-containing exceptions.
 const TOPICS_IS_COMPLETE_LIST = true;
 
+// Student-facing "Ask Me About" pills are restricted to the standard
+// checkbox options from the alumni form. "Other" and any free-text
+// write-ins are retained in the normalized data for QA, but never rendered
+// as pills on the live profile.
+const APPROVED_CONVERSATION_TOPICS = KNOWN_OPTIONS.topics.filter(v => v !== "Other");
+const APPROVED_CONVERSATION_TOPIC_KEYS = new Map(
+  APPROVED_CONVERSATION_TOPICS.map(v => [v.trim().replace(/\s+/g, " ").toLowerCase(), v])
+);
+
+function approvedConversationTopic(value){
+  const key = (value || "").trim().replace(/\s+/g, " ").toLowerCase();
+  return APPROVED_CONVERSATION_TOPIC_KEYS.get(key) || null;
+}
+
+function visibleConversationTopics(a){
+  return a.topics
+    .map(approvedConversationTopic)
+    .filter(Boolean);
+}
+
+function buildConversationTopicQA(list){
+  const unexpected = [];
+  list.forEach(a => {
+    a.topics.forEach(topic => {
+      if(!approvedConversationTopic(topic)){
+        unexpected.push({alum: a.name, topic});
+      }
+    });
+  });
+  window.CMI_CONNECTS_DATA_QA = Object.freeze({
+    unexpectedConversationTopics: unexpected
+  });
+  if(unexpected.length){
+    console.warn(
+      "[CMI Connects QA] Non-standard conversation topics hidden from profiles:",
+      unexpected
+    );
+  }
+  return unexpected;
+}
+
 // The 3 real checkbox options for "format" - anything else in that field is
 // free-text ("Other").
 const CANONICAL_FORMAT_OPTIONS = [
@@ -3201,7 +3803,7 @@ const MASTHEAD_LABEL_OVERRIDES = {
 };
 const FILTER_ALLOW_LISTS = {
   marketingAreas: CANONICAL_MARKETING_AREAS,
-  topics: KNOWN_OPTIONS.topics,
+  topics: APPROVED_CONVERSATION_TOPICS,
   // "Both in person and virtual" cut from the filter checkboxes per
   // request - someone who wants either can already just check both of
   // the two specific options below instead of needing a third combined
@@ -3591,10 +4193,10 @@ function normalizeRow(row, index){
     company: (row[COLUMNS.company] || "").trim(),
     // "Other" write-ins are dropped from this field per request.
     format: rawFormat.filter(v => CANONICAL_FORMAT_OPTIONS.includes(v)),
-    // Free-text short answer, not a checkbox field - normalized below
-    // since alumni wrote it every which way ("NYC", "San Fransisco",
-    // "Chicagoland", "Toronto, Ontario Canada"...).
-    city: normalizeCityValue(row[COLUMNS.city]),
+    // Display the location exactly as written in the source spreadsheet.
+    // Region bucketing for the Location filter is handled separately and
+    // must never rewrite the visible label (e.g. "NYC" stays "NYC").
+    city: [(row[COLUMNS.city] || "").trim()].filter(Boolean),
     industries: rawIndustries.filter(v => CANONICAL_INDUSTRIES.includes(v)),
     marketingAreas: smartSplit(row[COLUMNS.marketingAreas], KNOWN_OPTIONS.marketingAreas),
     brandAgency: (row[COLUMNS.brandAgency] || "").trim(),
@@ -3789,7 +4391,7 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
     };
     optionLabel.appendChild(checkbox);
     let displayVal = val;
-    if(key === 'topics') displayVal = filterTopicDisplayLabel(val);
+    if(key === 'topics') displayVal = topicShortLabel(val);
     else if(key === 'brandAgency') displayVal = brandAgencyDisplayLabel(val);
     else if(key === 'marketingAreas') displayVal = marketingAreaDisplayLabel(val);
     else if(key === 'format') displayVal = formatDisplayLabel(val);
@@ -3812,14 +4414,14 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
 const US_REGIONS = ["Midwest", "East Coast", "South", "West Coast"];
 const US_REGION_BY_CITY = {
   "boston": "East Coast", "cambridge": "East Coast", "new york": "East Coast",
-  "new york city": "East Coast", "washington, d.c.": "East Coast",
+  "new york city": "East Coast", "nyc": "East Coast", "washington, d.c.": "East Coast",
   "pittsburgh": "East Coast", "boca raton": "East Coast",
   "lancaster": "East Coast", "montville": "East Coast",
   "chicago": "Midwest", "minneapolis": "Midwest", "urbana": "Midwest",
   "deerfield": "Midwest", "columbus": "Midwest", "park ridge": "Midwest",
   "wilmette": "Midwest",
   "los angeles": "West Coast", "bay area": "West Coast",
-  "san francisco bay area": "West Coast", "salt lake city": "West Coast",
+  "san francisco": "West Coast", "san francisco bay area": "West Coast", "salt lake city": "West Coast",
   "denver": "West Coast", "phoenix": "West Coast", "boise": "West Coast",
   "reno": "West Coast", "palo alto": "West Coast",
   "vacaville, california": "West Coast",
@@ -3917,13 +4519,8 @@ function buildLocationRegionGroup(values, onAnyChange){
 }
 
 function updateDropdownCountBadge(toggle, count){
+  // Active state is communicated by the solid purple highlight only.
   toggle.querySelector('.filter-dropdown-count')?.remove();
-  if(count){
-    toggle.insertBefore(
-      Object.assign(document.createElement('span'), {className: 'filter-dropdown-count', textContent: ` (${count})`}),
-      toggle.querySelector('svg')
-    );
-  }
   toggle.classList.toggle('has-selection', count > 0);
 }
 
@@ -3958,7 +4555,7 @@ function buildFilterPanel(){
     const dropdown = document.createElement('div');
     dropdown.className = 'filter-dropdown';
     const activeCount = filterState[key].size;
-    const toggle = buildFilterDropdownToggle(dropdown, `${CATEGORY_LABELS[key] || key}${activeCount ? ` <span class="filter-dropdown-count">(${activeCount})</span>` : ''}`);
+    const toggle = buildFilterDropdownToggle(dropdown, `${CATEGORY_LABELS[key] || key}`);
     toggle.classList.toggle('has-selection', activeCount > 0);
     dropdown.appendChild(toggle);
 
@@ -3991,7 +4588,7 @@ function buildFilterPanel(){
     const dropdown = document.createElement('div');
     dropdown.className = 'filter-dropdown';
     const activeCount = otherKeysWithValues.reduce((sum, key) => sum + filterState[key].size, 0);
-    const toggle = buildFilterDropdownToggle(dropdown, `Brand vs Agency${activeCount ? ` <span class="filter-dropdown-count">(${activeCount})</span>` : ''}`);
+    const toggle = buildFilterDropdownToggle(dropdown, `Brand vs Agency`);
     toggle.classList.toggle('has-selection', activeCount > 0);
     dropdown.appendChild(toggle);
 
@@ -4030,7 +4627,7 @@ function matchesFilters(alum){
   // here, so changing filters or search can never remove anyone from it.
   const q = document.getElementById('searchInput').value.trim();
   if(q){
-    const hay = [alum.name, alum.company, ...alum.industries, ...alum.marketingAreas, ...alum.topics]
+    const hay = [alum.name, alum.company, ...alum.city, ...alum.industries, ...alum.marketingAreas, ...alum.topics]
       .join(" ");
     // Match at a word boundary rather than any substring, so a short query
     // like "AI" doesn't match text that merely contains those letters in
@@ -4384,6 +4981,99 @@ const PORTRAIT_PLACEHOLDER_SVG = '<svg width="56" height="56" viewBox="0 0 24 24
 // so this tries every extension actually in use in that folder in turn
 // (via the image's own onerror) and falls back to the placeholder SVG
 // once all of them 404 - never assumes a particular alum has a photo.
+// Exact portrait filenames from /photos. Using the manifest avoids the
+// extension-by-extension 404 chain and lets visible cards preload the
+// precise asset before a profile is opened.
+const PHOTO_FILE_BY_SLUG = {
+  "aastha_desai": "aastha_desai.jfif",
+  "adrena_stubberfield": "adrena_stubberfield.png",
+  "alexandra_barrangan": "alexandra_barrangan.jfif",
+  "alice_liang": "alice_liang.jfif",
+  "amanda_modelski": "amanda_modelski.png",
+  "anni_lundy": "anni_lundy.png",
+  "arjun_kumar": "arjun_kumar.jfif",
+  "ashley_gondorcin_graves": "ashley_gondorcin_graves.jfif",
+  "ashley_owen": "ashley_owen.jfif",
+  "bhawna_n": "bhawna_n.png",
+  "bri_sandack": "bri_sandack.jfif",
+  "brian_weidy": "brian_weidy.jfif",
+  "brittany_thomas": "brittany_thomas.jfif",
+  "camille_vicino": "camille_vicino.jfif",
+  "carmen_gutierrez_de_la_roza": "carmen_gutierrez_de_la_roza.jfif",
+  "christiana_stewart": "christiana_stewart.jfif",
+  "christina_fu": "christina_fu.jfif",
+  "cianna_reeves": "cianna_reeves.png",
+  "constance_yulei_liu": "constance_yulei_liu.jpg",
+  "daniel_allen": "daniel_allen.jfif",
+  "dhriti_trivedi": "dhriti_trivedi.jfif",
+  "fara_goldberg": "fara_goldberg.jfif",
+  "faryal_ali": "faryal_ali.jfif",
+  "gary_gonzalez": "gary_gonzalez.png",
+  "gonzalo_garcia_calderon": "gonzalo_garcia_calderon.jfif",
+  "hanson_hairihan": "hanson_hairihan.jfif",
+  "henry_huang": "henry_huang.jfif",
+  "henry_rogers": "henry_rogers.jfif",
+  "ilina_ewen": "ilina_ewen.jfif",
+  "jasmine_chao": "jasmine_chao.jfif",
+  "jennifer_wang": "jennifer_wang.jfif",
+  "jess_guffey": "jess_guffey.jfif",
+  "jesse_zeng": "jesse_zeng.png",
+  "jiaran_wang": "jiaran_wang.png",
+  "jonathan_kamel": "jonathan_kamel.png",
+  "kali_skidelsky": "kali_skidelsky.jfif",
+  "kandise_le_blanc": "kandise_le_blanc.png",
+  "katie_boardman": "katie_boardman.jfif",
+  "katie_lahti": "katie_lahti.jfif",
+  "katie_mcdonnell": "katie_mcdonnell.jfif",
+  "kay_chung": "kay_chung.jfif",
+  "kevin_miller": "kevin_miller.jfif",
+  "kevin_sidell": "kevin_sidell.jfif",
+  "kiera_luo": "kiera_luo.png",
+  "koushank_ahuja": "koushank_ahuja.jfif",
+  "laura_alencar": "laura_alencar.jfif",
+  "lauren_meltzer": "lauren_meltzer.jfif",
+  "layth_yehyawi": "layth_yehyawi.jfif",
+  "leeann_shelton": "leeann_shelton.jfif",
+  "lily_proudman": "lily_proudman.jfif",
+  "linda_feng": "linda_feng.jfif",
+  "lindsey_schott": "lindsey_schott.jfif",
+  "lucinda_vacura": "lucinda_vacura.jfif",
+  "mahek_parekh": "mahek_parekh.png",
+  "manuel_altomonte": "manuel_altomonte.jfif",
+  "marc_zarefsky": "marc_zarefsky.jfif",
+  "maria_alejandra_alvarado_g": "maria_alejandra_alvarado_g.jfif",
+  "mary_hager": "mary_hager.png",
+  "meena_vetri_wehrs": "meena_vetri_wehrs.jfif",
+  "melanie_greben": "melanie_greben.jfif",
+  "morgan_ho": "morgan_ho.jfif",
+  "nadine_mansour": "nadine_mansour.jfif",
+  "nandini_balu": "nandini_balu.jfif",
+  "naomi_birenbaum": "naomi_birenbaum.jfif",
+  "nikith_deo": "nikith_deo.jfif",
+  "nina_wescott": "nina_wescott.jfif",
+  "olavina_harahap": "olavina_harahap.jfif",
+  "priyal_khanuja": "priyal_khanuja.jfif",
+  "rachel_sova": "rachel_sova.png",
+  "rainn_guo": "rainn_guo.jfif",
+  "riya_bhatia": "riya_bhatia.jfif",
+  "rohana_radhakrishnan": "rohana_radhakrishnan.jfif",
+  "rushil_mohan": "rushil_mohan.jfif",
+  "samone_khalil": "samone_khalil.png",
+  "sarah_koessel": "sarah_koessel.jfif",
+  "sasha_shrimanker": "sasha_shrimanker.png",
+  "selina_wang": "selina_wang.png",
+  "shari_newman": "shari_newman.jfif",
+  "sheryl_xu": "sheryl_xu.jfif",
+  "sumit_jagdale": "sumit_jagdale.jfif",
+  "taerynn_k_owens": "taerynn_k_owens.jfif",
+  "tamara_bendeck": "tamara_bendeck.jfif",
+  "tim_anderson": "tim_anderson.jfif",
+  "victor_yakovlev": "victor_yakovlev.png",
+  "wanyao_xie": "wanyao_xie.jfif",
+  "xuechen_zhang_susan": "xuechen_zhang_susan.jfif",
+  "yuki_fang": "yuki_fang.png"
+};
+
 const PORTRAIT_EXTS = ['jpg', 'jpeg', 'png', 'jfif'];
 function slugifyAlumName(name){
   return (name || '')
@@ -4413,6 +5103,37 @@ const resolvedPhotoCache = new Map();
 function resolveAlumPhoto(a){
   const slug = slugifyAlumName(a.name);
   if(resolvedPhotoCache.has(slug)) return Promise.resolve(resolvedPhotoCache.get(slug));
+
+  const exactFile = PHOTO_FILE_BY_SLUG[slug];
+  if(exactFile){
+    return new Promise(resolve => {
+      const candidate = new Image();
+      const src = `photos/${exactFile}`;
+      const settle = () => {
+        const result = {slug, src};
+        resolvedPhotoCache.set(slug, result);
+        resolve(result);
+      };
+      candidate.onload = () => {
+        if(candidate.decode){
+          let done = false;
+          const finish = () => { if(!done){ done = true; settle(); } };
+          candidate.decode().then(finish).catch(finish);
+          setTimeout(finish, 150);
+        } else {
+          settle();
+        }
+      };
+      candidate.onerror = () => {
+        const result = {slug, src: null};
+        resolvedPhotoCache.set(slug, result);
+        resolve(result);
+      };
+      candidate.src = src;
+    });
+  }
+
+  // Fallback for any future photo not yet present in the manifest.
   return new Promise(resolve => {
     function settleWith(result){
       resolvedPhotoCache.set(slug, result);
@@ -4425,27 +5146,14 @@ function resolveAlumPhoto(a){
       }
       const candidate = new Image();
       const src = `photos/${slug}.${PORTRAIT_EXTS[extIdx]}`;
-      candidate.onload = () => {
-        // decode() can hang indefinitely rather than ever resolving or
-        // rejecting (observed in at least one real browser context, not
-        // just a theoretical concern) - onload already means the bytes
-        // are in, so a stuck decode() must never be able to block this
-        // forever; race it against a short timeout and resolve either way.
-        if(candidate.decode){
-          let settled = false;
-          const settle = () => { if(!settled){ settled = true; settleWith({slug, src}); } };
-          candidate.decode().then(settle).catch(settle);
-          setTimeout(settle, 400);
-        } else {
-          settleWith({slug, src});
-        }
-      };
+      candidate.onload = () => settleWith({slug, src});
       candidate.onerror = () => tryExt(extIdx + 1);
       candidate.src = src;
     }
     tryExt(0);
   });
 }
+
 // Fire-and-forget hover/focus preload (2026-10-21, per request - "so
 // clicking them feels immediate") - just runs the real resolveAlumPhoto()
 // chain ahead of time and lets its own cache absorb the result; a click
@@ -4455,6 +5163,7 @@ function preloadAlumPhotoOnDemand(a){
   if(resolvedPhotoCache.has(slugifyAlumName(a.name))) return;
   resolveAlumPhoto(a);
 }
+
 // The only thing that actually touches the visible <img>/fallback -
 // called once a photo has resolved (see resolveAlumPhoto above) AND the
 // caller has confirmed (via its own token) that this is still the
@@ -4483,13 +5192,34 @@ function applyAlumPhoto(photoResult){
 // overwhelming majority of uploaded photos; the few non-jpg ones still
 // get their full extension-fallback chain in resolveAlumPhoto when
 // actually selected, this is only a cache-warming best effort).
-const PRELOAD_PHOTO_COUNT = 25; // above-the-fold + a bit of scroll headroom, not the whole (often 80-100+) list
-function preloadAlumPhotos(alumList){
-  alumList.slice(0, PRELOAD_PHOTO_COUNT).forEach(a => {
-    const slug = slugifyAlumName(a.name);
-    if(!slug) return;
-    new Image().src = `photos/${slug}.${PORTRAIT_EXTS[0]}`;
-  });
+let directoryPhotoPreloadObserver = null;
+
+function preloadDirectoryViewportPhotos(alumList){
+  // Immediately resolve the first screenful so a quick tap after the
+  // directory opens is already hot in cache.
+  alumList.slice(0, 10).forEach(preloadAlumPhotoOnDemand);
+
+  if(directoryPhotoPreloadObserver){
+    directoryPhotoPreloadObserver.disconnect();
+    directoryPhotoPreloadObserver = null;
+  }
+
+  if(!('IntersectionObserver' in window)){
+    alumList.slice(0, 25).forEach(preloadAlumPhotoOnDemand);
+    return;
+  }
+
+  const byId = new Map(alumList.map(a => [String(a.id), a]));
+  directoryPhotoPreloadObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if(!entry.isIntersecting) return;
+      const a = byId.get(entry.target.dataset.id);
+      if(a) preloadAlumPhotoOnDemand(a);
+      directoryPhotoPreloadObserver.unobserve(entry.target);
+    });
+  }, {root:null, rootMargin:'700px 0px'});
+
+  document.querySelectorAll('.directory-entry').forEach(el => directoryPhotoPreloadObserver.observe(el));
 }
 
 // Sort (2026-10-17, revised again) - re-orders whatever matchesFilters
@@ -4563,10 +5293,19 @@ function updateClearButtonVisibility(){
   btn.style.display = hasActiveFilter ? '' : 'none';
 }
 
-// The left-hand list - name/role/company/location/availability only,
-// no pin button (that lives solely on the profile panel now) and no
-// photo (portraits are profile-panel-only, per request). Natural text
-// wrapping on the name, never truncated or shrunk.
+function directoryPortraitHtml(a){
+  const slug = slugifyAlumName(a.name);
+  const file = PHOTO_FILE_BY_SLUG[slug];
+  const cls = file ? 'directory-entry-photo has-photo' : 'directory-entry-photo';
+  return `<div class="${cls}" aria-hidden="true">
+    ${file ? `<img src="photos/${file}" alt="" loading="lazy" decoding="async">` : ''}
+    <span class="directory-entry-photo-fallback">${PORTRAIT_PLACEHOLDER_SVG}</span>
+  </div>`;
+}
+
+// The left-hand list - compact identity + location/availability.
+// Mobile uses real portraits when available; desktop still keeps the
+// directory text-only through the responsive CSS.
 function renderDirectoryList(filtered){
   const list = document.getElementById('directoryList');
   const countEl = document.getElementById('directoryCount');
@@ -4590,6 +5329,7 @@ function renderDirectoryList(filtered){
     btn.dataset.id = a.id;
     btn.setAttribute('aria-pressed', String(a.id === selectedAlumId));
     btn.innerHTML = `
+      ${directoryPortraitHtml(a)}
       <div class="directory-entry-info">
         <div class="directory-entry-name">${a.name}</div>
         ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
@@ -4604,10 +5344,12 @@ function renderDirectoryList(filtered){
     btn.addEventListener('click', () => selectAlum(a.id, {openMobileDetail: true, reopenProfile: true}));
     btn.addEventListener('mouseenter', () => preloadAlumPhotoOnDemand(a));
     btn.addEventListener('focus', () => preloadAlumPhotoOnDemand(a));
+    btn.addEventListener('pointerdown', () => preloadAlumPhotoOnDemand(a), {passive:true});
+    btn.addEventListener('touchstart', () => preloadAlumPhotoOnDemand(a), {passive:true});
     list.appendChild(btn);
   });
   enforceDirectoryListMinWidth();
-  preloadAlumPhotos(filtered);
+  preloadDirectoryViewportPhotos(filtered);
 }
 
 // Up/Down arrow-key navigation across the list rows - moves focus to
@@ -4742,9 +5484,6 @@ function renderProfilePanel(){
       ? 'Select an alum from the list to view their profile.'
       : 'No alumni match those filters right now. Try clearing a few.';
     right.innerHTML = `
-      <div class="profile-toolbar">
-        <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
-      </div>
       <div class="directory-empty">${message}</div>
     `;
     return;
@@ -4758,9 +5497,6 @@ function renderProfilePanel(){
   // finished loading, never recreates it.
   if(!right.querySelector('.profile-header')){
     right.innerHTML = `
-      <div class="profile-toolbar">
-        <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
-      </div>
       <div class="profile-header">
         <div class="profile-header-inner">
           <div class="profile-portrait" aria-hidden="true">
@@ -4771,23 +5507,35 @@ function renderProfilePanel(){
             <div class="profile-availability"></div>
             <div class="profile-identity-wrap"></div>
           </div>
+          <div class="mobile-profile-meta-row" aria-label="Profile contact and availability">
+            <div class="mobile-profile-meta-location"></div>
+            <div class="mobile-profile-meta-linkedin"></div>
+            <div class="mobile-profile-meta-spots"></div>
+          </div>
         </div>
       </div>
       <div class="profile-sections"></div>
     `;
   }
 
-  // Text is deliberately NOT updated here, synchronously - that's the
-  // exact bug this closes ("the profile must never display text for one
-  // alum with the image of another"). Whatever profile is already on
-  // screen (the previously-selected alum's photo AND text, both) stays
-  // fully intact and untouched until the new alum's photo has actually
-  // resolved (decoded, or determined to have no photo at all) - then
-  // every piece of this alum's content swaps in together, in the same
-  // synchronous block below, so there's no in-between frame where they
-  // can be mismatched.
+  // If this portrait was preloaded from the visible directory, commit the
+  // entire profile synchronously. This prevents reopening the drawer with
+  // the previous alum's face for even one frame.
+  const slug = slugifyAlumName(a.name);
+  const cachedPhoto = resolvedPhotoCache.get(slug);
+  if(cachedPhoto){
+    lastRenderedAlumId = a.id;
+    applyAlumPhoto(cachedPhoto);
+    updateProfileAvailability(a);
+    updateProfileIdentity(a);
+    updateProfileSections(a);
+    return;
+  }
+
+  // Uncached portraits resolve atomically; the viewport preloader above
+  // makes this path uncommon for a card the user can currently tap.
   resolveAlumPhoto(a).then(photoResult => {
-    if(myToken !== profileRenderToken) return; // superseded - discard
+    if(myToken !== profileRenderToken) return;
     lastRenderedAlumId = a.id;
     applyAlumPhoto(photoResult);
     updateProfileAvailability(a);
@@ -4811,6 +5559,8 @@ function updateProfileAvailability(a){
       ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>
     </button>
   `;
+  const mobileSpots = document.querySelector('.mobile-profile-meta-spots');
+  if(mobileSpots) mobileSpots.innerHTML = capacityBadgeHtml(a.capacity, a.capacityAssumed);
 }
 
 // The lightweight path toggleCart() uses instead of a full
@@ -4847,6 +5597,25 @@ function updateProfileIdentity(a){
     </div>
     ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
   `;
+
+  const mobileLocation = document.querySelector('.mobile-profile-meta-location');
+  const mobileLinkedIn = document.querySelector('.mobile-profile-meta-linkedin');
+  if(mobileLocation){
+    mobileLocation.innerHTML = contactHtml;
+    requestAnimationFrame(updateMobileLocationWrapAlignment);
+  }
+  if(mobileLinkedIn) mobileLinkedIn.innerHTML = linkedinHtml;
+}
+
+function updateMobileLocationWrapAlignment(){
+  const location = document.querySelector('.mobile-profile-meta-location .format-value');
+  if(!location) return;
+  location.classList.remove('two-line-location');
+  const computed = getComputedStyle(location);
+  const lineHeight = parseFloat(computed.lineHeight) || 12;
+  if(location.getBoundingClientRect().height > lineHeight * 1.45){
+    location.classList.add('two-line-location');
+  }
 }
 
 // Industry/Marketing Expertise + Ask Me About - also image-free, cheap
@@ -4854,7 +5623,7 @@ function updateProfileIdentity(a){
 function updateProfileSections(a){
   const el = document.querySelector('.profile-sections');
   if(!el) return;
-  const visibleTopics = a.topics.filter(t => !TOPIC_CARD_EXCLUDE.includes(t));
+  const visibleTopics = visibleConversationTopics(a);
   el.innerHTML = profileThreeColumnsHtml(a, visibleTopics);
 }
 
@@ -4882,9 +5651,13 @@ function updateProfileSections(a){
 // the panel's innerHTML on every call, which would otherwise mean
 // rebinding - or leaking - a listener every time).
 document.getElementById('directoryRight').addEventListener('click', (e) => {
-  if(e.target.closest('#profileBackBtn')){ closeMobileDetail(); return; }
   const addBtn = e.target.closest('.profile-add-btn');
   if(addBtn) toggleCart(parseInt(addBtn.dataset.id, 10));
+});
+document.getElementById('mobileProfileBackdrop').addEventListener('click', closeMobileDetail);
+document.getElementById('mobileProfileRetract').addEventListener('click', closeMobileDetail);
+window.addEventListener('resize', () => {
+  if(document.body.classList.contains('mobile-drawer-open')) updateMobileLocationWrapAlignment();
 });
 // The divider's own chevron is the collapse control (2026-10-17, was a
 // separate X button on the profile panel) - stopPropagation on
@@ -5491,6 +6264,7 @@ function loadData(){
   if(SHEET_CSV_URL.includes("PASTE_YOUR")){
     // No real Sheet connected yet — preview with sample data instead.
     alumni = applyPhaseCutoff(SAMPLE_ROWS.map(normalizeRow).filter(a => a.name));
+    buildConversationTopicQA(alumni);
     FILTERABLE.forEach(key => filterState[key] = new Set());
     document.getElementById('roundNote').textContent = ROUND_LABEL + " (preview mode)";
     buildFilterPanel();
@@ -5507,6 +6281,7 @@ function loadData(){
         .map(normalizeRow)
         .filter(a => a.name) // drop any blank rows
     );
+    buildConversationTopicQA(alumni);
     FILTERABLE.forEach(key => filterState[key] = new Set());
     document.getElementById('roundNote').textContent = ROUND_LABEL;
     buildFilterPanel();
