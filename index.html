@@ -417,48 +417,61 @@ header.site{
   margin: 24px 0 28px;
   text-wrap: pretty;
 }
-.review-list{ display: flex; flex-direction: column; gap: 16px; }
-/* No pin icon any more (2026-10-15, per request) - the card is just a
-   plain stack: remove button top-right (above everything else), then
-   name+spots-available, title, company, location/LinkedIn. */
+.review-list{ display: flex; flex-direction: column; gap: 10px; }
+/* Simplified for quick shortlisting (2026-10-21, per request) - name,
+   title, company only, each one line where possible, noticeably
+   shorter/more rectangular than the old taller card (which also showed
+   a capacity badge and a location/LinkedIn line). Shortlist checkbox
+   (top-left) and remove button (top-right) are both smaller now too,
+   so the card only needs a little headroom above the text instead of
+   a whole separate row for them. */
 .review-card{
   position: relative;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 10px;
-  /* Extra top padding - the remove button sits in its own row above the
-     name/spots row (not beside it), per request, so the card needs room
-     above the name for the button's 30px height + 14px top offset. */
-  padding: 46px 24px 20px;
-  box-shadow: 0 6px 16px rgba(37,37,100,0.08);
-}
-.review-card-header{
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+  padding: 28px 34px 10px 16px;
+  box-shadow: 0 2px 6px rgba(37,37,100,0.06);
 }
 .review-card-name{
   font-family: 'Libre Baskerville', serif;
   font-weight: 500;
-  font-size: 19px;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.review-card-header .capacity-badge-wrap{ flex-shrink: 0; }
-.review-card-role{ font-size: 13.5px; color: var(--ink); margin-top: 2px; }
-.review-card-company{ font-size: 13px; font-style: italic; color: var(--muted); margin-top: 1px; }
-.review-card-contact{ margin-top: 10px; }
+.review-card-role{
+  font-size: 12.5px;
+  color: var(--ink);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Purple, not muted/italic (2026-10-21, per request - "company
+   remaining purple"), matching how company reads everywhere else on
+   the site. */
+.review-card-company{
+  font-size: 12px;
+  color: var(--accent);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .review-card-remove{
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 8px;
+  right: 8px;
   background: none;
   border: 1.5px solid var(--line-strong);
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   color: var(--muted);
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1;
   cursor: pointer;
 }
@@ -467,27 +480,53 @@ header.site{
    applies to shortlisting within this drawer, via a checkbox per card
    (top-left, mirroring the remove button at top-right) rather than at
    add-time. */
-.shortlist-status{
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  color: var(--muted);
-  margin-bottom: 4px;
-}
 .shortlist-toggle{
   position: absolute;
-  top: 16px;
-  left: 18px;
+  top: 9px;
+  left: 16px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-family: 'Inter', sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--muted);
   cursor: pointer;
 }
-.shortlist-toggle input{ width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
-.review-card.shortlisted{ border-color: var(--accent); box-shadow: 0 6px 16px rgba(37,37,100,0.08), 0 0 0 1.5px var(--accent) inset; }
+.shortlist-toggle input{ width: 13px; height: 13px; accent-color: var(--accent); cursor: pointer; }
+.review-card.shortlisted{ border-color: var(--accent); box-shadow: 0 2px 6px rgba(37,37,100,0.06), 0 0 0 1.5px var(--accent) inset; }
+/* Grayed out and non-selectable once 5 are shortlisted (2026-10-21, per
+   request) - the checkbox itself is `disabled`, cursor signals it's not
+   clickable, and the card dims to read as inert. The card element
+   itself is deliberately left clickable (not pointer-events:none) so
+   it can still catch a click and show the shake+message feedback below
+   instead of just doing nothing. */
+.review-card.disabled{ opacity: 0.45; cursor: not-allowed; }
+.review-card.disabled .shortlist-toggle{ pointer-events: none; }
+@keyframes reviewCardShake{
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+.review-card.shake{ animation: reviewCardShake 0.4s ease-in-out; }
+@media (prefers-reduced-motion: reduce){
+  .review-card.shake{ animation: none; }
+}
+/* Inline message, not a toast/alert (2026-10-21, per request - "do not
+   use a browser alert or pop-up... display this message inside the
+   Review & Submit section"). */
+.shortlist-cap-message{
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--warn);
+  background: #FDF1E7;
+  border: 1px solid var(--warn);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
 .review-empty{
   color: var(--muted);
   font-style: italic;
@@ -849,7 +888,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   max-width: 1480px;
   margin-inline: auto;
   background: var(--workspace-bg);
-  border-radius: 14px;
+  /* Square outer corners (2026-10-21, per request) - the large outer
+     workspace card itself is flat 90deg top and bottom; rounding stays
+     on everything inside it (cards, pills, search field, buttons). */
+  border-radius: 0;
   overflow: hidden;
   flex: 1 1 auto;
   min-height: 0;
@@ -880,13 +922,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    Back to being seamlessly joined to the directory/profile card below
    it (per request - "nevermind, should not be their own card, restore
    to how it was") - a shared border instead of top/bottom margins. */
+/* Border lives on .directory-toolbar itself (full width, no padding of
+   its own) rather than on the padded .listing-container inside it, so
+   the toolbar's own surface/divider runs edge-to-edge across the whole
+   workspace (2026-10-21, per request) while the search/filter controls
+   keep their exact current position via .listing-container's own
+   (unchanged) padding. */
+.directory-toolbar{ border-bottom: 1px solid var(--border); }
 .directory-toolbar > .listing-container{
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding-top: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
 }
 /* .search-box's own `flex: 1 1 280px` sets a WIDTH basis in its other
    context (a row-direction flex parent) - .directory-toolbar is
@@ -912,22 +960,27 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   gap: 10px;
   flex-wrap: nowrap;
 }
-/* Separates the count/sort row from the alumni listings below it.
-   Runs the width of #directoryLeft itself (which has no side padding of
-   its own, so no margin trick is needed on either side) - per request,
-   this should NOT bleed any further left than that into the page's
-   outer padding/margin, unlike the profile-side dividers. */
+/* Separates the count/sort row from the alumni listings below it. The
+   border lives on THIS element (plain width:100%, no padding of its
+   own) so it structurally cannot stop short of #directoryLeft's real
+   edges, regardless of what padding the row's content needs - the
+   actual padded content sits in .directory-list-header-inner below
+   (2026-10-21, per request: "put each border-bottom on the full-width
+   column wrapper, not on a padded inner element"). */
 .directory-list-header{
   flex: 0 0 auto;
+  width: 100%;
+  /* Thinner (per request) - was 2px, like the site's other dividers;
+     this one is now 1px. */
+  border-bottom: 1px solid var(--line);
+}
+.directory-list-header-inner{
   display: flex;
   align-items: center;
   justify-content: space-between;
   /* Shorter row (per request, twice now - "too tall") - was 16px, then
      10px, 28px throughout. */
   padding: 6px 24px;
-  /* Thinner (per request) - was 2px, like the site's other dividers;
-     this one is now 1px. */
-  border-bottom: 1px solid var(--line);
   font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   color: var(--muted);
@@ -1053,8 +1106,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      instead of scrolling, which is the explicit trade-off asked for. */
   overflow: hidden;
   /* Trimmed top/bottom (was 24px/48px, then 16px/20px, per request -
-     "shouldn't need to scroll, everything should fit"). */
-  padding: 12px 24px 12px;
+     "shouldn't need to scroll, everything should fit"). No horizontal
+     padding here any more (2026-10-21) - .profile-header needs to span
+     this column's true left/right edges for its own border-bottom
+     divider, so the 24px inset moved onto .profile-toolbar,
+     .profile-header-inner and .profile-sections individually instead
+     of living on this shared parent. */
+  padding: 12px 0 12px;
 }
 /* Collapsing the profile panel (2026-10-17): hides it and the resizer,
    the directory expands to fill the width. Selection and the stored
@@ -1202,6 +1260,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   align-items: center;
   justify-content: flex-end;
   margin-bottom: 20px;
+  padding: 0 24px; /* restores the inset now that #directoryRight no longer provides it (2026-10-21) */
 }
 .profile-back-btn{
   display: none; /* shown only below 1024px, see the max-width block */
@@ -1214,31 +1273,47 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 0;
 }
 .profile-back-btn:hover{ color: var(--ink); }
-/* Structural two-column grid (2026-10-20) - photo column is a fixed
-   track, info column is the flexible rest; no position:absolute,
-   right:0 or negative/large auto margins anywhere in this block. The
-   action row, identity block and location/LinkedIn all live INSIDE the
-   info column, so they share its exact horizontal bounds and move with
-   it (dragging the divider, resizing the window) rather than being
-   measured or pinned against the outer panel.
-   height:205px (2026-10-20, layout-stability pass) - an EXPLICIT fixed
-   row height, matching the photo's own height exactly, rather than
-   letting the row auto-size to whichever child is tallest. Without
-   this, an alum with an unusually long 2-line title/company could in
-   theory push the row taller than 205px, which would shove
-   .profile-divider (and everything below it) down - a real, if rare,
-   source of per-alum layout jump this closes off entirely: the row's
-   height can never vary, so the divider's position is fixed by this
-   container boundary alone, never by photo-load timing or text length.
-   overflow:visible is deliberate, not an oversight - an extreme outlier
-   title just overflows the row visually rather than ever resizing it. */
+/* The divider-bearing element (2026-10-21, per request) - plain
+   width:100%, no padding, no grid of its own; its only CSS job is to
+   carry the border-bottom so that line structurally cannot stop short
+   of the profile column's real edges. All the actual layout (grid,
+   padding, fixed height) lives in .profile-header-inner below. Its
+   own height is left auto so it always exactly wraps its one child -
+   alignProfileHeaderDividerToChevron() stretches that explicitly via
+   an inline height when it needs to nudge the border down to meet the
+   chevron. */
 .profile-header{
+  width: 100%;
+  border-bottom: 1px solid var(--border);
+}
+/* Structural two-column grid - photo column is a fixed track, info
+   column is the flexible rest; no position:absolute, right:0 or
+   negative/large auto margins anywhere in this block. The action row,
+   identity block and location/LinkedIn all live INSIDE the info
+   column, so they share its exact horizontal bounds and move with it
+   (dragging the divider, resizing the window) rather than being
+   measured or pinned against the outer panel.
+   height:205px (layout-stability pass) - an EXPLICIT fixed row height,
+   matching the photo's own height exactly, rather than letting the row
+   auto-size to whichever child is tallest. Without this, an alum with
+   an unusually long 2-line title/company could in theory push the row
+   taller than 205px, which would shove the divider (and everything
+   below it) down - a real, if rare, source of per-alum layout jump
+   this closes off entirely: the row's height can never vary, so the
+   divider's position is fixed by this container boundary alone, never
+   by photo-load timing or text length. overflow:visible is deliberate,
+   not an oversight - an extreme outlier title just overflows the row
+   visually rather than ever resizing it. padding supplies the same
+   24px horizontal inset .profile-header itself used to carry, plus a
+   20px gap before the divider line below. */
+.profile-header-inner{
   display: grid;
   grid-template-columns: 172px minmax(0, 1fr);
   gap: 28px;
   align-items: start;
   height: 205px;
   overflow: visible;
+  padding: 0 24px 20px;
 }
 /* Portrait + text stack vertically once the panel gets narrow (resized
    small, or on a mobile detail view) - toggled by a ResizeObserver on
@@ -1254,26 +1329,24 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    stacked layout. This only fires from a deliberate, one-time drag of
    the resizer, not from switching alumni, so it isn't the same
    per-alum jump risk the fixed-height rule above exists to close off. */
-.directory-right.narrow .profile-header{ grid-template-columns: 1fr; height: auto; }
+.directory-right.narrow .profile-header-inner{ grid-template-columns: 1fr; height: auto; }
 .directory-right.narrow .profile-portrait{ width: 145px; height: 173px; }
-.directory-right.narrow .profile-info-identity{ margin-top: 86px; } /* half of the 173px narrow portrait height */
-/* position:relative so .profile-availability (below) can be taken out
-   of flow without disturbing the identity block's own position - its
-   margin-top is what actually places the name, independent of the
-   action row's height. */
-.profile-info{ min-width: 0; position: relative; }
-/* Capacity badge + Add/Added button - plain flex row, left-aligned
-   within the info column (no justify-content:flex-end / negative
-   margin against the outer panel), same horizontal bounds as the
-   identity block below it. Absolutely positioned (2026-10-20) so its
-   own height doesn't push the identity block down - the name's
-   position is now set directly, at the photo's own vertical midpoint
-   (see .profile-info-identity), not "whatever's left after this row". */
-.profile-availability{ display: flex; align-items: center; justify-content: flex-start; gap: 12px; position: absolute; top: 0; left: 0; right: 0; }
-/* Name starts at the photo's own vertical midpoint (per request) -
-   205px portrait height / 2, independent of .profile-availability's
-   own (now absolutely-positioned, out-of-flow) height above it. */
-.profile-info-identity{ margin-top: 102px; }
+/* Plain top-aligned stack (2026-10-21, per request) - action row, then
+   straight into the identity block with a flat 12px gap, no vertical
+   centering, spacer, or content-height-based positioning of any kind.
+   .profile-info being display:flex/column is what makes that 12px a
+   real, simple margin instead of needing position:absolute + a
+   photo-height-derived margin-top the way this used to work. */
+.profile-info{
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-self: start;
+  height: auto;
+  min-height: 0;
+  min-width: 0;
+}
+.profile-availability{ display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 12px; }
 /* 1.5x larger (per request) - was 156x185 (which itself was reduced
    from 176x220 on 2026-10-17 to tighten the header row). */
 .profile-portrait{
@@ -1323,18 +1396,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .profile-info .alum-role{ margin-top: 2px; font-size: 15px; line-height: 1.2; }
 .profile-info .alum-company{ font-size: 14px; line-height: 1.2; margin-top: 1px; }
 .profile-info .alum-meta{ margin-top: 7px; font-size: 14px; }
-/* Edge-to-edge on both sides, per request ("run to the edge of the
-   white content column") - .directory-right's own 24px padding is the
-   only inset to cancel on either side. The only divider left in the
-   profile (2026-10-20 - the one that used to sit above Ask Me About is
-   gone); its vertical position is set in JS (see
-   alignProfileDividerToChevron()) to land exactly on the resizer
+/* Restores the 24px inset now that #directoryRight no longer provides
+   it (2026-10-21) - the only divider left in the profile is
+   .profile-header's own border-bottom (the one that used to sit above
+   Ask Me About is gone); its vertical position is set in JS (see
+   alignProfileHeaderDividerToChevron()) to land exactly on the resizer
    chevron's own vertical center, not just wherever the header's
    natural height happens to put it. */
-.profile-divider{
-  margin: 20px -24px 0 -24px;
-  border-top: 2px solid var(--line);
-}
+.profile-sections{ padding: 0 24px; }
 .profile-sections .alum-columns{ margin-top: 0; }
 /* Enclosed field (2026-10-20), replacing the old underline style - a
    real bordered/rounded box matching the rest of the workspace's
@@ -1370,6 +1439,29 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .search-btn:hover{ color: var(--ink); }
 .search-btn:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Clear (x) button - shown only while the field has text (toggled in
+   JS), per request. Sits inside the field's own right side, same row
+   as the input, no layout shift when it appears/disappears since the
+   field's own padding already leaves room for it. */
+.search-clear-btn{
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.search-clear-btn:hover{ color: var(--ink); background: var(--border); }
+.search-clear-btn:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
 .clear-btn{
   background:none;
   border:none;
@@ -1679,8 +1771,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .profile-toolbar{ justify-content: space-between; }
   .profile-portrait{ width: 180px; height: 225px; }
   .profile-name{ font-size: 26px; }
-  .profile-header{ gap: 18px; height: 225px; } /* matches the bigger mobile portrait - same fixed-row-height rationale as the base rule, just the mobile photo size */
-  .profile-info-identity{ margin-top: 112px; } /* half of the 225px mobile portrait height - was missing, silently inheriting the base 205px photo's 102px */
+  .profile-header-inner{ gap: 18px; height: 225px; } /* matches the bigger mobile portrait - same fixed-row-height rationale as the base rule, just the mobile photo size */
 }
 
 .alum-row{
@@ -1886,9 +1977,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 /* Industry Expertise + Marketing Expertise side by side in one row
    - Ask Me About is a separate full-width row below (plain spacing
-   only now - 2026-10-20, per request: the only divider in the profile
-   is .profile-divider itself, directly below the photo/job-info
-   section; the one that used to sit above Ask Me About is removed). */
+   only now - the only divider in the profile is .profile-header's own
+   border-bottom, directly below the photo/job-info section; the one
+   that used to sit above Ask Me About is removed). */
 .alum-columns{
   display: flex;
   flex-direction: row;
@@ -2127,6 +2218,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 14px 24px;
   border-bottom: 2px solid var(--line);
   flex-shrink: 0;
+}
+/* Sized down (2026-10-21, per request) - the "My list" heading is now a
+   full instructional sentence rather than two words, so it needs a
+   font-size that doesn't dominate the page the way the browser's
+   default h2 size would. */
+#pinsDrawerTitle{
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 0;
 }
 .pins-drawer-header h2{
   font-family: 'Libre Baskerville', serif;
@@ -2470,6 +2571,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     </button>
     <input type="text" id="searchInput" placeholder="Search by name, company, or keyword…">
+    <button type="button" class="search-clear-btn" id="searchClearBtn" aria-label="Clear search" style="display:none">×</button>
   </div>
   <div class="toolbar-row2">
     <div class="filter-dropdowns" id="filterPanel"></div>
@@ -2494,18 +2596,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 <div class="directory-split" id="directorySplit">
   <div class="directory-left" id="directoryLeft">
     <div class="directory-list-header">
-      <span id="directoryCount"></span>
-      <div class="filter-dropdown sort-dropdown" id="sortDropdown">
-        <button type="button" class="sort-label-btn" id="sortToggle" aria-haspopup="true" aria-expanded="false">
-          <span id="sortToggleLabel">Sort</span>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <div class="filter-dropdown-panel sort-panel" id="sortPanel">
-          <button type="button" class="sort-option sort-clear" data-sort="none">Clear</button>
-          <button type="button" class="sort-option" data-sort="capacity">Most spots available</button>
-          <button type="button" class="sort-option" data-sort="capacity_asc">Least spots available</button>
-          <button type="button" class="sort-option" data-sort="newest">Newest</button>
-          <button type="button" class="sort-option" data-sort="oldest">Oldest</button>
+      <div class="directory-list-header-inner">
+        <span id="directoryCount"></span>
+        <div class="filter-dropdown sort-dropdown" id="sortDropdown">
+          <button type="button" class="sort-label-btn" id="sortToggle" aria-haspopup="true" aria-expanded="false">
+            <span id="sortToggleLabel">Sort</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="filter-dropdown-panel sort-panel" id="sortPanel">
+            <button type="button" class="sort-option sort-clear" data-sort="none">Clear</button>
+            <button type="button" class="sort-option" data-sort="capacity">Most spots available</button>
+            <button type="button" class="sort-option" data-sort="capacity_asc">Least spots available</button>
+            <button type="button" class="sort-option" data-sort="newest">Newest</button>
+            <button type="button" class="sort-option" data-sort="oldest">Oldest</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2527,7 +2631,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 <div class="pins-drawer-backdrop" id="pinsDrawerBackdrop"></div>
 <aside class="pins-drawer" id="pinsDrawer" role="dialog" aria-modal="true" aria-labelledby="pinsDrawerTitle" aria-hidden="true">
   <div class="pins-drawer-header">
-    <h2 id="pinsDrawerTitle">My list <span class="pins-drawer-count" id="pinsDrawerCount"></span></h2>
+    <h2 id="pinsDrawerTitle">Submit up to 5 alumni. The rest go to your wishlist and are not guaranteed. <span class="pins-drawer-count" id="pinsDrawerCount"></span></h2>
     <button class="pins-drawer-close" id="pinsDrawerClose" aria-label="Close">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
     </button>
@@ -2535,7 +2639,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 
   <div class="pins-drawer-body" id="pinsDrawerListPane">
     <div class="review-empty" id="pinsDrawerEmpty" style="display:none">No alumni added yet. Browse the directory to find people you'd like to meet.</div>
-    <div class="shortlist-status" id="shortlistStatus"></div>
+    <div class="shortlist-cap-message" id="shortlistCapMessage" style="display:none">Deselect 1 alum to proceed</div>
     <div id="pinsDrawerList" class="review-list"></div>
   </div>
   <div class="pins-drawer-footer" id="pinsDrawerListFooter">
@@ -4289,7 +4393,7 @@ function collapseProfilePanel(){
 function expandProfilePanel(){
   document.getElementById('directorySplit').classList.remove('profile-collapsed');
   enforceDirectoryListMinWidth();
-  alignProfileDividerToChevron();
+  alignProfileHeaderDividerToChevron();
 }
 
 function renderProfilePanel(){
@@ -4317,16 +4421,17 @@ function renderProfilePanel(){
         <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
       </div>
       <div class="profile-header">
-        <div class="profile-portrait" aria-hidden="true">
-          <img class="profile-portrait-img" alt="" style="display:none">
-          <span class="profile-portrait-fallback" style="display:none">${PORTRAIT_PLACEHOLDER_SVG}</span>
-        </div>
-        <div class="profile-info">
-          <div class="profile-availability"></div>
-          <div class="profile-identity-wrap"></div>
+        <div class="profile-header-inner">
+          <div class="profile-portrait" aria-hidden="true">
+            <img class="profile-portrait-img" alt="" style="display:none">
+            <span class="profile-portrait-fallback" style="display:none">${PORTRAIT_PLACEHOLDER_SVG}</span>
+          </div>
+          <div class="profile-info">
+            <div class="profile-availability"></div>
+            <div class="profile-identity-wrap"></div>
+          </div>
         </div>
       </div>
-      <div class="profile-divider"></div>
       <div class="profile-sections"></div>
     `;
   }
@@ -4337,7 +4442,7 @@ function renderProfilePanel(){
   updateProfileSections(a);
 
   collapseIndustryTagsInline();
-  alignProfileDividerToChevron();
+  alignProfileHeaderDividerToChevron();
 }
 
 // Capacity badge + Add/Added button - the only two pieces of
@@ -4402,38 +4507,38 @@ function updateProfileSections(a){
   el.innerHTML = profileThreeColumnsHtml(a, visibleTopics);
 }
 
-// Lines up .profile-divider's visible line with the resizer chevron's
-// own vertical center (per request - "align its vertical position
-// exactly with the center/vertex of the chevron... so the intersection
-// looks intentional"). The chevron is centered on the whole split's
-// height (viewport-dependent, via .directory-resizer's own
-// align-items:center), while the divider's natural position depends on
-// the header's content height - these only coincide through explicit
-// measurement, not by default layout. Resets to the base CSS margin
-// first so repeated calls measure from a known starting point, not a
-// previous call's own adjustment.
-function alignProfileDividerToChevron(){
-  const divider = document.querySelector('.profile-divider');
-  const chevron = document.getElementById('directoryCollapseBtn');
+// Lines up .profile-header's own border-bottom (the profile's one
+// divider, 2026-10-21) with the resizer chevron's vertical center (per
+// request - "align its vertical position exactly with the center/
+// vertex of the chevron... so the intersection looks intentional").
+// The chevron is centered on the whole split's height (viewport-
+// dependent, via .directory-resizer's own align-items:center), while
+// .profile-header's natural height is a fixed, content-independent
+// 205px (see .profile-header-inner) - these only coincide through
+// explicit measurement, not by default layout. Stretches
+// .profile-header's own height (never .profile-header-inner's, which
+// stays fixed) to push the border down to meet the chevron; resets to
+// the CSS default first so repeated calls measure from a known
+// starting point, not a previous call's own adjustment.
+function alignProfileHeaderDividerToChevron(){
   const header = document.querySelector('.profile-header');
-  if(!divider || !chevron || !header) return;
-  divider.style.marginTop = '';
+  const chevron = document.getElementById('directoryCollapseBtn');
+  if(!header || !chevron) return;
+  header.style.height = '';
   // offsetParent is null anywhere up the hidden-ancestor chain (mobile
   // view, or the profile panel still collapsed at render time, e.g.
   // selectAlum() rendering before a separate expandProfilePanel() call)
   // - bail rather than compute off a zeroed-out rect.
-  if(chevron.offsetParent === null || divider.offsetParent === null) return;
+  if(chevron.offsetParent === null || header.offsetParent === null) return;
   const chevronRect = chevron.getBoundingClientRect();
-  const headerBottom = header.getBoundingClientRect().bottom;
-  const dividerTop = divider.getBoundingClientRect().top;
-  const baseMarginTop = parseFloat(getComputedStyle(divider).marginTop) || 0;
+  const headerRect = header.getBoundingClientRect();
   const chevronMid = chevronRect.top + chevronRect.height / 2;
-  // Never let the divider move above the header's own bottom edge (a
-  // safety floor, not just the common case) - if the chevron's center
-  // ever comes out above that, fall back to sitting flush against the
-  // header instead of overlapping the photo/text.
-  const targetTop = Math.max(chevronMid, headerBottom);
-  divider.style.marginTop = (baseMarginTop + (targetTop - dividerTop)) + 'px';
+  // Never let the border move above the header's own natural bottom
+  // edge (a safety floor, not just the common case) - if the chevron's
+  // center ever comes out above that, fall back to the header's
+  // natural height instead of ever compressing/overlapping its content.
+  const targetHeight = Math.max(chevronMid - headerRect.top, headerRect.height);
+  header.style.height = targetHeight + 'px';
 }
 
 // Delegated rather than bound per-render (renderProfilePanel replaces
@@ -4622,7 +4727,7 @@ function sizeDirectorySplit(){
 let directorySplitResizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(directorySplitResizeTimer);
-  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); alignProfileDividerToChevron(); }, 100);
+  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); alignProfileHeaderDividerToChevron(); }, 100);
 });
 
 // Draggable divider between the directory list and the profile panel
@@ -4823,13 +4928,40 @@ function toggleShortlist(id){
   if(idx !== -1){
     shortlist.splice(idx, 1);
   } else {
+    // Defensive fallback - the checkbox itself is `disabled` once at
+    // cap (see renderPinCardsInto), so this normally can't fire via a
+    // real click, but keep it safe regardless of how toggleShortlist
+    // gets called.
     if(shortlist.length >= MAX_PICKS){
-      showToast(`You can shortlist up to ${MAX_PICKS} alumni to submit. Remove one first to add another.`);
+      showShortlistCapFeedback();
       return;
     }
     shortlist.push(id);
   }
   renderPinsDrawer();
+}
+
+// Inline feedback for trying to shortlist a 6th alum (2026-10-21, per
+// request - "do not use a browser alert or pop-up"): a brief shake on
+// every grayed-out card plus a message inside the Review & Submit
+// section itself, not a toast/alert. navigator.vibrate() is a nice-to-
+// have on devices that support it; the visual shake works regardless.
+let shortlistCapMessageTimer;
+function showShortlistCapFeedback(){
+  const message = document.getElementById('shortlistCapMessage');
+  if(message){
+    message.style.display = '';
+    clearTimeout(shortlistCapMessageTimer);
+    shortlistCapMessageTimer = setTimeout(() => { message.style.display = 'none'; }, 2200);
+  }
+  document.querySelectorAll('.review-card.disabled').forEach(card => {
+    card.classList.remove('shake');
+    // Force a reflow so re-adding the class restarts the animation even
+    // if it's still playing from a previous rapid click.
+    void card.offsetWidth;
+    card.classList.add('shake');
+  });
+  if(navigator.vibrate) navigator.vibrate(60);
 }
 
 // Renders alumni cards (with a Remove control, and - only in the
@@ -4843,26 +4975,28 @@ function renderPinCardsInto(containerId, ids, opts){
   list.innerHTML = ids.map(id => {
     const a = alumni.find(alum => alum.id === id);
     if(!a) return '';
-    const contactHtml = cardContactLineHtml(a);
-    const linkedinHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
-    const hasContact = contactHtml || linkedinHtml;
     const isShortlisted = shortlist.includes(id);
+    // Once 5 are shortlisted, every OTHER card in this list is grayed
+    // out and non-selectable (2026-10-21, per request) - clicking one
+    // doesn't toggle it; see the delegated click handler below for the
+    // shake+message feedback instead.
+    const atCap = opts.showShortlistToggle && !isShortlisted && shortlist.length >= MAX_PICKS;
+    // Name/title/company only (2026-10-21, per request - "optimized for
+    // quick shortlisting") - no capacity badge, no location/LinkedIn
+    // line; that detail is already one click away on the directory/
+    // profile view this list was built from.
     return `
-      <div class="review-card ${isShortlisted ? 'shortlisted' : ''}">
+      <div class="review-card ${isShortlisted ? 'shortlisted' : ''} ${atCap ? 'disabled' : ''}" ${atCap ? `data-at-cap="${id}"` : ''}>
         ${opts.showShortlistToggle ? `
           <label class="shortlist-toggle">
-            <input type="checkbox" class="shortlist-checkbox" data-id="${id}" ${isShortlisted ? 'checked' : ''}>
+            <input type="checkbox" class="shortlist-checkbox" data-id="${id}" ${isShortlisted ? 'checked' : ''} ${atCap ? 'disabled' : ''}>
             Shortlist
           </label>
         ` : ''}
         ${opts.showRemove ? `<button class="review-card-remove" data-id="${id}" aria-label="Remove ${a.name} from my list">×</button>` : ''}
-        <div class="review-card-header">
-          <div class="review-card-name">${a.name}</div>
-          ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
-        </div>
-        ${a.role ? `<div class="review-card-role">${a.role}</div>` : ''}
+        <div class="review-card-name">${a.name}</div>
+        ${a.role ? `<div class="review-card-role">${titleCaseRole(a.role)}</div>` : ''}
         <div class="review-card-company">${a.company}</div>
-        ${hasContact ? `<div class="alum-meta review-card-contact">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
       </div>
     `;
   }).join('');
@@ -4876,6 +5010,13 @@ function renderPinCardsInto(containerId, ids, opts){
     cb.addEventListener('change', () => {
       toggleShortlist(parseInt(cb.dataset.id, 10));
     });
+  });
+  // The checkbox/label itself is disabled (so it can never actually
+  // toggle), but the card underneath still catches the click, which is
+  // what lets a tap/click on a grayed-out card trigger the shake +
+  // message feedback instead of just silently doing nothing.
+  list.querySelectorAll('.review-card[data-at-cap]').forEach(card => {
+    card.addEventListener('click', () => showShortlistCapFeedback());
   });
 }
 
@@ -4891,9 +5032,12 @@ function renderPinsDrawer(){
   document.getElementById('pinsDrawerContinueExploring').style.display = empty ? '' : 'none';
   document.getElementById('pinsDrawerContinueBtn').disabled = shortlist.length === 0;
   renderPinCardsInto('pinsDrawerList', cart, {showShortlistToggle: true, showRemove: true});
-
-  const statusEl = document.getElementById('shortlistStatus');
-  if(statusEl) statusEl.textContent = cart.length ? `${shortlist.length} of ${MAX_PICKS} shortlisted for Review & Submit` : '';
+  // Removed automatically once fewer than 5 are selected (per request),
+  // not just after its own timeout - e.g. deselecting one right away.
+  if(shortlist.length < MAX_PICKS){
+    const message = document.getElementById('shortlistCapMessage');
+    if(message) message.style.display = 'none';
+  }
 
   if(isReview){
     renderPinCardsInto('reviewList', shortlist, {showShortlistToggle: false, showRemove: false});
@@ -4912,7 +5056,7 @@ function setPinsDrawerMode(mode){
   document.getElementById('pinsDrawerListFooter').style.display = isReview ? 'none' : '';
   document.getElementById('pinsDrawerReviewPane').style.display = isReview ? '' : 'none';
   document.getElementById('pinsDrawerReviewFooter').style.display = isReview ? '' : 'none';
-  document.getElementById('pinsDrawerTitle').firstChild.textContent = isReview ? 'Your shortlist ' : 'My list ';
+  document.getElementById('pinsDrawerTitle').firstChild.textContent = isReview ? 'Your shortlist ' : 'Submit up to 5 alumni. The rest go to your wishlist and are not guaranteed. ';
   renderPinsDrawer();
 }
 
@@ -5018,8 +5162,24 @@ document.getElementById('resubmitModal').addEventListener('click', (e) => {
   if(e.target.id === 'resubmitModal') closeResubmitModal();
 });
 
-document.getElementById('searchInput').addEventListener('input', renderGrid);
+// Clear (x) button toggles with the field's own contents - shown
+// whenever there's text to clear, hidden when empty - and clicking it
+// clears the search and re-renders immediately, same as typing/
+// deleting the text by hand would.
+function updateSearchClearBtn(){
+  const input = document.getElementById('searchInput');
+  const clearBtn = document.getElementById('searchClearBtn');
+  clearBtn.style.display = input.value ? '' : 'none';
+}
+document.getElementById('searchInput').addEventListener('input', () => { updateSearchClearBtn(); renderGrid(); });
 document.getElementById('searchBtn').addEventListener('click', renderGrid);
+document.getElementById('searchClearBtn').addEventListener('click', () => {
+  const input = document.getElementById('searchInput');
+  input.value = '';
+  updateSearchClearBtn();
+  renderGrid();
+  input.focus();
+});
 
 function updateSortUI(){
   document.getElementById('sortToggleLabel').textContent = sortMode === 'none' ? 'Sort' : `Sort: ${SORT_LABELS[sortMode]}`;
