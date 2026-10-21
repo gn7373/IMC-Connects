@@ -165,11 +165,14 @@ header.site{
      there's no awkward margin") - was inset by clamp(48px,6vw,96px). */
   right: 0;
   bottom: 0;
-  /* 2x bigger (2026-10-21, per request) - was clamp(760px, 54vw, 920px).
-     .hero-top's own overflow:hidden (see its rule above) safely clips
-     anything this pushes past the hero section's 100vh bounds, so this
-     can't blow out the page layout even at the largest end of the clamp. */
-  width: clamp(1520px, 108vw, 1840px);
+  /* Reduced back by 0.5x (2026-10-21, per request - "should not be
+     spilling into the nav bar") - the previous 2x pass (clamp(1520px,
+     108vw, 1840px)) made the artwork tall enough that on a short-ish
+     viewport it reached up into .hero-nav's own territory before
+     .hero-top's overflow:hidden clipped it. Halving the width (and so
+     the height too, via the img's locked aspect-ratio) keeps it clear
+     of the nav at any normal desktop viewport height. */
+  width: clamp(760px, 54vw, 920px);
   height: auto;
   display: flex;
   align-items: flex-end;
@@ -462,8 +465,24 @@ header.site{
   letter-spacing: 0.06em;
   color: var(--ink);
 }
+/* Vertically centers whichever panel is active within the space below
+   the title band (2026-10-21, per request - "contents...should be
+   vertically centered relative to the sections they occupy") - min-height
+   is set by sizeInfoLayout() to fill exactly down to the viewport's own
+   bottom edge (measured from wherever this element actually starts, so
+   it's correct regardless of the masthead/title-band's real height),
+   same measure-don't-guess approach as sizeDirectorySplit() elsewhere.
+   If a panel's own content is taller than that, flex just grows the
+   container instead of clipping - the page still scrolls normally. */
 .info-layout{
-  padding: 0 6vw 60px;
+  /* Symmetric top/bottom padding (2026-10-21) - was 0 top/60px bottom,
+     which skewed the "centered" content down by that same 60px once
+     justify-content:center was added below (centering happens within
+     the padded content box, so asymmetric padding = asymmetric result). */
+  padding: 60px 6vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 /* Each panel gets its own centered max-width (2026-10-21, per request)
    instead of .info-layout's old near-full-width column. */
@@ -526,20 +545,29 @@ header.site{
   text-wrap: pretty;
 }
 .review-list{ display: flex; flex-direction: column; gap: 10px; }
-/* Simplified for quick shortlisting (2026-10-21, per request) - name,
-   title, company only, each one line where possible, noticeably
-   shorter/more rectangular than the old taller card (which also showed
-   a capacity badge and a location/LinkedIn line). Shortlist checkbox
-   (top-left) and remove button (top-right) are both smaller now too,
-   so the card only needs a little headroom above the text instead of
-   a whole separate row for them. */
+/* Compact horizontal row (2026-10-21, per request) - checkbox/checkmark,
+   then the text column (name/title/company, each its own line), left to
+   right in one row, rather than the checkbox/remove button floating
+   above the text. Noticeably shorter than the old taller card. */
 .review-card{
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 28px 34px 10px 16px;
+  padding: 10px 34px 10px 14px;
   box-shadow: 0 2px 6px rgba(37,37,100,0.06);
+  /* Reorders smoothly instead of jumping (2026-10-21, per request - see
+     reorderReviewCards()), which sets this inline via the FLIP
+     technique; the transition only ever animates a translate, never
+     left/top, so it stays cheap. */
+  transition: transform 220ms ease;
+}
+.review-card-text{
+  min-width: 0;
+  flex: 1 1 auto;
 }
 .review-card-name{
   font-family: 'Libre Baskerville', serif;
@@ -584,24 +612,26 @@ header.site{
   cursor: pointer;
 }
 .review-card-remove:hover{ border-color: var(--warn); color: var(--warn); }
-/* "My list" has no size cap any more (2026-10-17) - the 5-max now only
-   applies to shortlisting within this drawer, via a checkbox per card
-   (top-left, mirroring the remove button at top-right) rather than at
-   add-time. */
+/* Left of the text now, not floating above it (2026-10-21, per request)
+   - the "Shortlist" label text is gone entirely, just the bare checkbox.
+   "My list" itself has no size cap (2026-10-17) - the 5-max only
+   applies to shortlisting within this drawer. */
 .shortlist-toggle{
-  position: absolute;
-  top: 9px;
-  left: 16px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-family: 'Inter', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--muted);
+  flex-shrink: 0;
   cursor: pointer;
 }
-.shortlist-toggle input{ width: 13px; height: 13px; accent-color: var(--accent); cursor: pointer; }
+.shortlist-toggle input{ width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; margin: 0; }
+/* The review (read-only, already-checked) pane's own left-side marker -
+   a static checkmark in place of the editable checkbox the list pane
+   uses, same position or request ("checkmark/checkbox...on the left
+   side of the text"). */
+.review-card-checkmark{
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--accent);
+}
 .review-card.shortlisted{ border-color: var(--accent); box-shadow: 0 2px 6px rgba(37,37,100,0.06), 0 0 0 1.5px var(--accent) inset; }
 /* Grayed out and non-selectable once 5 are shortlisted (2026-10-21, per
    request) - the checkbox itself is `disabled`, cursor signals it's not
@@ -737,10 +767,14 @@ header.site{
   border: 1px solid var(--border);
   border-radius: 10px;
 }
+/* Serif questions, matches About's own body copy size (2026-10-21, per
+   request) - was 21px with no explicit font-family (inherited the
+   page's default sans-serif). */
 .faq-q{
+  font-family: 'Libre Baskerville', serif;
   font-weight: 600;
   color: var(--ink);
-  font-size: 21px;
+  font-size: 18.25px;
   margin-bottom: 0;
   cursor: pointer;
   display: flex;
@@ -754,16 +788,20 @@ header.site{
   font-size: 1.3em;
 }
 .faq-item.open .faq-q::before{ content: '\2212'; }
+/* Sans-serif answers (unchanged), matching About's own body copy size
+   now too (2026-10-21, per request) - was 20.25px. */
 .faq-a{
   color: var(--muted);
   font-family: 'Inter', sans-serif;
-  font-size: 20.25px;
+  font-size: 18.25px;
   line-height: 1.6;
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease;
   text-wrap: pretty;
 }
+.faq-a p{ margin: 0 0 10px; }
+.faq-a p:last-child{ margin-bottom: 0; }
 .faq-item.open .faq-a{ margin-top: 12px; }
 @media (max-width: 700px){
   .about-body{ font-size: 16px; line-height: 1.6; }
@@ -772,7 +810,7 @@ header.site{
   #feedbackText{ margin-top: 16px; font-size: 16px; }
   .feedback-send{ font-size: 15px; }
   .faq-item{ padding: 15px 16px; }
-  .faq-q{ font-size: 17px; }
+  .faq-q{ font-size: 16px; }
   .faq-a{ font-size: 16px; line-height: 1.55; }
 }
 
@@ -1431,24 +1469,32 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    column, so they share its exact horizontal bounds and move with it
    (resizing the window) rather than being measured or pinned against
    the outer panel.
-   height is a flat constant again (2026-10-21, per request - "fix
-   profile positioning": the profile image must NOT move based on which
-   alumni card is selected or where it sits in the scrollable directory,
-   so this has exactly ONE fixed layout position for every alum, never
-   read from the DOM). 243px = an 18px top gap (.profile-portrait's own
-   margin-top below - matches where the directory list's first card
-   starts beneath its count/sort row, same for every alum, not the
-   selected one) + the 205px photo + a flat 20px bottom gap down to the
-   divider (this element's own padding-bottom). Neither number is ever
-   touched by JS. */
+   One fixed layout system now (2026-10-21, per request - "treat the
+   photo and the two horizontal boundaries as one fixed layout system"):
+   --photo-gap is applied as this element's OWN padding-block, top and
+   bottom equally, rather than living half on .profile-portrait's own
+   margin-top (which only pushed the photo down, leaving the capacity/
+   Add row at a different, un-equal offset) and half on this element's
+   padding-bottom. Because the padding-top now pushes the ENTIRE grid
+   row down equally - both the photo column and the info column's own
+   capacity/Add row start at the exact same y, immediately satisfying
+   "align the top edges of both controls with the top edge of the
+   profile photo" with no extra positioning needed anywhere else. height
+   is exactly --photo-height + 2*--photo-gap, so the lower divider
+   (this element's parent's own border-bottom) always sits immediately
+   after a symmetric gap, never touched by JS, never derived from the
+   selected card or the resizer chevron (which keeps its own, fully
+   unrelated vertical position on the divider track). */
 .profile-header-inner{
+  --photo-height: 205px;
+  --photo-gap: 28px;
   display: grid;
   grid-template-columns: 172px minmax(0, 1fr);
   gap: 28px;
   align-items: start;
-  height: 243px;
+  height: calc(var(--photo-height) + (2 * var(--photo-gap)));
   overflow: visible;
-  padding: 0 24px 20px;
+  padding: var(--photo-gap) 24px;
 }
 /* Portrait + text stack vertically once the panel gets narrow (resized
    small, or on a mobile detail view) - toggled by a ResizeObserver on
@@ -1456,25 +1502,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    query, since the panel's width changes from dragging the divider, not
    just from the viewport changing. A single grid column makes the two
    items stack top-to-bottom on their own, same as flex-direction:column
-   used to. */
-/* height:auto here (not a fixed px like the base/mobile rules below) -
-   once stacked into a single column, the row is no longer two items
-   racing for the same height, so the base row's "lock it to the photo's
-   height" rationale doesn't apply; organic sizing is correct for a
-   stacked layout. This only fires from a deliberate, one-time drag of
-   the resizer, not from switching alumni, so it isn't the same
-   per-alum jump risk the fixed-height rule above exists to close off. */
-.directory-right.narrow .profile-header-inner{ grid-template-columns: 1fr; height: auto; }
-.directory-right.narrow .profile-portrait{ width: 145px; height: 173px; margin-top: 0; }
+   used to; the fixed-gap symmetry above is a side-by-side-only concept,
+   so it's reset here too. */
+.directory-right.narrow .profile-header-inner{ grid-template-columns: 1fr; height: auto; padding-top: 0; }
+.directory-right.narrow .profile-portrait{ width: 145px; height: 173px; }
 /* Name block's top lands at approximately the photo's own vertical
-   midpoint (per request) - 70px is a flat constant (not measured per-
-   alum): .profile-availability's own rendered height is the same for
-   every alum regardless of its text (capacity badge/button height
-   don't vary with content length, only width does), so this holds
-   consistently without needing JS to compute it. Capacity/Add stays
-   above it, unaffected, still flush at the header's own top; role/
-   company/location stay tightly stacked below it exactly as before. */
-.profile-identity-wrap{ margin-top: 70px; }
+   midpoint (per request) - 60px is a flat constant (not measured per-
+   alum): both the photo and .profile-availability now start from the
+   exact same y (the shared padding-top above), so this is simply
+   --photo-height/2 minus .profile-availability's own natural rendered
+   height+margin (which doesn't vary by alum - the badge/button's height
+   is fixed regardless of text length, only their width changes), with
+   no dependency on the outer gap value at all. */
+.profile-identity-wrap{ margin-top: 60px; }
 .directory-right.narrow .profile-identity-wrap{ margin-top: 0; }
 /* Plain top-aligned stack - action row, then straight into the identity
    block with a flat 12px gap. .profile-info being display:flex/column is
@@ -1489,17 +1529,22 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   min-height: 0;
   min-width: 0;
 }
-.profile-availability{ display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 12px; }
+/* align-items:flex-start (2026-10-21, per request - "align the top
+   edges of both controls exactly with the top edge of the profile
+   photo"), was center - the badge and button aren't quite the same
+   height, so centering them within the row left the shorter one a
+   couple px lower than the row's own top (which lines up with the
+   photo's top); flex-start pins both of their top edges to that same
+   line exactly, regardless of the small height difference between them. */
+.profile-availability{ display: flex; align-items: flex-start; justify-content: flex-start; gap: 12px; margin-bottom: 12px; }
 /* 1.5x larger (per request) - was 156x185 (which itself was reduced
-   from 176x220 on 2026-10-17 to tighten the header row). margin-top:18px
-   (2026-10-21, per request - "fix profile positioning") is a flat
-   constant, the same for every alum, matching where the directory
-   list's own first card starts beneath its count/sort row - never
-   derived from the selected card's own position/scroll offset. */
+   from 176x220 on 2026-10-17 to tighten the header row). No margin-top
+   of its own any more (2026-10-21) - the top gap is .profile-header-
+   inner's own padding-top now (see that rule), shared equally by this
+   and the info column's capacity/Add row, instead of living here alone. */
 .profile-portrait{
   width: 172px;
-  height: 205px;
-  margin-top: 18px;
+  height: var(--photo-height, 205px);
   border-radius: 8px;
   /* Neutral, not lavender (2026-10-20 - "no purple/lavender highlight
      or colored background around the photo") - the placeholder (shown
@@ -1915,10 +1960,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-split.mobile-detail-open .directory-right{ display: block; }
   .profile-back-btn{ display: inline-block; }
   .profile-toolbar{ justify-content: space-between; }
-  .profile-portrait{ width: 180px; height: 225px; margin-top: 0; }
+  .profile-portrait{ width: 180px; height: 225px; }
   .profile-identity-wrap{ margin-top: 0; }
   .profile-name{ font-size: 26px; }
-  .profile-header-inner{ gap: 18px; height: 225px; } /* matches the bigger mobile portrait - same fixed-row-height rationale as the base rule, just the mobile photo size */
+  .profile-header-inner{ gap: 18px; height: 225px; padding-top: 0; } /* matches the bigger mobile portrait - same fixed-row-height rationale as the base rule, just the mobile photo size; padding-top:0 since the side-by-side symmetric-gap scheme doesn't apply once stacked */
 }
 
 .alum-row{
@@ -1997,9 +2042,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   gap: 6px;
 }
 .capacity-icon{ color: var(--ink); flex-shrink: 0; }
-/* Matches .add-btn's own font-size (13.5px), per request - only in the
-   profile panel's top row, where the two sit right next to each other. */
-.profile-availability .capacity-badge{ font-size: 13.5px; }
+/* Matches the filter controls' own size now (2026-10-21, per request -
+   "reduce both the spots left badge and Add to my list button to
+   approximately the same height/font size/padding as the filter
+   controls"), was 13.5px/5px 10px - see .filter-dropdown-toggle for the
+   reference values. Label text itself (e.g. "spots left") is unchanged. */
+.profile-availability .capacity-badge{ font-size: 12.5px; padding: 5px 12px; }
 .capacity-badge{
   display: inline-flex;
   align-items: center;
@@ -2108,17 +2156,18 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .format-value .format-icon + .format-icon{ margin-left: -1px; }
 .alum-availability-line{ display: flex; align-items: flex-start; gap: 6px; }
 .alum-availability-line .format-icon{ margin-top: 2px; }
-/* Shared small-caps section label - Industry/Experience/Marketing
-   Expertise/Ask me about all use this same treatment, matching the
+/* Shared small-caps section label - Industry Expertise/Marketing
+   Expertise/Ask Me About all use this same treatment, matching the
    reference page's labeled-field look. 15px per the 2026-10-20 type
-   scale (12/13/14/15/17/27px). */
+   scale (12/13/14/15/17/27px). Primary text color, not purple (2026-10-21,
+   per request) - was var(--accent-deep). */
 .field-label{
   display: block;
   font-family: 'Libre Baskerville', serif;
   font-size: 15px;
   letter-spacing: 0.01em;
   text-transform: none;
-  color: var(--accent-deep);
+  color: var(--ink);
   margin-bottom: 6px;
   font-weight: 700;
 }
@@ -2224,6 +2273,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .add-btn.added .pin-btn-icon{ color: var(--accent); }
 .add-btn:hover{ border-color: var(--success-on-light); color: var(--success-on-light); }
 .add-btn.added:hover{ border-color: var(--success-on-light); color: #fff; }
+/* Matches the filter controls' own size (2026-10-21, per request) -
+   scoped to .profile-add-btn specifically (not the shared .add-btn base,
+   which the resubmit modal's own button also uses and isn't part of
+   this request), was 13.5px/9px 16px. */
+.profile-add-btn{ font-size: 12.5px; padding: 5px 12px; }
 
 /* Card select control - a round "+" that becomes a white check once the
    alum is selected, at which point the whole card turns purple (below). */
@@ -2367,7 +2421,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    full instructional sentence rather than two words, so it needs a
    font-size that doesn't dominate the page the way the browser's
    default h2 size would. */
+/* Sans-serif UI font now (2026-10-21, per request - "regular sans-serif
+   UI font, not the serif/display font") - was inheriting Libre
+   Baskerville from .pins-drawer-header h2 below (this element IS that
+   h2; nothing here set its own font-family before, so it fell through). */
 #pinsDrawerTitle{
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 600;
   line-height: 1.35;
@@ -2379,7 +2438,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   font-size: 21px;
   margin: 0;
 }
-.pins-drawer-count{ color: var(--muted); font-size: 15px; }
 .pins-drawer-close{
   background: none;
   border: none;
@@ -2654,12 +2712,35 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
       </div>
       <div class="info-panel" id="infoPanelFaq">
         <div class="faq-item">
-          <div class="faq-q">How does matching actually work?</div>
-          <div class="faq-a">You pin up to 5 alumni you'd like to meet and submit your name and email address. We will use these preferences to introduce you to each alum via email. From there, it's up to you to coordinate the conversation.</div>
+          <div class="faq-q">How does this work?</div>
+          <div class="faq-a">
+            <p>Browse the directory, add alumni to your list, submit your top 5 and wait for an email introduction to each of them. Once you're connected, it's up to you to lead the conversation.</p>
+            <p><strong>Note:</strong> Since alumni have indicated their availability, the site runs on a first-come, first-serve basis. If an alum's slots fill up before you've submitted, you will not be able to request them.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Are matches guaranteed?</div>
+          <div class="faq-a">For your top 5, yes. For your wish list, it depends on whether the alums are still available after the deadline.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Can I pick less than 5?</div>
+          <div class="faq-a">Absolutely. 5 is just the ceiling.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Can I just pick randomly?</div>
+          <div class="faq-a">To respect alumni's time and be fair to other students, please do not request a coffee chat with someone if you don't plan to follow through.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">What happens after we're connected via email?</div>
+          <div class="faq-a">My introductory email will ask the alumni to share their availability with you. If you haven't heard back after 1 day, shoot them a follow-up message and <strong><u>please move me to BCC</u></strong>.</div>
         </div>
         <div class="faq-item">
           <div class="faq-q">Are these 1:1 coffee chats or group sessions?</div>
           <div class="faq-a">1:1 only! We want these chats to be as free and helpful for your individual needs as possible.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">If these are 1:1, why are there other students copied on our email?</div>
+          <div class="faq-a">To avoid spamming the alums with multiple emails.</div>
         </div>
         <div class="faq-item">
           <div class="faq-q">What if none of the alumni I want are available?</div>
@@ -2676,6 +2757,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
         <div class="faq-item">
           <div class="faq-q">I already submitted. How do I change my pins?</div>
           <div class="faq-a">Use the "Edit your response" link from the confirmation email you got when you first submitted. This site only accepts 1 response so if you try resubmitting here, your submission will get blocked as a duplicate.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">I have another question.</div>
+          <div class="faq-a">Text me (Gaby)!</div>
         </div>
       </div>
       <div class="info-panel" id="infoPanelFeedback">
@@ -2786,7 +2871,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 <div class="pins-drawer-backdrop" id="pinsDrawerBackdrop"></div>
 <aside class="pins-drawer" id="pinsDrawer" role="dialog" aria-modal="true" aria-labelledby="pinsDrawerTitle" aria-hidden="true">
   <div class="pins-drawer-header">
-    <h2 id="pinsDrawerTitle">Submit up to 5 alumni. The rest go to your wishlist and are not guaranteed. <span class="pins-drawer-count" id="pinsDrawerCount"></span></h2>
+    <h2 id="pinsDrawerTitle">Check up to 5 alums to submit. The rest go to your wish list.</h2>
     <button class="pins-drawer-close" id="pinsDrawerClose" aria-label="Close">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
     </button>
@@ -5093,17 +5178,18 @@ function renderPinCardsInto(containerId, ids, opts){
     // line; that detail is already one click away on the directory/
     // profile view this list was built from.
     return `
-      <div class="review-card ${isShortlisted ? 'shortlisted' : ''} ${atCap ? 'disabled' : ''}" ${atCap ? `data-at-cap="${id}"` : ''}>
-        ${opts.showShortlistToggle ? `
-          <label class="shortlist-toggle">
-            <input type="checkbox" class="shortlist-checkbox" data-id="${id}" ${isShortlisted ? 'checked' : ''} ${atCap ? 'disabled' : ''}>
-            Shortlist
-          </label>
-        ` : ''}
+      <div class="review-card ${isShortlisted ? 'shortlisted' : ''} ${atCap ? 'disabled' : ''}" data-id="${id}" ${atCap ? `data-at-cap="${id}"` : ''}>
+        ${opts.showShortlistToggle
+          ? `<label class="shortlist-toggle">
+               <input type="checkbox" class="shortlist-checkbox" data-id="${id}" ${isShortlisted ? 'checked' : ''} ${atCap ? 'disabled' : ''}>
+             </label>`
+          : `<span class="review-card-checkmark" aria-hidden="true">${CHECK_ICON_SVG}</span>`}
+        <div class="review-card-text">
+          <div class="review-card-name">${a.name}</div>
+          ${a.role ? `<div class="review-card-role">${titleCaseRole(a.role)}</div>` : ''}
+          <div class="review-card-company">${a.company}</div>
+        </div>
         ${opts.showRemove ? `<button class="review-card-remove" data-id="${id}" aria-label="Remove ${a.name} from my list">×</button>` : ''}
-        <div class="review-card-name">${a.name}</div>
-        ${a.role ? `<div class="review-card-role">${titleCaseRole(a.role)}</div>` : ''}
-        <div class="review-card-company">${a.company}</div>
       </div>
     `;
   }).join('');
@@ -5127,18 +5213,65 @@ function renderPinCardsInto(containerId, ids, opts){
   });
 }
 
+// Checked alumni float to the top of the editable list, most-recently-
+// checked first, followed by the rest of the previously-checked group
+// in reverse selection order (2026-10-21, per request) - shortlist[]
+// itself is already in selection order (toggleShortlist pushes onto the
+// end), so reversing it is "most recent first". Everyone still
+// unchecked stays below, in their existing cart order, untouched.
+function orderedPinsDrawerListIds(){
+  const checkedFirst = [...shortlist].reverse();
+  const uncheckedRest = cart.filter(id => !shortlist.includes(id));
+  return checkedFirst.concat(uncheckedRest);
+}
+
 // Refreshes whichever parts of the drawer are currently relevant - safe
 // to call any time the cart/shortlist changes, whether or not the
 // drawer is open.
 function renderPinsDrawer(){
   const isReview = pinsDrawerMode === 'review';
-  document.getElementById('pinsDrawerCount').textContent = isReview ? `(${shortlist.length}/${MAX_PICKS})` : `(${cart.length})`;
 
   const empty = cart.length === 0;
   document.getElementById('pinsDrawerEmpty').style.display = empty ? '' : 'none';
   document.getElementById('pinsDrawerContinueExploring').style.display = empty ? '' : 'none';
   document.getElementById('pinsDrawerContinueBtn').disabled = shortlist.length === 0;
-  renderPinCardsInto('pinsDrawerList', cart, {showShortlistToggle: true, showRemove: true});
+
+  // FLIP technique (2026-10-21, per request - "use a short, smooth
+  // reposition animation so the movement feels intentional rather than
+  // jumping") - capture every card's position before the list is
+  // rebuilt in its new (possibly reordered) order, then after rebuilding,
+  // jump each card back to where it WAS via an un-transitioned transform
+  // and immediately animate that away to zero. Checkbox state is never
+  // read from the old DOM here (that would be real state loss risk on
+  // reorder) - it's driven entirely by the shortlist[]/cart[] arrays,
+  // same as every other render, so reordering can't drop it.
+  const listEl = document.getElementById('pinsDrawerList');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const firstRects = new Map();
+  if(!reduceMotion){
+    listEl.querySelectorAll('.review-card').forEach(card => {
+      firstRects.set(card.dataset.id, card.getBoundingClientRect());
+    });
+  }
+
+  renderPinCardsInto('pinsDrawerList', orderedPinsDrawerListIds(), {showShortlistToggle: true, showRemove: true});
+
+  if(!reduceMotion){
+    listEl.querySelectorAll('.review-card').forEach(card => {
+      const firstRect = firstRects.get(card.dataset.id);
+      if(!firstRect) return; // newly added (just pinned from the directory) - no prior position to animate from
+      const deltaY = firstRect.top - card.getBoundingClientRect().top;
+      if(!deltaY) return;
+      card.style.transition = 'none';
+      card.style.transform = `translateY(${deltaY}px)`;
+      void card.offsetHeight; // forces the above to apply before the transition-back below is queued
+      requestAnimationFrame(() => {
+        card.style.transition = '';
+        card.style.transform = '';
+      });
+    });
+  }
+
   // Removed automatically once fewer than 5 are selected (per request),
   // not just after its own timeout - e.g. deselecting one right away.
   if(shortlist.length < MAX_PICKS){
@@ -5163,7 +5296,7 @@ function setPinsDrawerMode(mode){
   document.getElementById('pinsDrawerListFooter').style.display = isReview ? 'none' : '';
   document.getElementById('pinsDrawerReviewPane').style.display = isReview ? '' : 'none';
   document.getElementById('pinsDrawerReviewFooter').style.display = isReview ? '' : 'none';
-  document.getElementById('pinsDrawerTitle').firstChild.textContent = isReview ? 'Your shortlist ' : 'Submit up to 5 alumni. The rest go to your wishlist and are not guaranteed. ';
+  document.getElementById('pinsDrawerTitle').firstChild.textContent = isReview ? 'Your shortlist' : 'Check up to 5 alums to submit. The rest go to your wish list.';
   renderPinsDrawer();
 }
 
@@ -5490,7 +5623,55 @@ function selectInfoTab(tab){
   const panelId = 'infoPanel' + tab.charAt(0).toUpperCase() + tab.slice(1);
   const panel = document.getElementById(panelId);
   if(panel) panel.classList.add('active');
+  sizeInfoLayout();
+  positionFaqCards();
 }
+
+// Fills exactly down to the viewport's own bottom edge, measured from
+// wherever .info-layout actually starts (2026-10-21, "measure, don't
+// guess" - same approach as sizeDirectorySplit() elsewhere, rather than
+// a guessed calc(100vh - Npx) that would drift if the masthead/title-
+// band's real height ever changes) - .info-layout's own
+// justify-content:center then centers whichever panel is active inside
+// that space. Safe to call with the info view hidden (0 height, no-op
+// effectively) since it's also called from selectInfoTab() before any
+// tab has necessarily been shown.
+function sizeInfoLayout(){
+  const layout = document.querySelector('.info-layout');
+  if(!layout || document.getElementById('view-info').style.display === 'none') return;
+  const top = layout.getBoundingClientRect().top;
+  layout.style.minHeight = `calc(100vh - ${top}px)`;
+}
+
+// FAQ cards span exactly from the masthead logo's own right edge to the
+// "About" nav tab's left edge (2026-10-21, per request) - not a
+// guessed/hardcoded width, since both of those are themselves
+// responsive (clamp()-based padding). No-ops below 1024px, where the
+// masthead's own compact layout doesn't apply (see #heroSub.compact).
+let positionFaqCardsResizeTimer;
+function positionFaqCards(){
+  const faqPanel = document.getElementById('infoPanelFaq');
+  if(!faqPanel) return;
+  faqPanel.style.marginLeft = '';
+  faqPanel.style.width = '';
+  faqPanel.style.maxWidth = '';
+  if(!faqPanel.classList.contains('active')) return;
+  if(window.innerWidth <= 1023) return;
+  const logo = document.querySelector('#heroSub .masthead-logo');
+  const aboutTab = document.querySelector('#heroSub .tab-link[data-nav="about"]');
+  const parent = faqPanel.parentElement;
+  if(!logo || !aboutTab || !parent) return;
+  const startX = logo.getBoundingClientRect().right;
+  const endX = aboutTab.getBoundingClientRect().left;
+  const parentLeft = parent.getBoundingClientRect().left;
+  faqPanel.style.maxWidth = 'none';
+  faqPanel.style.marginLeft = (startX - parentLeft) + 'px';
+  faqPanel.style.width = (endX - startX) + 'px';
+}
+window.addEventListener('resize', () => {
+  clearTimeout(positionFaqCardsResizeTimer);
+  positionFaqCardsResizeTimer = setTimeout(() => { sizeInfoLayout(); positionFaqCards(); }, 120);
+});
 
 function showLanding(fromHistory){
   window.scrollTo(0, 0);
