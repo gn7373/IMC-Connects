@@ -3092,10 +3092,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .mobile-profile-meta-row{
     grid-area:meta !important;
     display:grid !important;
-    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) !important;
+    /* Left item hugs the left edge, right item hugs the right edge, and
+       LinkedIn sits centered in the actual remaining space BETWEEN them. */
+    grid-template-columns:minmax(0,max-content) minmax(42px,1fr) max-content !important;
     align-items:center !important;
     width:100% !important;
-    column-gap:6px !important;
+    column-gap:8px !important;
     min-width:0 !important;
     font-family:'Inter', sans-serif !important;
     font-size:10px !important;
@@ -3105,7 +3107,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .mobile-profile-meta-location{
     justify-self:start !important;
     min-width:0 !important;
-    max-width:100% !important;
+    max-width:72px !important;
     white-space:normal !important;
     overflow-wrap:normal !important;
   }
@@ -3549,7 +3551,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-redesign-8";
+const BUILD_VERSION = "2026-10-21-mobile-redesign-9";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
