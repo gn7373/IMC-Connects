@@ -76,6 +76,12 @@
   --lavender-muted: #8D83BC;
 }
 *{ box-sizing: border-box; }
+/* Reserves the scrollbar's own width whether or not one is actually
+   needed on a given page (2026-10-21, per request - "prevent horizontal
+   nav shifting between pages") - without this, a page tall enough to
+   scroll is very slightly narrower than one that isn't, which shifts
+   the masthead's own content by the scrollbar's width between pages. */
+html{ scrollbar-gutter: stable; }
 body{
   margin:0;
   /* Full-height app shell (per request) - header/toolbar take their own
@@ -154,23 +160,42 @@ header.site{
    same as the tower illustration it replaces. */
 .hero-illustration{
   position: absolute;
-  /* Inset from the right edge (2026-10-21, per request - "not tucked
-     into the bottom-right corner") so the right-side trees/vegetation
-     stay fully visible instead of running off the viewport edge. */
-  right: clamp(48px, 6vw, 96px);
+  /* Flush with the right edge now (2026-10-21, per request - "ensure the
+     right edge of the image aligns with the right edge of the site so
+     there's no awkward margin") - was inset by clamp(48px,6vw,96px). */
+  right: 0;
   bottom: 0;
-  /* Larger (per request - "keep the Arch illustration large and
-     concentrated in the mid-right") - the vegetation extends further
-     left toward center at this width, but .hero-copy's own left-
-     anchored max-width:450px column (see that rule) still never
-     overlaps it at any width this clamp covers. */
-  width: clamp(760px, 54vw, 920px);
+  /* 2x bigger (2026-10-21, per request) - was clamp(760px, 54vw, 920px).
+     .hero-top's own overflow:hidden (see its rule above) safely clips
+     anything this pushes past the hero section's 100vh bounds, so this
+     can't blow out the page layout even at the largest end of the clamp. */
+  width: clamp(1520px, 108vw, 1840px);
   height: auto;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
   pointer-events: none;
   z-index: 1;
+  /* Part of the one coordinated entrance (2026-10-21, per request) -
+     the box's own final size/position above is never touched by this
+     (so there's zero layout shift, the composition is already fully
+     reserved before the animation starts), only opacity/transform/
+     clip-path animate. Starts 120ms after .hero-copy's own entrance
+     begins, so the text leads and the art follows, not simultaneous. */
+  opacity: 0;
+  animation: heroArtReveal 700ms cubic-bezier(.22, .61, .36, 1) 120ms both;
+}
+@keyframes heroArtReveal{
+  from{
+    opacity: 0;
+    transform: translateX(20px);
+    clip-path: inset(0 0 0 18%);
+  }
+  to{
+    opacity: 1;
+    transform: translateX(0);
+    clip-path: inset(0 0 0 0);
+  }
 }
 .hero-illustration img{
   display: block;
@@ -189,7 +214,7 @@ header.site{
 /* Tablet - a smaller share of the hero width (per request), same
    clamp() mechanism, just a narrower range. */
 @media (max-width: 1100px) and (min-width: 768px){
-  .hero-illustration{ width: clamp(460px, 50vw, 700px); }
+  .hero-illustration{ width: clamp(920px, 100vw, 1400px); right: 0; }
 }
 /* Mobile - stacks below the text and centers, rather than squeezing
    the desktop left-text/right-image composition into a narrow screen
@@ -271,11 +296,13 @@ header.site{
   font-size: 1em;
   letter-spacing: 0.06em;
 }
-/* The listing/category/info masthead's compact variant - just the logo
-   (left) and nav tabs (right) in the same positions the landing header
-   uses, with no page title or back button. Overrides the base #heroSub's
-   big centered-title layout (still used by category/info) down to a
-   slim, ordinary nav row. */
+/* The listing/info masthead's compact variant - just the logo (left)
+   and nav tabs (right) in the same positions the landing header uses,
+   with no page title or back button. Overrides the base #heroSub's big
+   centered-title layout (still used by category/claimForm) down to a
+   slim, ordinary nav row. About/FAQ/Feedback also use this now
+   (2026-10-21, per request - see showInfo()); their own page title
+   lives in the separate .info-title-band instead of this masthead. */
 #heroSub.compact{
   height: auto;
   display: flex;
@@ -330,9 +357,14 @@ header.site{
    illustration later won't move this text. If the vertical alignment
    ever needs re-tuning, adjust the 0.335 figure in positionHeroCopy()
    (and this fallback to match) directly.
-   No entrance animation/opacity any more (2026-10-21, per request -
-   "stop landing-page blinking on refresh") - renders directly in its
-   final state on first paint, same as every other element on the page. */
+   One coordinated entrance (2026-10-21, per request - "replace landing-
+   page blinking with one deliberate entrance sequence") - a single
+   500ms fade+rise on the whole headline/subheading/button block
+   together (not per-line), not a competing opacity/animation per
+   element. The keyframe's own transform keeps the existing
+   translateY(-50%) vertical-centering offset throughout (via
+   calc(-50% + 14px) -> -50%) rather than replacing it, so the slide-in
+   doesn't fight this element's actual positioning transform. */
 .hero-copy{
   position: absolute;
   top: 33.5%;
@@ -342,6 +374,12 @@ header.site{
   z-index: 3;
   padding: 0 6vw;
   box-sizing: border-box;
+  opacity: 0;
+  animation: heroCopyIn 500ms cubic-bezier(.22, .61, .36, 1) forwards;
+}
+@keyframes heroCopyIn{
+  from{ opacity: 0; transform: translateY(calc(-50% + 14px)); }
+  to{ opacity: 1; transform: translateY(-50%); }
 }
 .hero-copy > *{ max-width: 450px; }
 
@@ -399,8 +437,50 @@ header.site{
 }
 .tab-link:hover{ color: var(--accent); border-bottom-color: var(--accent); }
 
+/* Compact title band (2026-10-21, per request - replaces the old
+   oversized #heroSub h2 title area for About/FAQ/Feedback) - same
+   full-bleed-surface-with-centered-inner pattern as .directory-toolbar
+   on Browse (see its own comment), so the two share identical left/
+   right boundaries, not just a similar look. */
+.info-title-band{
+  width: 100%;
+  background: var(--workspace-bg);
+  border-bottom: 1px solid var(--border);
+}
+.info-title-band-inner{
+  width: calc(100% - 64px);
+  max-width: 1480px;
+  margin-inline: auto;
+  /* Vertical padding tuned so this band's total height (~123px) matches
+     Browse's own search/filter toolbar height, per request. */
+  padding: 40px 24px;
+  text-align: center;
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 500;
+  font-size: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
 .info-layout{
   padding: 0 6vw 60px;
+}
+/* Each panel gets its own centered max-width (2026-10-21, per request)
+   instead of .info-layout's old near-full-width column. */
+#infoPanelAbout{
+  max-width: 1000px;
+  margin: 0 auto;
+}
+#infoPanelFaq{
+  max-width: 960px;
+  margin: 0 auto;
+  flex-direction: column;
+  gap: 12px;
+}
+#infoPanelFaq.active{ display: flex; }
+#infoPanelFeedback{
+  max-width: 960px;
+  margin: 0 auto;
 }
 
 /* ---------- EMBEDDED CLAIM FORM ---------- */
@@ -646,11 +726,17 @@ header.site{
 #feedbackText{ margin-top: 24px; }
 .about-body:last-child{ margin-bottom: 0; }
 
+/* Compact accordion cards (2026-10-21, per request), replacing the old
+   full-width border-top-divided rows - subtle off-white fill, thin
+   border, ~10px radius, 16-18px vertical padding; the 12px gap between
+   cards comes from #infoPanelFaq's own flex gap above, not a margin
+   here. */
 .faq-item{
-  padding: 68px 0;
-  border-top: 2px solid var(--line);
+  padding: 17px 20px;
+  background: var(--workspace-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
 }
-.faq-item:first-child{ border-top: none; padding-top: 24px; }
 .faq-q{
   font-weight: 600;
   color: var(--ink);
@@ -685,8 +771,7 @@ header.site{
   .about-mobile-break{ display: block; margin-top: 20px; }
   #feedbackText{ margin-top: 16px; font-size: 16px; }
   .feedback-send{ font-size: 15px; }
-  .faq-item{ padding: 24px 0; }
-  .faq-item:first-child{ padding-top: 16px; }
+  .faq-item{ padding: 15px 16px; }
   .faq-q{ font-size: 17px; }
   .faq-a{ font-size: 16px; line-height: 1.55; }
 }
@@ -744,6 +829,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .pin-blue img{ filter: drop-shadow(0 3px 2px rgba(37,37,100,0.35)) hue-rotate(200deg) saturate(1.5); }
 .pin-orange img{ filter: drop-shadow(0 3px 2px rgba(37,37,100,0.35)) hue-rotate(15deg) saturate(1.1); }
 .pin-pink img{ filter: drop-shadow(0 3px 2px rgba(37,37,100,0.35)) hue-rotate(320deg) saturate(1.2); }
+/* Immediately shows everything in its final state (2026-10-21, per
+   request) - no fade/rise/reveal at all for anyone who's asked their OS
+   to minimize motion. */
+@media (prefers-reduced-motion: reduce){
+  .hero-copy{ animation: none; opacity: 1; transform: translateY(-50%); }
+  .hero-illustration{ animation: none; opacity: 1; transform: translateX(0); clip-path: none; }
+}
+@media (max-width: 767px) and (prefers-reduced-motion: reduce){
+  .hero-copy{ transform: none; }
+}
 @media (max-width: 767px){
   .hero-top{ height: auto; min-height: auto; overflow: visible; padding-bottom: 0; }
   .hero-nav{ position: static; padding-top: 20px; padding-bottom: 16px; }
@@ -767,13 +862,18 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .top-tabs.open{ display: flex; }
   /* Desktop centers .hero-copy with position:absolute/top:50% - mobile
      drops that back to normal in-flow stacking below the nav (which is
-     itself static on mobile, see above). No entrance animation here
-     either (2026-10-21, see the base rule's own comment). */
+     itself static on mobile, see above), so its own entrance keyframe
+     is a plain vertical-only slide (no -50% baseline to preserve). */
   .hero-copy{
     position: static;
     margin: 20px 0 0;
     padding-top: 0;
     padding-bottom: 0;
+    animation-name: heroCopyInMobile;
+  }
+  @keyframes heroCopyInMobile{
+    from{ opacity: 0; transform: translateY(14px); }
+    to{ opacity: 1; transform: translateY(0); }
   }
   .hero-copy > *{ max-width: none; }
   header.site h1{ font-size: clamp(38px, 11vw, 54px); }
@@ -1329,25 +1429,26 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    negative/large auto margins anywhere in this block. The action row,
    identity block and location/LinkedIn all live INSIDE the info
    column, so they share its exact horizontal bounds and move with it
-   (dragging the divider, resizing the window) rather than being
-   measured or pinned against the outer panel.
-   height is auto (2026-10-21, per request - replaces the former fixed
-   205px row) - the top/bottom whitespace around the photo is no longer
-   a flat constant, it's computed per-alum by positionProfileHeaderPhoto()
-   below so the photo's top lines up with the clicked directory card's
-   own visible top, with an equal gap mirrored below the photo down to
-   the divider. That function sets .profile-portrait's margin-top and
-   this element's own padding-bottom inline, to the same px value, each
-   time an alum is selected - this rule just supplies the horizontal
-   24px inset; the vertical gaps are 0/0 until JS sets them. */
+   (resizing the window) rather than being measured or pinned against
+   the outer panel.
+   height is a flat constant again (2026-10-21, per request - "fix
+   profile positioning": the profile image must NOT move based on which
+   alumni card is selected or where it sits in the scrollable directory,
+   so this has exactly ONE fixed layout position for every alum, never
+   read from the DOM). 243px = an 18px top gap (.profile-portrait's own
+   margin-top below - matches where the directory list's first card
+   starts beneath its count/sort row, same for every alum, not the
+   selected one) + the 205px photo + a flat 20px bottom gap down to the
+   divider (this element's own padding-bottom). Neither number is ever
+   touched by JS. */
 .profile-header-inner{
   display: grid;
   grid-template-columns: 172px minmax(0, 1fr);
   gap: 28px;
   align-items: start;
-  height: auto;
+  height: 243px;
   overflow: visible;
-  padding: 0 24px 0;
+  padding: 0 24px 20px;
 }
 /* Portrait + text stack vertically once the panel gets narrow (resized
    small, or on a mobile detail view) - toggled by a ResizeObserver on
@@ -1364,13 +1465,21 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    the resizer, not from switching alumni, so it isn't the same
    per-alum jump risk the fixed-height rule above exists to close off. */
 .directory-right.narrow .profile-header-inner{ grid-template-columns: 1fr; height: auto; }
-.directory-right.narrow .profile-portrait{ width: 145px; height: 173px; }
-/* Plain top-aligned stack (2026-10-21, per request) - action row, then
-   straight into the identity block with a flat 12px gap, no vertical
-   centering, spacer, or content-height-based positioning of any kind.
-   .profile-info being display:flex/column is what makes that 12px a
-   real, simple margin instead of needing position:absolute + a
-   photo-height-derived margin-top the way this used to work. */
+.directory-right.narrow .profile-portrait{ width: 145px; height: 173px; margin-top: 0; }
+/* Name block's top lands at approximately the photo's own vertical
+   midpoint (per request) - 70px is a flat constant (not measured per-
+   alum): .profile-availability's own rendered height is the same for
+   every alum regardless of its text (capacity badge/button height
+   don't vary with content length, only width does), so this holds
+   consistently without needing JS to compute it. Capacity/Add stays
+   above it, unaffected, still flush at the header's own top; role/
+   company/location stay tightly stacked below it exactly as before. */
+.profile-identity-wrap{ margin-top: 70px; }
+.directory-right.narrow .profile-identity-wrap{ margin-top: 0; }
+/* Plain top-aligned stack - action row, then straight into the identity
+   block with a flat 12px gap. .profile-info being display:flex/column is
+   what makes that 12px a real, simple margin instead of needing
+   position:absolute. */
 .profile-info{
   display: flex;
   flex-direction: column;
@@ -1382,10 +1491,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .profile-availability{ display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 12px; }
 /* 1.5x larger (per request) - was 156x185 (which itself was reduced
-   from 176x220 on 2026-10-17 to tighten the header row). */
+   from 176x220 on 2026-10-17 to tighten the header row). margin-top:18px
+   (2026-10-21, per request - "fix profile positioning") is a flat
+   constant, the same for every alum, matching where the directory
+   list's own first card starts beneath its count/sort row - never
+   derived from the selected card's own position/scroll offset. */
 .profile-portrait{
   width: 172px;
   height: 205px;
+  margin-top: 18px;
   border-radius: 8px;
   /* Neutral, not lavender (2026-10-20 - "no purple/lavender highlight
      or colored background around the photo") - the placeholder (shown
@@ -1801,7 +1915,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-split.mobile-detail-open .directory-right{ display: block; }
   .profile-back-btn{ display: inline-block; }
   .profile-toolbar{ justify-content: space-between; }
-  .profile-portrait{ width: 180px; height: 225px; }
+  .profile-portrait{ width: 180px; height: 225px; margin-top: 0; }
+  .profile-identity-wrap{ margin-top: 0; }
   .profile-name{ font-size: 26px; }
   .profile-header-inner{ gap: 18px; height: 225px; } /* matches the bigger mobile portrait - same fixed-row-height rationale as the base rule, just the mobile photo size */
 }
@@ -2523,6 +2638,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 </div>
 
 <div id="view-info" style="display:none">
+  <div class="info-title-band">
+    <div class="info-title-band-inner" id="infoTitleBand">About</div>
+  </div>
   <div class="info-layout">
     <div class="info-content">
       <div class="info-panel" id="infoPanelAbout">
@@ -4350,7 +4468,7 @@ function renderDirectoryList(filtered){
         <svg class="directory-entry-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
       </div>
     `;
-    btn.addEventListener('click', () => selectAlum(a.id, {openMobileDetail: true, reopenProfile: true, originEl: btn}));
+    btn.addEventListener('click', () => selectAlum(a.id, {openMobileDetail: true, reopenProfile: true}));
     list.appendChild(btn);
   });
   enforceDirectoryListMinWidth();
@@ -4388,7 +4506,7 @@ document.addEventListener('keydown', (e) => {
     : Math.max(currentIndex - 1, 0);
   const nextEntry = entries[nextIndex];
   nextEntry.focus();
-  selectAlum(Number(nextEntry.dataset.id), {originEl: nextEntry});
+  selectAlum(Number(nextEntry.dataset.id), {});
 });
 
 // Selecting an entry never rebuilds the list (so its scroll position is
@@ -4414,17 +4532,12 @@ function selectAlum(id, opts){
   // scratch, which briefly flashes/reloads the photo even though it's
   // the exact same one already showing (per request - "set it to remain
   // static").
-  if(!alreadySelected) renderProfilePanel(opts.originEl);
+  if(!alreadySelected) renderProfilePanel();
   if(opts.openMobileDetail){
     document.getElementById('directorySplit').classList.add('mobile-detail-open');
     document.getElementById('directoryRight').scrollTop = 0;
   }
   if(opts.reopenProfile) expandProfilePanel();
-  // positionProfileHeaderPhoto() itself now runs from inside
-  // renderProfilePanel()'s own async photo-resolution callback (see that
-  // function) - by the time it fires, openMobileDetail/expandProfilePanel
-  // above have already run synchronously in this same call, so the panel
-  // is guaranteed visible by then.
 }
 
 function closeMobileDetail(){
@@ -4462,7 +4575,7 @@ let profileRenderToken = 0;
 // for no reason.
 let lastRenderedAlumId = null;
 
-function renderProfilePanel(originEl){
+function renderProfilePanel(){
   const right = document.getElementById('directoryRight');
   const a = alumni.find(x => x.id === selectedAlumId);
   if(a && a.id === lastRenderedAlumId && right.querySelector('.profile-header')) return;
@@ -4523,7 +4636,6 @@ function renderProfilePanel(originEl){
     updateProfileIdentity(a);
     updateProfileSections(a);
     collapseIndustryTagsInline();
-    positionProfileHeaderPhoto(originEl);
   });
 }
 
@@ -4599,81 +4711,15 @@ function updateProfileSections(a){
 // just sits at its natural position, directly below the content, with
 // no JS involved at all.
 
-// Photo-to-selected-card alignment (2026-10-21, per request) - the
-// profile photo's top lines up with the clicked directory card's own
-// visible top IN THE PANE at the moment of selection, not a live,
-// continuously-updating scroll-follow (explicitly not that, per the
-// clarifying follow-up: "this is the initial/aligned layout
-// relationship, not a live scroll-following behavior" - so scrolling
-// the list afterward never moves an already-open photo). The same gap
-// is then mirrored below the photo as the whitespace down to the
-// divider, so the photo sits with equal top/bottom breathing room
-// inside the header - the divider's own position is simply wherever
-// that symmetric box ends, never derived from the resizer chevron
-// (which keeps its own independent, unrelated vertical position on the
-// divider track). Called once per actual alum switch (from
-// renderProfilePanel, which itself only runs on a real selection change,
-// never a re-click) - not on scroll, not on resize, matching the
-// "initial relationship" framing.
-function positionProfileHeaderPhoto(originEl){
-  const header = document.querySelector('.profile-header-inner');
-  const portrait = document.querySelector('.profile-portrait');
-  const identityWrap = document.querySelector('.profile-identity-wrap');
-  const availability = document.querySelector('.profile-availability');
-  if(!header || !portrait || !identityWrap || !availability) return;
-
-  // Reset any previous alum's inline offsets before measuring, so a
-  // stale gap doesn't skew this alum's own measurement.
-  portrait.style.marginTop = '';
-  header.style.paddingBottom = '';
-  identityWrap.style.marginTop = '';
-
-  // Mobile's full-screen detail view and the dragged-narrow stacked
-  // layout both lay the photo and info out in a single column (and, on
-  // mobile, the directory card that was clicked isn't even on screen at
-  // the same time) - none of this side-by-side whitespace math applies
-  // there.
-  const right = document.getElementById('directoryRight');
-  if(window.innerWidth <= 1023 || right?.classList.contains('narrow')) return;
-
-  let gap = 0;
-  if(originEl && originEl.isConnected){
-    const entryTop = originEl.getBoundingClientRect().top;
-    const headerTop = header.getBoundingClientRect().top;
-    gap = entryTop - headerTop;
-  }
-  // Sanity clamp - keeps the header from ballooning if the clicked card
-  // happened to sit far down a scrolled list; alignment is "approximate"
-  // by design once a card that far from the header is involved.
-  gap = Math.max(0, Math.min(gap, 96));
-
-  portrait.style.marginTop = gap + 'px';
-  header.style.paddingBottom = gap + 'px';
-
-  // Name block's top lands at approximately the photo's own vertical
-  // midpoint (per request) - the capacity/Add row stays above it
-  // (untouched, still flush at the header's own top), role/company/
-  // location stay tightly stacked below it exactly as before.
-  const photoHeight = portrait.getBoundingClientRect().height;
-  const availabilityHeight = availability.getBoundingClientRect().height;
-  const naturalNameTop = availabilityHeight + 12; // 12 = .profile-availability's own margin-bottom
-  const desiredNameTop = gap + (photoHeight / 2);
-  identityWrap.style.marginTop = Math.max(0, desiredNameTop - naturalNameTop) + 'px';
-}
-let profileHeaderPhotoResizeTimer;
-window.addEventListener('resize', () => {
-  clearTimeout(profileHeaderPhotoResizeTimer);
-  profileHeaderPhotoResizeTimer = setTimeout(() => {
-    // Only acts when a resize crosses INTO mobile/narrow territory, to
-    // clear the (now meaningless, possibly layout-breaking) inline
-    // offsets - never recomputes a new gap for an unrelated plain
-    // desktop resize, which would be a live scroll/resize-following
-    // behavior the user explicitly asked this NOT to have.
-    const right = document.getElementById('directoryRight');
-    const outOfRange = window.innerWidth <= 1023 || right?.classList.contains('narrow');
-    if(outOfRange) positionProfileHeaderPhoto(null);
-  }, 120);
-});
+// Profile header geometry is pure CSS now (2026-10-21, per request -
+// "fix profile positioning" - the photo must NOT move based on which
+// card is selected or where it sits in the scrollable directory). The
+// previous positionProfileHeaderPhoto() read the clicked card's own
+// getBoundingClientRect() and derived a per-alum gap from it - removed
+// entirely, along with every call site, so the header now has exactly
+// ONE fixed layout position for every alum: see .profile-portrait's
+// margin-top and .profile-header-inner's height/padding-bottom in the
+// stylesheet, both flat constants, not read from the DOM at all.
 
 // Delegated rather than bound per-render (renderProfilePanel replaces
 // the panel's innerHTML on every call, which would otherwise mean
@@ -5416,7 +5462,15 @@ function showInfo(tab, fromHistory){
   currentView = 'info';
   document.getElementById('heroLanding').style.display = 'none';
   document.getElementById('heroSub').style.display = '';
-  document.getElementById('heroSub').classList.remove('compact');
+  // Compact masthead now (2026-10-21, per request - "standardize the
+  // About, FAQ, and Feedback pages so they use the same structural
+  // shell as the Browse page"): same masthead component/height/padding/
+  // nav-link positions as Browse, with the IMC | CONNECTS logo as the
+  // home link - was .remove('compact'), which used the oversized
+  // 290px title band and swapped the logo out for a bare house-icon
+  // back button instead. The page's own title now lives in the
+  // separate .info-title-band below (see selectInfoTab()).
+  document.getElementById('heroSub').classList.add('compact');
   document.querySelector('header.site').classList.add('masthead-mode');
   document.getElementById('view-category').style.display = 'none';
   document.getElementById('view-listing').style.display = 'none';
@@ -5429,6 +5483,7 @@ function showInfo(tab, fromHistory){
 
 function selectInfoTab(tab){
   document.getElementById('subTitle').textContent = INFO_TAB_LABELS[tab] || 'About';
+  document.getElementById('infoTitleBand').textContent = INFO_TAB_LABELS[tab] || 'About';
   document.querySelectorAll('.info-panel').forEach(panel => {
     panel.classList.remove('active');
   });
