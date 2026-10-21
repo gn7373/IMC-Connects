@@ -3113,15 +3113,18 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
   .mobile-profile-meta-location .format-value{
     display:flex !important;
-    align-items:flex-start !important;
+    align-items:baseline !important;
     gap:4px !important;
     min-width:0 !important;
     white-space:normal !important;
     line-height:1.18 !important;
   }
+  .mobile-profile-meta-location .format-value.two-line-location{
+    align-items:center !important;
+  }
   .mobile-profile-meta-location .format-icon{
     flex:0 0 auto !important;
-    margin-top:1px !important;
+    margin-top:0 !important;
     width:10px !important;
     height:10px !important;
   }
@@ -3551,7 +3554,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-redesign-9";
+const BUILD_VERSION = "2026-10-21-mobile-redesign-10";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -3630,6 +3633,47 @@ const KNOWN_OPTIONS = {
 // "Other" write-in). Leave false for fields where the list above only
 // covers the rare comma-containing exceptions.
 const TOPICS_IS_COMPLETE_LIST = true;
+
+// Student-facing "Ask Me About" pills are restricted to the standard
+// checkbox options from the alumni form. "Other" and any free-text
+// write-ins are retained in the normalized data for QA, but never rendered
+// as pills on the live profile.
+const APPROVED_CONVERSATION_TOPICS = KNOWN_OPTIONS.topics.filter(v => v !== "Other");
+const APPROVED_CONVERSATION_TOPIC_KEYS = new Map(
+  APPROVED_CONVERSATION_TOPICS.map(v => [v.trim().replace(/\s+/g, " ").toLowerCase(), v])
+);
+
+function approvedConversationTopic(value){
+  const key = (value || "").trim().replace(/\s+/g, " ").toLowerCase();
+  return APPROVED_CONVERSATION_TOPIC_KEYS.get(key) || null;
+}
+
+function visibleConversationTopics(a){
+  return a.topics
+    .map(approvedConversationTopic)
+    .filter(Boolean);
+}
+
+function buildConversationTopicQA(list){
+  const unexpected = [];
+  list.forEach(a => {
+    a.topics.forEach(topic => {
+      if(!approvedConversationTopic(topic)){
+        unexpected.push({alum: a.name, topic});
+      }
+    });
+  });
+  window.CMI_CONNECTS_DATA_QA = Object.freeze({
+    unexpectedConversationTopics: unexpected
+  });
+  if(unexpected.length){
+    console.warn(
+      "[CMI Connects QA] Non-standard conversation topics hidden from profiles:",
+      unexpected
+    );
+  }
+  return unexpected;
+}
 
 // The 3 real checkbox options for "format" - anything else in that field is
 // free-text ("Other").
@@ -5498,8 +5542,22 @@ function updateProfileIdentity(a){
 
   const mobileLocation = document.querySelector('.mobile-profile-meta-location');
   const mobileLinkedIn = document.querySelector('.mobile-profile-meta-linkedin');
-  if(mobileLocation) mobileLocation.innerHTML = contactHtml;
+  if(mobileLocation){
+    mobileLocation.innerHTML = contactHtml;
+    requestAnimationFrame(updateMobileLocationWrapAlignment);
+  }
   if(mobileLinkedIn) mobileLinkedIn.innerHTML = linkedinHtml;
+}
+
+function updateMobileLocationWrapAlignment(){
+  const location = document.querySelector('.mobile-profile-meta-location .format-value');
+  if(!location) return;
+  location.classList.remove('two-line-location');
+  const computed = getComputedStyle(location);
+  const lineHeight = parseFloat(computed.lineHeight) || 12;
+  if(location.getBoundingClientRect().height > lineHeight * 1.45){
+    location.classList.add('two-line-location');
+  }
 }
 
 // Industry/Marketing Expertise + Ask Me About - also image-free, cheap
@@ -5507,7 +5565,7 @@ function updateProfileIdentity(a){
 function updateProfileSections(a){
   const el = document.querySelector('.profile-sections');
   if(!el) return;
-  const visibleTopics = a.topics.filter(t => !TOPIC_CARD_EXCLUDE.includes(t));
+  const visibleTopics = visibleConversationTopics(a);
   el.innerHTML = profileThreeColumnsHtml(a, visibleTopics);
 }
 
@@ -5540,6 +5598,9 @@ document.getElementById('directoryRight').addEventListener('click', (e) => {
 });
 document.getElementById('mobileProfileBackdrop').addEventListener('click', closeMobileDetail);
 document.getElementById('mobileProfileRetract').addEventListener('click', closeMobileDetail);
+window.addEventListener('resize', () => {
+  if(document.body.classList.contains('mobile-drawer-open')) updateMobileLocationWrapAlignment();
+});
 // The divider's own chevron is the collapse control (2026-10-17, was a
 // separate X button on the profile panel) - stopPropagation on
 // pointerdown keeps a click here from also being read as a drag-start by
@@ -6145,6 +6206,7 @@ function loadData(){
   if(SHEET_CSV_URL.includes("PASTE_YOUR")){
     // No real Sheet connected yet — preview with sample data instead.
     alumni = applyPhaseCutoff(SAMPLE_ROWS.map(normalizeRow).filter(a => a.name));
+    buildConversationTopicQA(alumni);
     FILTERABLE.forEach(key => filterState[key] = new Set());
     document.getElementById('roundNote').textContent = ROUND_LABEL + " (preview mode)";
     buildFilterPanel();
@@ -6161,6 +6223,7 @@ function loadData(){
         .map(normalizeRow)
         .filter(a => a.name) // drop any blank rows
     );
+    buildConversationTopicQA(alumni);
     FILTERABLE.forEach(key => filterState[key] = new Set());
     document.getElementById('roundNote').textContent = ROUND_LABEL;
     buildFilterPanel();
