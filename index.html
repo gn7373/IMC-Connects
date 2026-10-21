@@ -2149,14 +2149,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     grid-area: loc;
     justify-self: start;
     display: flex !important;
-    /* A long city name (e.g. "San Francisco Bay Area") would otherwise
-       push the spots-left badge in the next column off the row's edge -
-       truncate instead, same reasoning .topic-tag already uses. */
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
   }
-  .directory-entry-location-inline span{ overflow: hidden; text-overflow: ellipsis; }
+  .directory-entry-location-inline span{
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
   .directory-entry-right{
     grid-area: right;
     justify-self: end;
@@ -2884,15 +2886,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     padding:9px 20px !important;
   }
 
-  /* Directory cards: generic icon only, using the reference proportions. */
+  /* Mobile directory card:
+     row 1 = photo + full identity block;
+     row 2 = location from the card's left edge + availability/actions right.
+     This gives long role/company text room to wrap beside the photo and gives
+     legitimate multi-word locations (e.g. Cambridge, MA) substantially more
+     horizontal space without competing with the portrait. */
   .directory-entry{
     grid-template-columns:72px minmax(0,1fr) auto !important;
     grid-template-rows:auto auto !important;
     grid-template-areas:
       "photo info info"
-      "photo loc right" !important;
+      "loc loc right" !important;
     column-gap:12px !important;
-    row-gap:8px !important;
+    row-gap:10px !important;
     width:100% !important;
     padding:10px 12px !important;
     margin-bottom:10px !important;
@@ -2951,24 +2958,29 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-entry-location-inline{
     grid-area:loc !important;
     display:flex !important;
-    justify-self:stretch !important;
+    justify-self:start !important;
+    align-self:center !important;
     min-width:0 !important;
     max-width:100% !important;
-    overflow:hidden !important;
-    text-overflow:ellipsis !important;
-    white-space:nowrap !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    white-space:normal !important;
     font-size:12px !important;
+    line-height:1.2 !important;
   }
   .directory-entry-location-inline .format-value{
     min-width:0 !important;
-    overflow:hidden !important;
-    text-overflow:ellipsis !important;
-    white-space:nowrap !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    white-space:normal !important;
+    line-height:1.2 !important;
   }
   .directory-entry-right{
     grid-area:right !important;
     display:flex !important;
+    align-items:center !important;
     justify-self:end !important;
+    align-self:center !important;
     gap:6px !important;
     flex-shrink:0 !important;
   }
@@ -3493,7 +3505,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <button type="button" class="search-clear-btn" id="searchClearBtn" aria-label="Clear search" style="display:none">×</button>
   </div>
   <div class="toolbar-row2" id="toolbarRow2">
-    <button type="button" class="mobile-filters-toggle" id="mobileFiltersToggle" aria-expanded="false" aria-controls="filterPanel">Filters</button>
+    <button type="button" class="mobile-filters-toggle" id="mobileFiltersToggle" aria-expanded="false" aria-controls="filterPanel">Show filters</button>
     <div class="filter-dropdowns" id="filterPanel"></div>
     <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
     <button class="pins-toggle-btn" id="pinsToggleBtn">Review &amp; Submit</button>
@@ -3616,7 +3628,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-hotfix-14";
+const BUILD_VERSION = "2026-10-21-mobile-directory-15";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4334,6 +4346,7 @@ mobileFiltersToggle.addEventListener('click', () => {
   const willOpen = !document.getElementById('toolbarRow2').classList.contains('mobile-filters-open');
   document.getElementById('toolbarRow2').classList.toggle('mobile-filters-open', willOpen);
   mobileFiltersToggle.setAttribute('aria-expanded', String(willOpen));
+  mobileFiltersToggle.textContent = willOpen ? 'Hide filters' : 'Show filters';
   if(!willOpen) closeAllFilterDropdowns();
 });
 document.addEventListener('click', (e) => {
