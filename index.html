@@ -395,7 +395,7 @@ header.site{
 .tab-link:hover{ color: var(--accent); border-bottom-color: var(--accent); }
 
 .info-layout{
-  padding: 12px 6vw 60px;
+  padding: 0 6vw 60px;
 }
 
 /* ---------- EMBEDDED CLAIM FORM ---------- */
@@ -616,10 +616,12 @@ header.site{
 .about-body{
   color: var(--muted);
   font-family: 'Inter', sans-serif;
-  font-size: 20.25px;
-  line-height: 1.7;
+  /* -2px (2026-10-21, per request), down from 20.25px, as part of
+     fitting the whole About page in one view with no scroll. */
+  font-size: 18.25px;
+  line-height: 1.5;
   text-align: left;
-  margin: 0 0 20px;
+  margin: 0 0 12px;
   text-wrap: pretty;
 }
 .about-body strong{
@@ -632,7 +634,10 @@ header.site{
   border-radius: 6px;
   padding: 1px 8px;
 }
-.about-body:first-child{ margin-top: 24px; }
+/* Lifted (2026-10-21, per request) - was 24px, tightened along with
+   .info-layout's own top padding to pull the whole block up and help
+   it fit in one view with no scroll. */
+.about-body:first-child{ margin-top: 8px; }
 #feedbackText{ margin-top: 24px; }
 .about-body:last-child{ margin-bottom: 0; }
 
@@ -2520,6 +2525,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   <div class="info-layout">
     <div class="info-content">
       <div class="info-panel" id="infoPanelAbout">
+        <p class="about-body">Hi everyone,</p>
         <p class="about-body">Earlier this summer, CMI began piloting career-related events under the banner "CMI Connect" to help our cohort navigate career discernment as we headed into our last two quarters. Following a successful alumni networking pilot in late summer, CMI Connect has been folded into Medill Career Services under IMC Connects.</p>
         <p class="about-body">Career Services will continue to host IMC Connects events on campus this fall. This portion of IMC Connects focuses on 1:1 coffee chats and will remain student-run.</p>
         <p class="about-body">Our pilot in September served 37 students and 47 alumni. For phase II, we're excited to bring you 200+ Northwestern alumni from across the world who are eager to support you during your job search.</p>
