@@ -8,6 +8,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:wght@600&family=DM+Serif+Display:ital@0;1&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<!-- Preloads the landing hero illustration (2026-10-21, per request -
+     "stop landing-page blinking on refresh") so it's already in the
+     browser's cache by the time .hero-illustration's own <img> asks for
+     it, instead of only starting that fetch once the DOM parse reaches
+     it further down the page. -->
+<link rel="preload" as="image" href="The%20Arch%20No%20background.png">
 <style>
 /* ============================================================
    CONFIG IS IN THE <script> BLOCK AT THE BOTTOM OF THIS FILE.
@@ -148,9 +154,17 @@ header.site{
    same as the tower illustration it replaces. */
 .hero-illustration{
   position: absolute;
-  right: 0;
+  /* Inset from the right edge (2026-10-21, per request - "not tucked
+     into the bottom-right corner") so the right-side trees/vegetation
+     stay fully visible instead of running off the viewport edge. */
+  right: clamp(48px, 6vw, 96px);
   bottom: 0;
-  width: clamp(620px, 56vw, 980px);
+  /* Larger (per request - "keep the Arch illustration large and
+     concentrated in the mid-right") - the vegetation extends further
+     left toward center at this width, but .hero-copy's own left-
+     anchored max-width:450px column (see that rule) still never
+     overlaps it at any width this clamp covers. */
+  width: clamp(760px, 54vw, 920px);
   height: auto;
   display: flex;
   align-items: flex-end;
@@ -166,7 +180,8 @@ header.site{
   /* 1672x941 natural pixels - pinning the ratio up front (same
      reasoning as the old tower illustration's own aspect-ratio) means
      the wrapper's height is known from first layout, before the image
-     itself has even downloaded. */
+     itself has even downloaded - no cropping (object-fit:contain, never
+     cover), so the full artwork is always visible. */
   aspect-ratio: 1672 / 941;
   object-fit: contain;
   object-position: right bottom;
@@ -290,17 +305,19 @@ header.site{
 #heroSub.compact .top-bar-light{ position: static; }
 
 /* ---------- HERO COPY ---------- */
-/* Used to share .hero-nav-inner's exact max-width/margin/padding-left
-   formula so the headline's left edge lined up with the logo above it -
-   .hero-nav-inner's own horizontal padding changed (2026-10-17, to match
-   the browsing page's masthead instead - see its own comment) and this
-   was deliberately left as-is per that request, so that alignment no
-   longer holds. */
+/* Shares .hero-nav-inner's exact horizontal formula now (2026-10-21,
+   per request - "use the same shared horizontal page gutter for both
+   rather than independent margins") - plain padding:0 6vw with no
+   max-width/auto-margin, same as .hero-nav-inner above, so the
+   headline's left edge lines up with the logo's own left edge exactly,
+   not just approximately: both are the same 6vw of the same full-width
+   element, instead of two independent formulas (a centered max-width
+   column here vs. a full-bleed 6vw there) that happened to drift apart.
+   At a ~1600px desktop width this lands at 96px, inside the requested
+   90-100px range. */
 /* Vertically positioned in .hero-top (the 100vh hero section), so the
    whole text block (headline through the button) holds its tuned
-   position regardless of viewport height. Horizontal placement
-   (margin: 0 auto within left/right: 0) is unchanged from the old
-   in-flow version.
+   position regardless of viewport height.
    top: 33.5% below is just the pre-JS fallback (first paint, or JS
    disabled) - positionHeroCopy() in the script overrides it on load/
    resize with the same 33.5% value clamped to never sit above a safe
@@ -312,7 +329,10 @@ header.site{
    CSS clamp() now, unrelated to this value), so resizing that
    illustration later won't move this text. If the vertical alignment
    ever needs re-tuning, adjust the 0.335 figure in positionHeroCopy()
-   (and this fallback to match) directly. */
+   (and this fallback to match) directly.
+   No entrance animation/opacity any more (2026-10-21, per request -
+   "stop landing-page blinking on refresh") - renders directly in its
+   final state on first paint, same as every other element on the page. */
 .hero-copy{
   position: absolute;
   top: 33.5%;
@@ -320,23 +340,8 @@ header.site{
   right: 0;
   transform: translateY(-50%);
   z-index: 3;
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 0 clamp(24px, 5vw, 64px);
+  padding: 0 6vw;
   box-sizing: border-box;
-  opacity: 0;
-  animation: heroCopyIn 800ms cubic-bezier(.22,.8,.32,1) both;
-}
-@keyframes heroCopyIn{
-  from{ opacity: 0; transform: translate(-26px, -50%); }
-  to{ opacity: 1; transform: translate(0, -50%); }
-}
-/* Mobile's version of the same entrance - .hero-copy is back in normal
-   flow there (no top:50%/translateY to preserve), so this is just the
-   original horizontal-only slide-in. */
-@keyframes heroCopyInMobile{
-  from{ opacity: 0; transform: translateX(-26px); }
-  to{ opacity: 1; transform: translateX(0); }
 }
 .hero-copy > *{ max-width: 450px; }
 
@@ -739,12 +744,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .pin-blue img{ filter: drop-shadow(0 3px 2px rgba(37,37,100,0.35)) hue-rotate(200deg) saturate(1.5); }
 .pin-orange img{ filter: drop-shadow(0 3px 2px rgba(37,37,100,0.35)) hue-rotate(15deg) saturate(1.1); }
 .pin-pink img{ filter: drop-shadow(0 3px 2px rgba(37,37,100,0.35)) hue-rotate(320deg) saturate(1.2); }
-@media (prefers-reduced-motion: reduce){
-  .hero-copy{ animation: none !important; opacity: 1; transform: translateY(-50%); }
-}
-@media (max-width: 767px) and (prefers-reduced-motion: reduce){
-  .hero-copy{ transform: none !important; }
-}
 @media (max-width: 767px){
   .hero-top{ height: auto; min-height: auto; overflow: visible; padding-bottom: 0; }
   .hero-nav{ position: static; padding-top: 20px; padding-bottom: 16px; }
@@ -768,15 +767,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .top-tabs.open{ display: flex; }
   /* Desktop centers .hero-copy with position:absolute/top:50% - mobile
      drops that back to normal in-flow stacking below the nav (which is
-     itself static on mobile, see above), and swaps in a horizontal-only
-     entrance animation since there's no vertical offset to preserve. */
+     itself static on mobile, see above). No entrance animation here
+     either (2026-10-21, see the base rule's own comment). */
   .hero-copy{
     position: static;
     margin: 20px 0 0;
     padding-top: 0;
     padding-bottom: 0;
-    max-width: none;
-    animation: heroCopyInMobile 800ms cubic-bezier(.22,.8,.32,1) both;
   }
   .hero-copy > *{ max-width: none; }
   header.site h1{ font-size: clamp(38px, 11vw, 54px); }
@@ -1403,11 +1400,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   color: var(--line-strong);
   overflow: hidden;
 }
-/* Real photo, when the alum has one uploaded (see updateProfilePhoto()) -
+/* Real photo, when the alum has one uploaded (see applyAlumPhoto()) -
    fills the same box the placeholder SVG used to center itself in,
    cropped to it rather than distorted. Kept mounted across renders
-   (2026-10-20, per request) - updateProfilePhoto() only ever changes
-   its src, never recreates the element, so switching alums can never
+   (2026-10-20, per request) - applyAlumPhoto() only ever changes its
+   src, never recreates the element, so switching alums can never
    flash/reload the image that's already showing. */
 .profile-portrait-img{
   width: 100%;
@@ -1415,9 +1412,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   object-fit: cover;
   display: block;
 }
-/* Hidden by default - only shown once updateProfilePhoto() has
-   exhausted every known extension for this alum's photo without one
-   actually loading (i.e. no photo has been uploaded for them yet). */
+/* Hidden by default - only shown once resolveAlumPhoto() has exhausted
+   every known extension for this alum's photo without one actually
+   loading (i.e. no photo has been uploaded for them yet). */
 .profile-portrait-fallback{ display: none; }
 /* name+title+company as one tight cluster (2026-10-20 spec exact
    values) - no default heading margin, so .alum-role's own margin-top
@@ -2502,7 +2499,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
       </div>
 
       <div class="hero-illustration" aria-hidden="true">
-        <img src="The%20Arch%20No%20background.png" alt="">
+        <img src="The%20Arch%20No%20background.png" alt="" width="1672" height="941">
       </div>
     </div>
   </div>
@@ -4174,68 +4171,74 @@ function slugifyAlumName(name){
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
 }
-// Preloads off-DOM via new Image() + decode(), trying each known
-// extension in turn (same fallback chain the old onerror-based version
-// used) - the VISIBLE <img> is never touched until a candidate actually
-// finishes loading and decoding, so whatever photo is currently showing
-// stays up the whole time (2026-10-20, per request - "never temporarily
-// clear the src or show a blank image state"). Guards against a rapid
-// double-switch (select alum A, then B before A's photo even
-// resolved) by checking the currently-selected alum is still the one
-// this chain was loading for before it swaps anything in.
-function updateProfilePhoto(a){
+// Resolves (never touches the DOM) which photo, if any, an alum has -
+// trying each known extension in turn via the image's own onerror, same
+// fallback chain the site has always used - and settles once a candidate
+// has actually finished loading AND decoding (or, for alums with no
+// photo at all, once every extension has 404'd). Returns a Promise of
+// {slug, src} (src is null when no photo exists, meaning "show the
+// placeholder"). Deliberately has no notion of "is this still the
+// current selection" itself any more - renderProfilePanel's own token
+// check is what discards a stale result, so this function stays a pure
+// "what photo does this alum have" lookup.
+function resolveAlumPhoto(a){
+  const slug = slugifyAlumName(a.name);
+  return new Promise(resolve => {
+    function tryExt(extIdx){
+      if(extIdx >= PORTRAIT_EXTS.length){
+        resolve({slug, src: null});
+        return;
+      }
+      const candidate = new Image();
+      const src = `photos/${slug}.${PORTRAIT_EXTS[extIdx]}`;
+      candidate.onload = () => {
+        // decode() can hang indefinitely rather than ever resolving or
+        // rejecting (observed in at least one real browser context, not
+        // just a theoretical concern) - onload already means the bytes
+        // are in, so a stuck decode() must never be able to block this
+        // forever; race it against a short timeout and resolve either way.
+        if(candidate.decode){
+          let settled = false;
+          const settle = () => { if(!settled){ settled = true; resolve({slug, src}); } };
+          candidate.decode().then(settle).catch(settle);
+          setTimeout(settle, 400);
+        } else {
+          resolve({slug, src});
+        }
+      };
+      candidate.onerror = () => tryExt(extIdx + 1);
+      candidate.src = src;
+    }
+    tryExt(0);
+  });
+}
+// The only thing that actually touches the visible <img>/fallback -
+// called once a photo has resolved (see resolveAlumPhoto above) AND the
+// caller has confirmed (via its own token) that this is still the
+// current selection. Never recreates the <img> element, only ever
+// changes its src/display, so a photo already showing never flashes.
+function applyAlumPhoto(photoResult){
   const right = document.getElementById('directoryRight');
   const img = right.querySelector('.profile-portrait-img');
   const fallback = right.querySelector('.profile-portrait-fallback');
   if(!img || !fallback) return;
-  const slug = slugifyAlumName(a.name);
-  if(img.dataset.alumSlug === slug) return; // already showing this alum's photo/placeholder - nothing to do
-
-  const stillCurrent = () => slugifyAlumName((alumni.find(x => x.id === selectedAlumId) || {}).name) === slug;
-
-  function tryExt(extIdx){
-    if(extIdx >= PORTRAIT_EXTS.length){
-      if(!stillCurrent()) return;
-      img.style.display = 'none';
-      fallback.style.display = 'flex';
-      img.dataset.alumSlug = slug;
-      return;
-    }
-    const candidate = new Image();
-    const src = `photos/${slug}.${PORTRAIT_EXTS[extIdx]}`;
-    const swapIn = () => {
-      if(!stillCurrent()) return;
-      img.src = src;
-      img.style.display = '';
-      fallback.style.display = 'none';
-      img.dataset.alumSlug = slug;
-    };
-    candidate.onload = () => {
-      // decode() can hang indefinitely rather than ever resolving or
-      // rejecting (observed in at least one real browser context, not
-      // just a theoretical concern) - onload already means the bytes are
-      // in, so a stuck decode() must never be able to block the swap
-      // forever; race it against a short timeout and swap in either way.
-      if(candidate.decode){
-        let settled = false;
-        const settle = () => { if(!settled){ settled = true; swapIn(); } };
-        candidate.decode().then(settle).catch(settle);
-        setTimeout(settle, 400);
-      } else {
-        swapIn();
-      }
-    };
-    candidate.onerror = () => tryExt(extIdx + 1);
-    candidate.src = src;
+  if(img.dataset.alumSlug === photoResult.slug) return; // already showing this alum's photo/placeholder
+  if(photoResult.src){
+    img.src = photoResult.src;
+    img.style.display = '';
+    fallback.style.display = 'none';
+  } else {
+    img.style.display = 'none';
+    fallback.style.display = 'flex';
   }
-  tryExt(0);
+  img.dataset.alumSlug = photoResult.slug;
 }
 // Warms the browser's image cache for a batch of alumni ahead of
 // selection (2026-10-20, per request - "preload alumni profile images
 // where practical so moving between profiles feels instantaneous") -
 // fire-and-forget, just the most common extension (jpg handles the
 // overwhelming majority of uploaded photos; the few non-jpg ones still
-// get their full extension-fallback chain in updateProfilePhoto when
+// get their full extension-fallback chain in resolveAlumPhoto when
 // actually selected, this is only a cache-warming best effort).
 const PRELOAD_PHOTO_COUNT = 25; // above-the-fold + a bit of scroll headroom, not the whole (often 80-100+) list
 function preloadAlumPhotos(alumList){
@@ -4411,18 +4414,17 @@ function selectAlum(id, opts){
   // scratch, which briefly flashes/reloads the photo even though it's
   // the exact same one already showing (per request - "set it to remain
   // static").
-  if(!alreadySelected) renderProfilePanel();
+  if(!alreadySelected) renderProfilePanel(opts.originEl);
   if(opts.openMobileDetail){
     document.getElementById('directorySplit').classList.add('mobile-detail-open');
     document.getElementById('directoryRight').scrollTop = 0;
   }
   if(opts.reopenProfile) expandProfilePanel();
-  // Photo-to-card alignment is computed here, AFTER the panel has
-  // actually been unhidden above (expandProfilePanel/openMobileDetail) -
-  // measuring any earlier, while the panel is still display:none
-  // (profile-collapsed, or the mobile detail view not yet open), would
-  // read every rect as zero and silently produce a 0 gap.
-  if(!alreadySelected) positionProfileHeaderPhoto(opts.originEl);
+  // positionProfileHeaderPhoto() itself now runs from inside
+  // renderProfilePanel()'s own async photo-resolution callback (see that
+  // function) - by the time it fires, openMobileDetail/expandProfilePanel
+  // above have already run synchronously in this same call, so the panel
+  // is guaranteed visible by then.
 }
 
 function closeMobileDetail(){
@@ -4440,10 +4442,34 @@ function expandProfilePanel(){
   enforceDirectoryListMinWidth();
 }
 
-function renderProfilePanel(){
+// Every alum switch gets its own token (2026-10-21, per request -
+// "fix profile image/text desynchronization") - whichever resolveAlumPhoto()
+// call finishes LAST isn't necessarily the one for the alum actually
+// still selected (rapid/long-press navigation can fire several of these
+// before the first one's photo even finishes loading/decoding), so every
+// callback below checks its own token against the current one before
+// touching the DOM. An older, now-stale resolution is simply discarded -
+// "latest request wins" - rather than being allowed to overwrite a newer
+// selection's text with its own (wrong) photo, or vice versa.
+let profileRenderToken = 0;
+// Tracks whoever's content is actually on screen right now (set once an
+// async resolution above actually applies) - lets a call that's really
+// just "the same alum is still selected" (renderGrid() re-runs this on
+// every filter/search/sort change, whether or not the selection itself
+// changed) skip straight past the whole resolve/apply dance below, so
+// typing in the search box can never re-trigger a photo reload or reset
+// this alum's own per-selection header gap (see positionProfileHeaderPhoto)
+// for no reason.
+let lastRenderedAlumId = null;
+
+function renderProfilePanel(originEl){
   const right = document.getElementById('directoryRight');
   const a = alumni.find(x => x.id === selectedAlumId);
+  if(a && a.id === lastRenderedAlumId && right.querySelector('.profile-header')) return;
+  const myToken = ++profileRenderToken;
+
   if(!a){
+    lastRenderedAlumId = null;
     right.innerHTML = `
       <div class="profile-toolbar">
         <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
@@ -4456,9 +4482,9 @@ function renderProfilePanel(){
   // Structural shell, built once and then left alone (2026-10-20, per
   // request - "do not re-render or replace the entire profile DOM for
   // small state changes"). .profile-portrait-img in particular stays
-  // mounted across every subsequent call - see updateProfilePhoto()
-  // below, which only ever changes its src once a new photo has
-  // actually finished loading, never recreates it.
+  // mounted across every subsequent call - see applyAlumPhoto() below,
+  // which only ever changes its src once a new photo has actually
+  // finished loading, never recreates it.
   if(!right.querySelector('.profile-header')){
     right.innerHTML = `
       <div class="profile-toolbar">
@@ -4480,12 +4506,25 @@ function renderProfilePanel(){
     `;
   }
 
-  updateProfilePhoto(a);
-  updateProfileAvailability(a);
-  updateProfileIdentity(a);
-  updateProfileSections(a);
-
-  collapseIndustryTagsInline();
+  // Text is deliberately NOT updated here, synchronously - that's the
+  // exact bug this closes ("the profile must never display text for one
+  // alum with the image of another"). Whatever profile is already on
+  // screen (the previously-selected alum's photo AND text, both) stays
+  // fully intact and untouched until the new alum's photo has actually
+  // resolved (decoded, or determined to have no photo at all) - then
+  // every piece of this alum's content swaps in together, in the same
+  // synchronous block below, so there's no in-between frame where they
+  // can be mismatched.
+  resolveAlumPhoto(a).then(photoResult => {
+    if(myToken !== profileRenderToken) return; // superseded - discard
+    lastRenderedAlumId = a.id;
+    applyAlumPhoto(photoResult);
+    updateProfileAvailability(a);
+    updateProfileIdentity(a);
+    updateProfileSections(a);
+    collapseIndustryTagsInline();
+    positionProfileHeaderPhoto(originEl);
+  });
 }
 
 // Capacity badge + Add/Added button - the only two pieces of
