@@ -2759,7 +2759,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    Directory uses generic person icons; profile keeps real photo.
    ============================================================ */
 .mobile-profile-retract,
-.mobile-profile-topbar,
+.mobile-profile-backdrop,
 .directory-entry-photo{ display:none; }
 
 @media (max-width: 767px){
@@ -2936,14 +2936,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     max-width:calc(100vw - 40px) !important;
   }
 
-  /* Dim EVERYTHING behind the profile, including the global masthead. */
-  #view-listing.mobile-detail-open::before{
-    content:"";
+  /* Real backdrop: dims the page and closes the drawer when tapped. */
+  .mobile-profile-backdrop{
+    display:none;
     position:fixed;
     inset:0;
+    padding:0;
+    margin:0;
+    border:0;
     background:rgba(26,30,31,.56);
     z-index:900;
-    pointer-events:none;
+    cursor:pointer;
+  }
+  #view-listing.mobile-detail-open .mobile-profile-backdrop{
+    display:block;
   }
   #view-listing.mobile-detail-open .directory-toolbar{
     display:none !important;
@@ -2978,67 +2984,21 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     .directory-right{ transition:none !important; }
   }
 
-  /* Drawer has its own topbar. Global masthead remains dimmed behind it. */
-  .mobile-profile-topbar{
-    display:flex !important;
-    position:relative;
-    align-items:center;
-    justify-content:flex-end;
-    height:88px !important;
-    padding:0 20px !important;
-  }
-  .mobile-profile-menu-btn{
-    width:34px !important;
-    height:34px !important;
-    display:flex !important;
-    align-items:center;
-    justify-content:center;
-    padding:0 !important;
-    border:0 !important;
-    background:none !important;
-    color:var(--ink) !important;
-    cursor:pointer;
-  }
-  .mobile-profile-nav-menu{
-    display:none;
-    position:absolute;
-    top:64px;
-    right:16px;
-    min-width:128px;
-    padding:10px;
-    background:#fff;
-    border:1px solid var(--border);
-    border-radius:10px;
-    box-shadow:0 12px 28px rgba(37,37,100,.16);
-    z-index:1100;
-  }
-  .mobile-profile-nav-menu.open{ display:block; }
-  .mobile-profile-nav-menu button{
-    display:block;
-    width:100%;
-    padding:8px 10px;
-    border:0;
-    background:none;
-    text-align:left;
-    font:500 13px 'Inter', sans-serif;
-    color:var(--ink);
-    cursor:pointer;
-  }
-
+  /* No hamburger/menu inside profile view. */
   .mobile-profile-retract{
     display:flex !important;
     align-items:center;
     justify-content:center;
     position:absolute;
-    left:-20px !important;
+    left:-32px !important;
     top:50% !important;
-    width:40px !important;
-    height:64px !important;
-    margin-top:-32px !important;
+    width:32px !important;
+    height:58px !important;
+    margin-top:-29px !important;
     padding:0 !important;
     border:1px solid var(--border-strong) !important;
     border-right:0 !important;
-    border-radius:14px 0 0 14px !important;
+    border-radius:12px 0 0 12px !important;
     background:var(--workspace-bg) !important;
     color:var(--accent) !important;
     z-index:1100 !important;
@@ -3051,19 +3011,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .profile-back-btn{ display:none !important; }
   .profile-header{
     width:100% !important;
-    padding:0 20px 18px !important;
+    padding:22px 20px 18px !important;
     border-bottom:1px solid var(--border-strong) !important;
     background:var(--workspace-bg) !important;
   }
   .profile-header-inner,
   .directory-right.narrow .profile-header-inner{
     display:grid !important;
-    grid-template-columns:88px minmax(0,1fr) auto !important;
+    grid-template-columns:88px minmax(0,1fr) !important;
     grid-template-rows:auto auto auto !important;
     grid-template-areas:
-      "portrait identity identity"
-      "meta meta spots"
-      "add add add" !important;
+      "portrait identity"
+      "meta meta"
+      "add add" !important;
     column-gap:14px !important;
     row-gap:13px !important;
     width:100% !important;
@@ -3115,33 +3075,43 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 
   .profile-info .alum-meta{
     grid-area:meta !important;
-    display:flex !important;
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) auto !important;
     align-items:center !important;
-    gap:8px !important;
+    column-gap:7px !important;
     min-width:0 !important;
-    overflow:hidden !important;
+    overflow:visible !important;
     margin:0 !important;
     white-space:nowrap !important;
-    font-size:12px !important;
+    font-size:10.5px !important;
+    line-height:1 !important;
+    padding-right:72px !important;
+    position:relative !important;
   }
   .profile-info .alum-meta .format-value{
     min-width:0 !important;
-    overflow:hidden !important;
-    text-overflow:ellipsis !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
     white-space:nowrap !important;
+    font-size:10.5px !important;
   }
   .profile-info .alum-meta .alum-linkedin{
     flex-shrink:0 !important;
     white-space:nowrap !important;
+    font-size:10.5px !important;
   }
+  .profile-info .alum-meta .sep{ display:none !important; }
   .profile-availability .capacity-badge-wrap{
-    grid-area:spots !important;
+    grid-area:meta !important;
     align-self:center !important;
     justify-self:end !important;
     white-space:nowrap !important;
+    z-index:2;
   }
   .profile-availability .capacity-badge{
-    font-size:11.5px !important;
+    font-size:10.5px !important;
+    line-height:1 !important;
+    padding:5px 7px !important;
   }
   .profile-add-btn{
     grid-area:add !important;
@@ -3416,6 +3386,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 </div>
 </div><!-- /directory-toolbar -->
 
+<button type="button" class="mobile-profile-backdrop" id="mobileProfileBackdrop" aria-label="Close profile"></button>
+
 <!-- Unified workspace card (2026-10-20 editorial-palette pass) - the
      directory/profile split lives inside this centered, square-cornered
      card (see .workspace's own comment); the toolbar above it is
@@ -3526,7 +3498,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-redesign-3";
+const BUILD_VERSION = "2026-10-21-mobile-redesign-4";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5237,18 +5209,8 @@ function renderProfilePanel(){
   if(!right.querySelector('.profile-header')){
     right.innerHTML = `
       <button type="button" class="mobile-profile-retract" id="mobileProfileRetract" aria-label="Retract profile">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 6 9 12 15 18"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
       </button>
-      <div class="mobile-profile-topbar">
-        <button type="button" class="mobile-profile-menu-btn" id="mobileProfileMenuBtn" aria-label="Menu" aria-expanded="false">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
-        <div class="mobile-profile-nav-menu" id="mobileProfileNavMenu">
-          <button type="button" data-profile-nav="about">About</button>
-          <button type="button" data-profile-nav="faq">FAQ</button>
-          <button type="button" data-profile-nav="feedback">Feedback</button>
-        </div>
-      </div>
       <div class="profile-header">
         <div class="profile-header-inner">
           <div class="profile-portrait" aria-hidden="true">
@@ -5371,23 +5333,10 @@ function updateProfileSections(a){
 // rebinding - or leaking - a listener every time).
 document.getElementById('directoryRight').addEventListener('click', (e) => {
   if(e.target.closest('#mobileProfileRetract')){ closeMobileDetail(); return; }
-  const menuBtn = e.target.closest('#mobileProfileMenuBtn');
-  if(menuBtn){
-    const menu = document.getElementById('mobileProfileNavMenu');
-    const willOpen = !menu.classList.contains('open');
-    menu.classList.toggle('open', willOpen);
-    menuBtn.setAttribute('aria-expanded', String(willOpen));
-    return;
-  }
-  const navBtn = e.target.closest('[data-profile-nav]');
-  if(navBtn){
-    closeMobileDetail();
-    showInfo(navBtn.dataset.profileNav);
-    return;
-  }
   const addBtn = e.target.closest('.profile-add-btn');
   if(addBtn) toggleCart(parseInt(addBtn.dataset.id, 10));
 });
+document.getElementById('mobileProfileBackdrop').addEventListener('click', closeMobileDetail);
 // The divider's own chevron is the collapse control (2026-10-17, was a
 // separate X button on the profile panel) - stopPropagation on
 // pointerdown keeps a click here from also being read as a drag-start by
