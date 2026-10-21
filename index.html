@@ -3191,10 +3191,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
   .mobile-profile-meta-row{
     grid-area:meta !important;
-    display:flex !important;
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) auto auto !important;
     align-items:center !important;
-    justify-content:flex-start !important;
-    gap:14px !important;
+    column-gap:8px !important;
     width:100% !important;
     min-width:0 !important;
     margin-top:8px !important;
@@ -3204,9 +3204,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     color:var(--muted) !important;
   }
   .mobile-profile-meta-location{
-    flex:0 1 auto !important;
     min-width:0 !important;
-    max-width:calc(100% - 78px) !important;
+    max-width:100% !important;
     white-space:normal !important;
   }
   .mobile-profile-meta-location .format-value{
@@ -3228,7 +3227,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     height:11px !important;
   }
   .mobile-profile-meta-linkedin{
-    flex:0 0 auto !important;
+    justify-self:start !important;
     align-self:center !important;
     white-space:nowrap !important;
     font-size:11.5px !important;
@@ -3245,30 +3244,33 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     height:11px !important;
   }
   .mobile-profile-meta-spots{
-    display:none !important;
+    display:inline-flex !important;
+    justify-self:end !important;
+    align-self:center !important;
+    white-space:nowrap !important;
+  }
+  .mobile-profile-meta-spots .capacity-badge-wrap{
+    display:inline-flex !important;
+    align-items:center !important;
+    white-space:nowrap !important;
+  }
+  .mobile-profile-meta-spots .capacity-badge{
+    font-size:11.5px !important;
+    line-height:1 !important;
+    padding:5px 7px !important;
+    white-space:nowrap !important;
   }
   .profile-availability{
     grid-area:add !important;
     display:flex !important;
     align-items:center !important;
     justify-content:flex-start !important;
-    gap:10px !important;
+    gap:0 !important;
     min-width:0 !important;
     margin-top:9px !important;
   }
-  .profile-availability .capacity-badge-wrap{
-    display:inline-flex !important;
-    align-items:center !important;
-    white-space:nowrap !important;
-  }
-  .profile-availability .capacity-icon{
+  .profile-availability > .capacity-badge-wrap{
     display:none !important;
-  }
-  .profile-availability .capacity-badge{
-    font-size:11.5px !important;
-    line-height:1 !important;
-    padding:6px 8px !important;
-    white-space:nowrap !important;
   }
   .profile-add-btn{
     grid-area:auto !important;
@@ -3665,7 +3667,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-profile-17";
+const BUILD_VERSION = "2026-10-21-mobile-profile-18";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5016,6 +5018,13 @@ function capacityBadgeHtml(capacity, assumed){
   return `<span class="capacity-badge-wrap">${icon}<span class="capacity-badge capacity-badge-${cls}">${label}</span></span>`;
 }
 
+function mobileProfileCapacityBadgeHtml(capacity){
+  const safeCapacity = Math.max(0, Number(capacity) || 0);
+  const cls = safeCapacity <= 0 ? 'full' : (safeCapacity === 1 ? 'low' : 'open');
+  const label = safeCapacity === 1 ? '1 spot' : `${safeCapacity} spots`;
+  return `<span class="capacity-badge-wrap"><span class="capacity-badge capacity-badge-${cls}">${label}</span></span>`;
+}
+
 // Split-view directory (2026-10-16 redesign): renderGrid() is the
 // orchestrator kept under its old name so every existing call site
 // (search input, filter clicks, clear-filters, category nav, etc. -
@@ -5628,7 +5637,7 @@ function updateProfileAvailability(a){
     </button>
   `;
   const mobileSpots = document.querySelector('.mobile-profile-meta-spots');
-  if(mobileSpots) mobileSpots.innerHTML = capacityBadgeHtml(a.capacity, a.capacityAssumed);
+  if(mobileSpots) mobileSpots.innerHTML = mobileProfileCapacityBadgeHtml(a.capacity);
 }
 
 // The lightweight path toggleCart() uses instead of a full
