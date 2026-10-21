@@ -336,10 +336,10 @@ header.site{
   background: var(--muted);
 }
 .hero-logo .logo-connect{
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 700;
   font-size: 1em;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
 }
 /* The listing/info masthead's compact variant - just the logo (left)
    and nav tabs (right) in the same positions the landing header uses,
@@ -2072,7 +2072,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    2026-10-21: a <button> with no display rule here at all defaults to
    inline-block in every browser, so this was visible on desktop too
    until this explicit base rule was added). */
-.mobile-filters-toggle{ display: none; }
+.mobile-filters-toggle,
+.mobile-clear-filters{ display: none; }
 /* Mobile-only Browse pass (2026-10-21, per request - "do a mobile-only
    responsive pass... do not alter the desktop design"). Nothing here
    touches any rule above 767px. */
@@ -2832,9 +2833,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .search-box{
     width:100% !important;
     min-width:0 !important;
-    height:58px !important;
-    min-height:58px !important;
-    flex:0 0 58px !important;
+    height:54px !important;
+    min-height:54px !important;
+    flex:0 0 54px !important;
     box-sizing:border-box !important;
     padding:0 17px !important;
     border-radius:14px !important;
@@ -2845,18 +2846,41 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
   .toolbar-row2{
     margin-top:0 !important;
-    gap:12px !important;
-    flex-wrap:wrap !important;
+    display:grid !important;
+    grid-template-columns:auto 1fr auto !important;
+    align-items:center !important;
+    column-gap:12px !important;
+    row-gap:8px !important;
   }
   .mobile-filters-toggle{
+    grid-column:1 !important;
+    grid-row:1 !important;
     min-height:40px !important;
     padding:8px 18px !important;
     border-radius:20px !important;
     font-size:13px !important;
   }
+  .mobile-clear-filters{
+    grid-column:1 !important;
+    grid-row:2 !important;
+    justify-self:start !important;
+    padding:0 2px !important;
+    border:0 !important;
+    background:none !important;
+    color:var(--accent) !important;
+    font-family:'Inter', sans-serif !important;
+    font-size:12px !important;
+    font-weight:600 !important;
+    cursor:pointer;
+  }
+  .toolbar-row2.has-active-filters .mobile-clear-filters{
+    display:inline-flex !important;
+  }
   .pins-toggle-btn{
+    grid-column:3 !important;
+    grid-row:1 !important;
     min-height:40px !important;
-    margin-left:auto !important;
+    margin-left:0 !important;
     padding:8px 18px !important;
     font-size:13px !important;
   }
@@ -2991,7 +3015,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 
   /* Filter drawers stay vertical/downward on mobile. */
   .toolbar-row2.mobile-filters-open .filter-dropdowns{
-    margin-top:12px !important;
+    grid-column:1 / -1 !important;
+    grid-row:3 !important;
+    margin-top:4px !important;
   }
   .toolbar-row2.mobile-filters-open .filter-dropdown-toggle,
   .toolbar-row2.mobile-filters-open .filter-checkboxes,
@@ -3113,8 +3139,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     align-items:start !important;
   }
   .profile-info,
-  .profile-identity-wrap,
-  .profile-availability{
+  .profile-identity-wrap{
     display:contents !important;
   }
   .profile-portrait,
@@ -3143,55 +3168,54 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
   .profile-info .alum-role{
     margin-top:6px !important;
-    font-size:13px !important;
+    font-size:13.5px !important;
     line-height:1.22 !important;
   }
   .profile-info .alum-company{
     margin-top:2px !important;
-    font-size:12.5px !important;
+    font-size:12px !important;
     line-height:1.22 !important;
     overflow-wrap:anywhere !important;
   }
+  .profile-info .alum-company-note{
+    display:inline-block !important;
+    max-width:100% !important;
+    white-space:normal !important;
+    margin-left:4px !important;
+  }
   .profile-identity-wrap{ margin-top:0 !important; }
 
-  /* Mobile metadata: left-anchored location, mathematically centered
-     LinkedIn, right-anchored spots. The two outer tracks are equal, so
-     LinkedIn stays centered between the row endpoints regardless of label
-     lengths. A long city may wrap to two lines; the other two stay
-     vertically centered against that taller row. */
-  .profile-info .alum-meta,
-  .profile-availability .capacity-badge-wrap{
+  /* Mobile profile metadata: readable contact row, then capacity + CTA. */
+  .profile-info .alum-meta{
     display:none !important;
   }
   .mobile-profile-meta-row{
     grid-area:meta !important;
     display:grid !important;
-    /* Left item hugs the left edge, right item hugs the right edge, and
-       LinkedIn sits centered in the actual remaining space BETWEEN them. */
-    grid-template-columns:minmax(0,max-content) minmax(42px,1fr) max-content !important;
+    grid-template-columns:minmax(0,1fr) auto !important;
     align-items:center !important;
     width:100% !important;
-    column-gap:8px !important;
+    column-gap:12px !important;
     min-width:0 !important;
     font-family:'Inter', sans-serif !important;
-    font-size:10px !important;
-    line-height:1.18 !important;
+    font-size:11.5px !important;
+    line-height:1.2 !important;
     color:var(--muted) !important;
   }
   .mobile-profile-meta-location{
     justify-self:start !important;
     min-width:0 !important;
-    max-width:72px !important;
+    max-width:100% !important;
     white-space:normal !important;
-    overflow-wrap:normal !important;
   }
   .mobile-profile-meta-location .format-value{
     display:flex !important;
     align-items:baseline !important;
-    gap:4px !important;
+    gap:5px !important;
     min-width:0 !important;
     white-space:normal !important;
-    line-height:1.18 !important;
+    line-height:1.2 !important;
+    font-size:11.5px !important;
   }
   .mobile-profile-meta-location .format-value.two-line-location{
     align-items:center !important;
@@ -3199,44 +3223,54 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .mobile-profile-meta-location .format-icon{
     flex:0 0 auto !important;
     margin-top:0 !important;
-    width:10px !important;
-    height:10px !important;
+    width:11px !important;
+    height:11px !important;
   }
   .mobile-profile-meta-linkedin{
-    justify-self:center !important;
+    justify-self:end !important;
     align-self:center !important;
     white-space:nowrap !important;
-    font-size:10px !important;
+    font-size:11.5px !important;
   }
   .mobile-profile-meta-linkedin .alum-linkedin{
     display:inline-flex !important;
     align-items:center !important;
-    gap:3px !important;
+    gap:4px !important;
     white-space:nowrap !important;
-    font-size:10px !important;
+    font-size:11.5px !important;
   }
   .mobile-profile-meta-linkedin svg{
-    width:10px !important;
-    height:10px !important;
+    width:11px !important;
+    height:11px !important;
   }
   .mobile-profile-meta-spots{
-    justify-self:end !important;
-    align-self:center !important;
-    white-space:nowrap !important;
-    min-width:0 !important;
-  }
-  .mobile-profile-meta-spots .capacity-icon{
     display:none !important;
   }
-  .mobile-profile-meta-spots .capacity-badge{
-    font-size:10px !important;
+  .profile-availability{
+    grid-area:add !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-start !important;
+    gap:8px !important;
+    min-width:0 !important;
+  }
+  .profile-availability .capacity-badge-wrap{
+    display:inline-flex !important;
+    align-items:center !important;
+    white-space:nowrap !important;
+  }
+  .profile-availability .capacity-icon{
+    display:none !important;
+  }
+  .profile-availability .capacity-badge{
+    font-size:11.5px !important;
     line-height:1 !important;
-    padding:5px 6px !important;
+    padding:6px 8px !important;
     white-space:nowrap !important;
   }
   .profile-add-btn{
-    grid-area:add !important;
-    justify-self:start !important;
+    grid-area:auto !important;
+    justify-self:auto !important;
     margin:0 !important;
     min-height:36px !important;
     padding:8px 14px !important;
@@ -3506,6 +3540,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   </div>
   <div class="toolbar-row2" id="toolbarRow2">
     <button type="button" class="mobile-filters-toggle" id="mobileFiltersToggle" aria-expanded="false" aria-controls="filterPanel">Show filters</button>
+    <button type="button" class="mobile-clear-filters" id="mobileClearFiltersBtn">Clear all</button>
     <div class="filter-dropdowns" id="filterPanel"></div>
     <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
     <button class="pins-toggle-btn" id="pinsToggleBtn">Review &amp; Submit</button>
@@ -3628,7 +3663,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-directory-15";
+const BUILD_VERSION = "2026-10-21-mobile-polish-16";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5063,7 +5098,7 @@ const PHOTO_FILE_BY_SLUG = {
   "maria_alejandra_alvarado_g": "maria_alejandra_alvarado_g.jfif",
   "mary_hager": "mary_hager.png",
   "meena_vetri_wehrs": "meena_vetri_wehrs.jfif",
-  "melanie_greben": "melanie_greben.jfif",
+  "melanie_greben": "melanie_greben.jfif?rev=20261021b",
   "morgan_ho": "morgan_ho.jfif",
   "nadine_mansour": "nadine_mansour.jfif",
   "nandini_balu": "nandini_balu.jfif",
@@ -5307,9 +5342,12 @@ let pendingShuffle = false;
 // doesn't count; this tracks the filter pills specifically.
 function updateClearButtonVisibility(){
   const btn = document.getElementById('clearFiltersBtn');
-  if(!btn) return;
+  const mobileBtn = document.getElementById('mobileClearFiltersBtn');
+  const toolbar = document.getElementById('toolbarRow2');
   const hasActiveFilter = FILTERABLE.some(key => filterState[key] && filterState[key].size > 0);
-  btn.style.display = hasActiveFilter ? '' : 'none';
+  if(btn) btn.style.display = hasActiveFilter ? '' : 'none';
+  if(mobileBtn) mobileBtn.style.display = hasActiveFilter ? '' : 'none';
+  if(toolbar) toolbar.classList.toggle('has-active-filters', hasActiveFilter);
 }
 
 function directoryPortraitHtml(a){
@@ -6235,19 +6273,18 @@ document.getElementById('pinsDrawerClose').addEventListener('click', closePinsDr
 document.getElementById('pinsDrawerBackdrop').addEventListener('click', closePinsDrawer);
 document.getElementById('pinsDrawerContinueExploring').addEventListener('click', closePinsDrawer);
 
-document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+function clearAllFilters(){
   FILTERABLE.forEach(key => filterState[key] = new Set());
   document.getElementById('searchInput').value = '';
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-  // Clearing all filters also clears whichever industry/marketing-area
-  // category the student arrived through, so the masthead heading and the
-  // Back button both reflect "all alumni" rather than a stale category.
   lastCategoryKey = null;
   document.getElementById('subTitle').textContent = 'All available alumni';
   buildFilterPanel();
   pendingShuffle = true;
   renderGrid();
-});
+}
+document.getElementById('clearFiltersBtn').addEventListener('click', clearAllFilters);
+document.getElementById('mobileClearFiltersBtn').addEventListener('click', clearAllFilters);
 
 function setStatus(html, type){
   document.getElementById('statusArea').innerHTML = html ? `<div class="status-banner ${type}">${html}</div>` : '';
