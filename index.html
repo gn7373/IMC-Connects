@@ -2986,24 +2986,27 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 
   /* No hamburger/menu inside profile view. */
   .mobile-profile-retract{
-    display:flex !important;
+    display:none !important;
     align-items:center;
     justify-content:center;
-    position:absolute;
-    left:-32px !important;
+    position:fixed !important;
+    right:clamp(250px, 68vw, 390px) !important;
     top:50% !important;
     width:32px !important;
     height:58px !important;
-    margin-top:-29px !important;
+    transform:translateY(-50%) !important;
     padding:0 !important;
     border:1px solid var(--border-strong) !important;
     border-right:0 !important;
     border-radius:12px 0 0 12px !important;
     background:var(--workspace-bg) !important;
     color:var(--accent) !important;
-    z-index:1100 !important;
+    z-index:1101 !important;
     box-shadow:-5px 2px 12px rgba(53,32,95,.14) !important;
     cursor:pointer;
+  }
+  #view-listing.mobile-detail-open .mobile-profile-retract{
+    display:flex !important;
   }
 
   /* Profile: photo + identity; metadata/spots; add button; divider. */
@@ -3387,6 +3390,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 </div><!-- /directory-toolbar -->
 
 <button type="button" class="mobile-profile-backdrop" id="mobileProfileBackdrop" aria-label="Close profile"></button>
+<button type="button" class="mobile-profile-retract" id="mobileProfileRetract" aria-label="Retract profile">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+</button>
 
 <!-- Unified workspace card (2026-10-20 editorial-palette pass) - the
      directory/profile split lives inside this centered, square-cornered
@@ -3498,7 +3504,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-redesign-4";
+const BUILD_VERSION = "2026-10-21-mobile-redesign-5";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5208,9 +5214,6 @@ function renderProfilePanel(){
   // finished loading, never recreates it.
   if(!right.querySelector('.profile-header')){
     right.innerHTML = `
-      <button type="button" class="mobile-profile-retract" id="mobileProfileRetract" aria-label="Retract profile">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
-      </button>
       <div class="profile-header">
         <div class="profile-header-inner">
           <div class="profile-portrait" aria-hidden="true">
@@ -5332,11 +5335,11 @@ function updateProfileSections(a){
 // the panel's innerHTML on every call, which would otherwise mean
 // rebinding - or leaking - a listener every time).
 document.getElementById('directoryRight').addEventListener('click', (e) => {
-  if(e.target.closest('#mobileProfileRetract')){ closeMobileDetail(); return; }
   const addBtn = e.target.closest('.profile-add-btn');
   if(addBtn) toggleCart(parseInt(addBtn.dataset.id, 10));
 });
 document.getElementById('mobileProfileBackdrop').addEventListener('click', closeMobileDetail);
+document.getElementById('mobileProfileRetract').addEventListener('click', closeMobileDetail);
 // The divider's own chevron is the collapse control (2026-10-17, was a
 // separate X button on the profile panel) - stopPropagation on
 // pointerdown keeps a click here from also being read as a drag-start by
