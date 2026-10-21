@@ -150,6 +150,16 @@ header.site{
   bottom: 0;
   width: clamp(360px, min(62vw, 58vh), 1200px);
   height: auto;
+  /* aspect-ratio (2026-10-20, layout-stability pass) - the image is
+     2303x793 natural pixels. Without this, the browser can't compute a
+     height for width:...;height:auto until the image itself has
+     downloaded and its intrinsic size becomes known, which is a real
+     (if brief) layout shift on first paint - this pins the ratio up
+     front so the box is sized correctly from the very first layout
+     pass, before the image has loaded at all. sizeTowerDecor()'s own
+     runtime width measurement is unrelated and unchanged - this only
+     fixes the gap between "width is set" and "height is known". */
+  aspect-ratio: 2303 / 793;
   pointer-events: none;
   z-index: 1;
 }
@@ -1210,12 +1220,25 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    action row, identity block and location/LinkedIn all live INSIDE the
    info column, so they share its exact horizontal bounds and move with
    it (dragging the divider, resizing the window) rather than being
-   measured or pinned against the outer panel. */
+   measured or pinned against the outer panel.
+   height:205px (2026-10-20, layout-stability pass) - an EXPLICIT fixed
+   row height, matching the photo's own height exactly, rather than
+   letting the row auto-size to whichever child is tallest. Without
+   this, an alum with an unusually long 2-line title/company could in
+   theory push the row taller than 205px, which would shove
+   .profile-divider (and everything below it) down - a real, if rare,
+   source of per-alum layout jump this closes off entirely: the row's
+   height can never vary, so the divider's position is fixed by this
+   container boundary alone, never by photo-load timing or text length.
+   overflow:visible is deliberate, not an oversight - an extreme outlier
+   title just overflows the row visually rather than ever resizing it. */
 .profile-header{
   display: grid;
   grid-template-columns: 172px minmax(0, 1fr);
   gap: 28px;
   align-items: start;
+  height: 205px;
+  overflow: visible;
 }
 /* Portrait + text stack vertically once the panel gets narrow (resized
    small, or on a mobile detail view) - toggled by a ResizeObserver on
@@ -1224,7 +1247,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    just from the viewport changing. A single grid column makes the two
    items stack top-to-bottom on their own, same as flex-direction:column
    used to. */
-.directory-right.narrow .profile-header{ grid-template-columns: 1fr; }
+/* height:auto here (not a fixed px like the base/mobile rules below) -
+   once stacked into a single column, the row is no longer two items
+   racing for the same height, so the base row's "lock it to the photo's
+   height" rationale doesn't apply; organic sizing is correct for a
+   stacked layout. This only fires from a deliberate, one-time drag of
+   the resizer, not from switching alumni, so it isn't the same
+   per-alum jump risk the fixed-height rule above exists to close off. */
+.directory-right.narrow .profile-header{ grid-template-columns: 1fr; height: auto; }
 .directory-right.narrow .profile-portrait{ width: 145px; height: 173px; }
 .directory-right.narrow .profile-info-identity{ margin-top: 86px; } /* half of the 173px narrow portrait height */
 /* position:relative so .profile-availability (below) can be taken out
@@ -1649,7 +1679,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .profile-toolbar{ justify-content: space-between; }
   .profile-portrait{ width: 180px; height: 225px; }
   .profile-name{ font-size: 26px; }
-  .profile-header{ gap: 18px; }
+  .profile-header{ gap: 18px; height: 225px; } /* matches the bigger mobile portrait - same fixed-row-height rationale as the base rule, just the mobile photo size */
+  .profile-info-identity{ margin-top: 112px; } /* half of the 225px mobile portrait height - was missing, silently inheriting the base 205px photo's 102px */
 }
 
 .alum-row{
