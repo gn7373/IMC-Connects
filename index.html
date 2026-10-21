@@ -136,6 +136,21 @@ body.listing-active{
   height: 100dvh;
   overflow: hidden;
 }
+/* Desktop-only lock (2026-10-21, per request - "fix the directory so it
+   scrolls normally on mobile... do not lock body scrolling unless a
+   modal/drawer genuinely requires it") - below 1024px the directory is
+   already one plain flowing column (see .directory-split's own mobile
+   rule), so the page should just scroll normally like every other
+   mobile view; this was the actual cause of mobile scroll being locked
+   the whole time the Browse page was open. */
+@media (max-width: 1023px){
+  body.listing-active{ height: auto; overflow: visible; }
+  /* "Lock the underlying directory only while the profile drawer is
+     open" (2026-10-21, per request) - the one mobile case that
+     genuinely needs a scroll lock, separate from (and overriding) the
+     plain-scroll reset directly above. */
+  body.mobile-drawer-open{ height: 100dvh; overflow: hidden; }
+}
 :focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
 #submitBtn:focus-visible{ outline-color: var(--success); }
 .add-btn:focus-visible{ outline-color: var(--success-on-light); }
@@ -237,17 +252,23 @@ header.site{
 @media (max-width: 1100px) and (min-width: 768px){
   .hero-illustration{ width: clamp(920px, 100vw, 1400px); right: 0; }
 }
-/* Mobile - stacks below the text and centers, rather than squeezing
-   the desktop left-text/right-image composition into a narrow screen
-   (per request). Oversized (110-125% of the viewport) and centered so
-   cropping the sides is an intentional choice, not an accident - the
-   arch itself (the image's own visual center) stays in frame. */
+/* Mobile - stacks below the text and centers (2026-10-21, revised per
+   request - "recompose the hero so the image feels connected to the
+   text... keep the Arch fully contained within the viewport/page width,
+   no horizontal spill") - was 115% width with the overflow deliberately
+   clipped by body's own overflow-x:hidden; that's exactly the spill
+   this request asks to remove, so width is contained at 100% now, with
+   a tighter top margin so it reads as part of the hero composition
+   rather than a separate footer image below it. The narrower CTA (see
+   .landing-option below) is what actually frees up the room to let
+   this read larger within that same contained width, without needing
+   to bleed past the viewport edge to do it. */
 @media (max-width: 767px){
   .hero-illustration{
     position: static;
-    width: 115%;
+    width: 100%;
     max-width: none;
-    margin: 24px auto 0;
+    margin: 16px 0 0;
     justify-content: center;
   }
 }
@@ -461,96 +482,73 @@ header.site{
 }
 .tab-link:hover{ color: var(--accent); border-bottom-color: var(--accent); }
 
-/* Compact title band (2026-10-21, per request - replaces the old
-   oversized #heroSub h2 title area for About/FAQ/Feedback) - same
-   full-bleed-surface-with-centered-inner pattern as .directory-toolbar
-   on Browse (see its own comment), so the two share identical left/
-   right boundaries, not just a similar look. */
-.info-title-band{
-  width: 100%;
-  background: var(--workspace-bg);
-  border-bottom: 1px solid var(--border);
-}
+/* No more white card/title-band + divider (2026-10-21, per request -
+   "remove the white card/title-band treatment... remove the separator
+   line... the headings should simply float on the page") - the heading
+   is just centered text now, sharing the exact same cream background
+   (var(--page-bg)) as the content area below it, so there's one
+   continuous surface from the masthead down rather than a white band
+   over a beige body. Font size is a clamp() now ("sizing responsive
+   rather than oversized"), not a flat 35px. */
+.info-title-band{ width: 100%; background: var(--page-bg); }
 .info-title-band-inner{
   width: calc(100% - 64px);
   max-width: 1480px;
   margin-inline: auto;
-  /* Vertical padding reduced from 40px (2026-10-21, per request - bigger
-     bold text, but "do not change...page-title-band height") to hold
-     the band's total height roughly where it was (~105-123px) now that
-     the text itself is taller - still centered vertically/horizontally
-     within the band either way. */
-  padding: 31px 24px;
+  padding: 40px 24px 8px;
   text-align: center;
   font-family: 'Libre Baskerville', serif;
-  /* Bigger and bold (2026-10-21, per request), same serif family - was
-     20px/500. */
   font-weight: 700;
-  font-size: 35px;
+  font-size: clamp(26px, 4vw, 35px);
   line-height: 1.2;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink);
 }
-/* Beige content area below the title-band divider (2026-10-21, per
-   request) - same warm beige as the page/browser margins elsewhere
-   (var(--page-bg), #F7F4EC), not the title band's own white. min-height
-   is set by sizeInfoLayout() to fill exactly down to the viewport's own
-   bottom edge (measured from wherever this element actually starts, so
-   it's correct regardless of the masthead/title-band's real height),
-   same measure-don't-guess approach as sizeDirectorySplit() elsewhere -
-   that's what makes this beige fill the whole section even when a
-   panel's own content is short, rather than stopping at the content's
-   own height.
-   Top-anchored now, not vertically centered (2026-10-21, per request -
-   About's "roughly 64-72px top spacing" and Feedback's "begin roughly
-   56-72px below the divider, not near the vertical center" both
-   describe top-anchored placement) - each panel supplies its own
-   margin-top below instead of this container centering everything;
-   FAQ's own content is long enough that centering never had a visible
-   effect for it anyway.) */
+/* Same cream background continuing straight down from the heading
+   above (2026-10-21) - min-height is set by sizeInfoLayout() to fill
+   exactly down to the viewport's own bottom edge (measured from
+   wherever this element actually starts), same measure-don't-guess
+   approach as sizeDirectorySplit() elsewhere, so the color still fills
+   the whole section even when a panel's own content is short. */
 .info-layout{
   padding: 0 6vw 60px;
   background: var(--page-bg);
-  /* Establishes a new block-formatting context (2026-10-21) so a
-     panel's own margin-top (see #infoPanelAbout etc. below) can't
-     collapse through this element's zero top padding - without this,
-     that margin-top would just push .info-layout ITSELF down instead
-     of creating space between this element's own top (where the beige
-     background starts) and the panel inside it, leaving the first
-     ~70px below the divider un-beige. */
+  /* Establishes a new block-formatting context so a panel's own
+     margin-top (see #infoPanelAbout etc. below) can't collapse through
+     this element's zero top padding - without this, that margin-top
+     would just push .info-layout ITSELF down instead of creating space
+     between this element's own top and the panel inside it. */
   display: flow-root;
 }
 /* Each panel gets its own centered max-width (2026-10-21, per request)
-   instead of .info-layout's old near-full-width column. */
+   instead of .info-layout's old near-full-width column. Margins are
+   flatter now that there's no divider to "start right after" - just a
+   plain, modest gap below the heading. */
 #infoPanelAbout{
   max-width: 1000px;
-  margin: 68px auto 0;
+  margin: 32px auto 0;
 }
 #infoPanelFaq{
   max-width: 960px;
-  margin: 60px auto 0;
+  margin: 28px auto 0;
   flex-direction: column;
   gap: 12px;
 }
 #infoPanelFaq.active{ display: flex; }
 #infoPanelFeedback{
   max-width: 960px;
-  margin: 64px auto 0;
+  margin: 32px auto 0;
 }
-/* Mobile-only (2026-10-21, per request - "main content begins about
-   28-36px below the title divider, not ~80-100px down") - the desktop
-   margin-top values above are tuned for a much taller title band/
-   masthead combo than mobile's own compact one. Title band itself:
-   ~110-125px tall on mobile (padding reduced to match, text sized down
-   to fit it), consistent across all three pages - desktop's own band
-   height is untouched. */
+/* Mobile-only (2026-10-21, per request - content begins ~28-36px below
+   the heading, 20px side gutters) - font-size is already a responsive
+   clamp() above, no override needed here any more. */
 @media (max-width: 767px){
-  .info-title-band-inner{ padding: 22px 20px; font-size: 26px; }
+  .info-title-band-inner{ padding: 28px 20px 4px; }
   .info-layout{ padding: 0 20px 48px; }
-  #infoPanelAbout{ max-width: none; margin: 32px 0 0; }
-  #infoPanelFaq{ max-width: none; margin: 32px 0 0; gap: 12px; }
-  #infoPanelFeedback{ max-width: none; margin: 32px 0 0; }
+  #infoPanelAbout{ max-width: none; margin: 30px 0 0; }
+  #infoPanelFaq{ max-width: none; margin: 30px 0 0; gap: 12px; }
+  #infoPanelFeedback{ max-width: none; margin: 30px 0 0; }
 }
 
 /* ---------- EMBEDDED CLAIM FORM ---------- */
@@ -939,6 +937,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .hero-top{ height: auto; min-height: auto; overflow: visible; padding-bottom: 0; }
   .hero-nav{ position: static; padding-top: 20px; padding-bottom: 16px; }
   .hero-hamburger{ display: block; }
+  /* Smaller on mobile (2026-10-21, per request - "it is currently too
+     visually dominant") - shared by both the landing logo and the
+     masthead's own copy (.hero-logo is the one class both use), was
+     15px/2em. */
+  .hero-logo{ font-size: 12px; }
+  .hero-logo .logo-cmi{ font-size: 1.8em; }
   .hero-nav-inner{ position: relative; }
   .top-tabs{
     display: none;
@@ -974,7 +978,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .hero-copy > *{ max-width: none; }
   header.site h1{ font-size: clamp(38px, 11vw, 54px); }
   .hero-lede{ font-size: 16px; max-width: none; }
-  .landing-option{ width: 100%; }
+  /* Noticeably narrower (2026-10-21, per request), was width:100%. */
+  .landing-option{ width: auto; min-width: 180px; padding: 14px 28px; }
 }
 
 .back-btn{
@@ -1860,29 +1865,17 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   line-height: 1.4;
   text-wrap: pretty;
 }
-/* Location's 3 region headers (United States / Asia / Latin America) -
-   each a clickable row that reveals its own nested city list only once
-   clicked, per request. Each region's panel opens horizontally (flyout
-   to the right of that row), not stacked below it (2026-10-17) - the
-   closed-state chevron points right accordingly, rotating to point
-   down once open, signaling "opens sideways" rather than "expands
-   below". .location-region needs its own position:relative since the
-   flyout anchors to that specific row, not the dropdown panel's corner. */
-.location-regions{ display: flex; flex-direction: column; gap: 4px; min-width: 200px; }
-.location-region{ position: relative; }
-/* Negative margins matching .filter-dropdown-panel's own 18px side
-   padding (2026-10-17, per request) - runs this divider edge-to-edge
-   across the dropdown instead of just the inset content width. */
-.location-region + .location-region{
-  border-top: 2px solid var(--line);
-  padding-top: 10px;
-  margin-top: 6px;
-  margin-left: -18px;
-  margin-right: -18px;
-  padding-left: 18px;
-  padding-right: 18px;
-}
-.location-region-toggle{
+/* Location is a single flat list now (2026-10-21, per request -
+   "simplify the filter... do not list every individual city... do not
+   add accordions within the four U.S. regions") - Midwest/East Coast/
+   South/West Coast are plain checkboxes, same as any other filter.
+   "Outside U.S." is the one remaining expandable piece - not a filter
+   value itself, just a disclosure toggle for Asia/Canada/Latin America/
+   Europe underneath it, and it expands straight DOWN inline (never
+   sideways, on desktop or mobile - see its own rule below). */
+.location-flat{ display: flex; flex-direction: column; gap: 8px; min-width: 200px; }
+.location-outside-us{ border-top: 1px solid var(--line); margin-top: 4px; padding-top: 8px; }
+.location-outside-us-toggle{
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1897,47 +1890,17 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   color: var(--ink);
   text-align: left;
 }
-.location-region-toggle span:first-child{ flex: 1 1 auto; }
-.location-region-toggle .filter-dropdown-count{ color: var(--accent); font-weight: 600; }
-.location-region-toggle.has-selection{ color: var(--accent); }
-.location-region-toggle svg{ transition: transform 150ms ease; flex-shrink: 0; transform: rotate(-90deg); }
-.location-region.open .location-region-toggle svg{ transform: rotate(0deg); }
-.location-region-panel{
+.location-outside-us-toggle span{ flex: 1 1 auto; }
+.location-outside-us-toggle.has-selection{ color: var(--accent); }
+.location-outside-us-toggle svg{ transition: transform 150ms ease; flex-shrink: 0; }
+.location-outside-us.open .location-outside-us-toggle svg{ transform: rotate(180deg); }
+.location-outside-us-panel{
   display: none;
-  position: absolute;
-  left: 100%;
-  top: -10px;
-  margin-left: 10px;
-  min-width: 200px;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  box-shadow: 0 14px 32px rgba(37,37,100,0.16);
-  padding: 14px 16px;
-  z-index: 20;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
 }
-.location-region.open .location-region-panel{ display: block; }
-/* Internal scroll instead of showing the whole list (2026-10-21, per
-   request - "for location options that run long, just have a scroll
-   feature nestled within them rather than showcasing the whole list")
-   - scoped to the checkbox lists specifically (leaf content, no flyouts
-   of their own), not to .location-region-panel itself, since that
-   panel can also hold a further nested accordion (North America's own
-   5 sub-regions) whose own flyouts rely on their ancestors staying
-   overflow:visible to not get clipped - see the comment on
-   .filter-dropdown-panel-grouped above for that same constraint. */
-.location-region-panel .filter-checkboxes,
-.location-subregions > .filter-checkboxes{
-  max-height: 220px;
-  overflow-y: auto;
-  padding-right: 6px;
-}
-.location-region-empty{
-  font-family: 'Inter', sans-serif;
-  font-size: 12.5px;
-  font-style: italic;
-  color: var(--muted);
-}
+.location-outside-us.open .location-outside-us-panel{ display: flex; }
 .filter-checkboxes{ display:flex; flex-direction: column; align-items: stretch; gap: 8px; font-size: 13.5px; text-align: left; white-space: nowrap; }
 .filter-checkbox-option{
   display:flex;
@@ -2002,6 +1965,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .toolbar-row2{ flex-wrap: wrap; }
   .directory-split{ flex-direction: column; height: auto; }
   .directory-left{ flex: 1 1 auto; max-width: none; }
+  /* Normal document scroll (2026-10-21, per request) - was
+     overflow-y:auto/min-height:0, the desktop-only "scrolls inside its
+     own box" behavior; with body.listing-active's height lock also
+     reset above, the list should just flow with the page like
+     everything else instead of fighting for its own internal scroll. */
+  .directory-list{ overflow-y: visible; min-height: auto; }
   /* Resize/collapse are desktop-only concepts - mobile already has its
      own full-screen detail pattern below. */
   .directory-resizer{ display: none !important; }
@@ -2010,9 +1979,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      flows with the page instead of scrolling in its own box. The detail
      view below can't rely on that same auto-height parent for its own
      sizing though, which is why it's position:fixed against the
-     viewport instead of position:absolute against .directory-split. */
+     viewport instead of position:absolute against .directory-split.
+     A real slide-in drawer now (2026-10-21, per request - "do NOT treat
+     the profile as a separate hard page... tapping an alum should open
+     a full-height profile drawer that slides in from the right") - was
+     display:none/block, a hard instant swap that also hid the directory
+     underneath it (.directory-left display:none, removed below). Always
+     rendered now (never display:none, which can't transition) and
+     pushed off-screen via transform instead, so it can slide; the
+     directory stays mounted and scrolled exactly where it was the whole
+     time, since nothing about it is ever hidden or rebuilt - "closing
+     restores the directory at exactly the previous scroll position" is
+     just a natural consequence of never having touched it. */
   .directory-right{
-    display: none;
     max-width: none;
     /* Desktop's 480px floor (keeps the split-view profile panel usable)
        would otherwise force this full-screen mobile view wider than the
@@ -2028,16 +2007,49 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     overflow-y: auto;
     padding: 20px 20px 40px;
     z-index: 30;
+    transform: translateX(100%);
+    transition: transform 280ms ease;
+    box-shadow: -8px 0 24px rgba(37,37,100,0.12);
   }
-  .directory-split.mobile-detail-open .directory-left{ display: none; }
-  .directory-split.mobile-detail-open .directory-right{ display: block; }
+  @media (prefers-reduced-motion: reduce){
+    .directory-right{ transition: none; }
+  }
+  .directory-split.mobile-detail-open .directory-right{ transform: translateX(0); }
+  /* Hides the whole search/filter/Review & Submit toolbar while the
+     drawer is open (2026-10-21, per request), so the drawer - which
+     starts at --content-top, re-measured right as this class toggles
+     (see openMobileDetail()) - begins immediately below the masthead
+     instead of leaving a dead gap where the toolbar used to be. */
+  #view-listing.mobile-detail-open .directory-toolbar{ display: none; }
   .profile-back-btn{ display: inline-block; }
-  .profile-toolbar{ justify-content: space-between; }
-  .profile-portrait{ width: 180px; height: 225px; }
-  .profile-identity-wrap{ margin-top: 0; }
-  .profile-name{ font-size: 26px; }
-  .profile-header-inner{ gap: 18px; height: 225px; padding-top: 0; } /* matches the bigger mobile portrait - same fixed-row-height rationale as the base rule, just the mobile photo size; padding-top:0 since the side-by-side symmetric-gap scheme doesn't apply once stacked */
+  .profile-toolbar{ justify-content: space-between; margin-bottom: 12px; }
+  /* Compact photo-left/identity-right (2026-10-21, per request - "make
+     the top of the profile substantially more compact... use a compact
+     photo-left/identity-right composition where it improves fit rather
+     than stacking a large portrait above everything") - was 180x225,
+     the same oversized portrait desktop's own profile uses. Smaller
+     photo + tighter header means the reclaimed toolbar space (see
+     #view-listing.mobile-detail-open .directory-toolbar above) actually
+     buys back more of the viewport for Industry/Marketing/Ask Me About
+     instead of the header alone eating it back up. */
+  .profile-portrait,
+  .directory-right.narrow .profile-portrait{ width: 104px; height: 130px; }
+  .profile-header-inner,
+  .directory-right.narrow .profile-header-inner{ grid-template-columns: 104px minmax(0,1fr); gap: 14px; height: 130px; padding-top: 0; }
+  /* Name's top ~ the smaller photo's own vertical midpoint (per
+     request - "keep name, title, company... prominent"), same flat-
+     constant reasoning the desktop rule next to this one uses. */
+  .profile-identity-wrap{ margin-top: 28px; }
+  .profile-name{ font-size: 21px; }
+  .profile-sections{ padding: 0 20px; }
+  .alum-columns{ gap: 16px; margin-top: 14px !important; }
+  .alum-col{ padding-top: 0; }
 }
+/* Hidden on desktop by default - only shown below 767px (bugfix,
+   2026-10-21: a <button> with no display rule here at all defaults to
+   inline-block in every browser, so this was visible on desktop too
+   until this explicit base rule was added). */
+.mobile-filters-toggle{ display: none; }
 /* Mobile-only Browse pass (2026-10-21, per request - "do a mobile-only
    responsive pass... do not alter the desktop design"). Nothing here
    touches any rule above 767px. */
@@ -2787,11 +2799,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   <div id="heroSub" style="display:none">
     <button type="button" class="hero-logo hero-logo-btn masthead-logo" id="logoHomeBtnMasthead" aria-label="IMC Connects home"><span class="logo-cmi">IMC</span><span class="logo-sep"></span><span class="logo-connect">CONNECTS</span></button>
     <div class="top-bar top-bar-light">
-      <div class="top-tabs">
+      <div class="top-tabs" id="topTabsMasthead">
         <button class="tab-link tab-link-light" data-nav="about">About</button>
         <button class="tab-link tab-link-light" data-nav="faq">FAQ</button>
         <button class="tab-link tab-link-light" data-nav="feedback">Feedback</button>
       </div>
+      <button class="hero-hamburger hero-hamburger-masthead" id="heroHamburgerMasthead" aria-label="Menu" aria-expanded="false" aria-controls="topTabsMasthead">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
     </div>
     <button class="back-btn" id="backBtn" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 3.2 2.6 11H5v9.5a1 1 0 0 0 1 1h4.5v-6h3v6H18a1 1 0 0 0 1-1V11h2.4z"/></svg></button>
     <h2 id="subTitle"></h2>
@@ -3537,7 +3552,6 @@ const CITY_REGION_OVERRIDES = {
   "madrid": "Europe", "rome": "Europe", "amsterdam": "Europe",
   "dublin": "Europe", "uk": "Europe", "united kingdom": "Europe"
 };
-const LOCATION_REGIONS = ["North America", "Europe", "Asia", "Latin America"];
 function regionForCity(value){
   const trimmed = (value || "").trim();
   const lower = trimmed.toLowerCase();
@@ -3787,106 +3801,16 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
   return optionsList;
 }
 
-// Country name for a raw Asia city/location value (2026-10-21, per
-// request) - comma-suffixed values (the common case, e.g. "Mumbai,
-// India") just take whatever follows the last comma; bare values that
-// are already a country name (e.g. "Singapore") pass through unchanged;
-// a short override list covers the rest (bare city names, and the one
-// multi-location value in the real data).
-const ASIA_VALUE_TO_COUNTRY = {
-  "seoul": "South Korea",
-  "shenzhen": "China",
-  "shanghai, china & singapore, singapore": "China & Singapore"
-};
-function countryForAsiaValue(value){
-  const trimmed = (value || "").trim();
-  const lower = trimmed.toLowerCase();
-  if(ASIA_VALUE_TO_COUNTRY[lower]) return ASIA_VALUE_TO_COUNTRY[lower];
-  const commaIdx = trimmed.lastIndexOf(",");
-  if(commaIdx !== -1) return trimmed.slice(commaIdx + 1).trim();
-  return trimmed;
-}
-
-// Same idea as buildFilterCheckboxGroup above, but one checkbox per
-// GROUP of raw values (as bucketed by groupFn) rather than one per raw
-// value - toggling a group's checkbox adds/removes every raw value in
-// that group together. Currently only used for Asia's country-level
-// rollup (see buildLocationRegionGroup), but written generically in
-// case another filter wants the same "show the group, not every raw
-// value" treatment later.
-function buildGroupedFilterCheckboxGroup(key, values, groupFn, onAnyChange){
-  const optionsList = document.createElement('div');
-  optionsList.className = 'filter-checkboxes';
-
-  const groups = {};
-  values.forEach(v => {
-    const g = groupFn(v);
-    (groups[g] = groups[g] || []).push(v);
-  });
-  const groupNames = Object.keys(groups).sort();
-
-  const selectAllLabel = document.createElement('label');
-  selectAllLabel.className = 'filter-checkbox-option filter-select-all';
-  const selectAllBox = document.createElement('input');
-  selectAllBox.type = 'checkbox';
-  selectAllBox.checked = values.every(v => filterState[key].has(v));
-  const groupCheckboxes = [];
-  selectAllBox.onchange = () => {
-    if(selectAllBox.checked) values.forEach(v => filterState[key].add(v));
-    else values.forEach(v => filterState[key].delete(v));
-    groupCheckboxes.forEach(cb => cb.checked = selectAllBox.checked);
-    resetMastheadToGeneric();
-    pendingShuffle = true;
-    renderGrid();
-    onAnyChange();
-  };
-  selectAllLabel.appendChild(selectAllBox);
-  selectAllLabel.appendChild(document.createTextNode('Select all'));
-  optionsList.appendChild(selectAllLabel);
-
-  groupNames.forEach(name => {
-    const groupValues = groups[name];
-    const optionLabel = document.createElement('label');
-    optionLabel.className = 'filter-checkbox-option';
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.checked = groupValues.every(v => filterState[key].has(v));
-    checkbox.onchange = () => {
-      if(checkbox.checked) groupValues.forEach(v => filterState[key].add(v));
-      else groupValues.forEach(v => filterState[key].delete(v));
-      selectAllBox.checked = values.every(v => filterState[key].has(v));
-      resetMastheadToGeneric();
-      pendingShuffle = true;
-      renderGrid();
-      onAnyChange();
-    };
-    optionLabel.appendChild(checkbox);
-    optionLabel.appendChild(document.createTextNode(name));
-    groupCheckboxes.push(checkbox);
-    optionsList.appendChild(optionLabel);
-  });
-
-  return optionsList;
-}
-
-// North America's own further breakdown (per request) - "East Coast,
-// Midwest, West Coast, South, Canada", nested one level inside the
-// North America region using the exact same accordion pattern (see
-// buildAccordionItem below) rather than a separate UI concept. Mapped
-// by hand against the real city values actually in the data; anything
-// that doesn't match a specific sub-region (e.g. a bare "USA" with no
-// city) falls through and is still shown, just directly in North
-// America's own list rather than nested under one of the five - better
-// than silently dropping it or guessing a region for it.
-const NA_SUBREGIONS = ["East Coast", "Midwest", "West Coast", "South", "Canada"];
-// Covers every North America value actually in the roster (cross-checked
-// against collectFilterOptions().city directly, 2026-10-21, per request -
-// the previous ~15-entry list left most of them falling through to the
-// generic "unmatched" list at the bottom of this panel, which is both
-// mis-categorized (e.g. nothing here is really "unsorted", every one of
-// these has a real US/Canada region) and was the actual source of the
-// long, unscrolled list the request flagged).
-const NA_SUBREGION_BY_CITY = {
+// Flat US regions (2026-10-21, per request - "simplify the filter...
+// do not add accordions within the four U.S. regions") - mapped by hand
+// against the real city values in the roster (cross-checked against
+// collectFilterOptions().city). A value that doesn't map to one of
+// these four, and isn't Canada/Asia/Latin America/Europe either (e.g. a
+// bare "USA" with no city), simply isn't shown as its own checkbox -
+// "exact cities remain discoverable through the existing search bar"
+// covers that case instead of guessing a region for it.
+const US_REGIONS = ["Midwest", "East Coast", "South", "West Coast"];
+const US_REGION_BY_CITY = {
   "boston": "East Coast", "cambridge": "East Coast", "new york": "East Coast",
   "new york city": "East Coast", "washington, d.c.": "East Coast",
   "pittsburgh": "East Coast", "boca raton": "East Coast",
@@ -3902,143 +3826,92 @@ const NA_SUBREGION_BY_CITY = {
   "atlanta": "South", "houston": "South", "miami": "South",
   "san antonio": "South"
 };
-function naSubregionForCity(value){
+function usRegionForCity(value){
+  return US_REGION_BY_CITY[(value || "").trim().toLowerCase()] || null;
+}
+function isCanadaValue(value){
   const lower = (value || "").trim().toLowerCase();
-  if(NA_SUBREGION_BY_CITY[lower]) return NA_SUBREGION_BY_CITY[lower];
-  if(lower === "canada" || lower.endsWith(", canada")) return "Canada";
-  return null;
+  return lower === "canada" || lower.endsWith(", canada");
 }
 
-// Generic single accordion row (a clickable header + a panel that's
-// hidden until clicked), shared by both the top-level region list and
-// North America's own nested sub-region list below - closeSiblingsIn is
-// whichever element directly contains this row's siblings, so each
-// level's accordion only ever closes items at its OWN level, never
-// reaching into a different level's already-open state.
-function buildAccordionItem(label, activeCount, panelEl, closeSiblingsIn){
-  const itemWrap = document.createElement('div');
-  itemWrap.className = 'location-region';
+// One plain checkbox representing a whole GROUP of raw values at once
+// (e.g. every raw city that maps to "Midwest", or every raw value that
+// maps to "Europe") - toggling it adds/removes the entire group
+// together, same underlying filterState.city Set every other location
+// value lives in.
+function buildFlatLocationCheckbox(label, groupValues, onAnyChange){
+  const optionLabel = document.createElement('label');
+  optionLabel.className = 'filter-checkbox-option';
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = groupValues.every(v => filterState.city.has(v));
+  checkbox.onchange = () => {
+    if(checkbox.checked) groupValues.forEach(v => filterState.city.add(v));
+    else groupValues.forEach(v => filterState.city.delete(v));
+    resetMastheadToGeneric();
+    pendingShuffle = true;
+    renderGrid();
+    onAnyChange();
+  };
+  optionLabel.appendChild(checkbox);
+  optionLabel.appendChild(document.createTextNode(label));
+  return optionLabel;
+}
+
+// "Outside U.S." (2026-10-21, per request) - not a filter value itself,
+// just a disclosure toggle for the four flat checkboxes underneath it
+// (Asia/Canada/Latin America/Europe); expands straight down inline, the
+// same on desktop as on mobile (no rightward cascading menu any more).
+function buildOutsideUSGroup(outsideUS, onAnyChange){
+  const order = ["Asia", "Canada", "Latin America", "Europe"];
+  const container = document.createElement('div');
+  container.className = 'location-outside-us';
+
+  const anySelected = order.some(r => outsideUS[r].some(v => filterState.city.has(v)));
   const toggle = document.createElement('button');
   toggle.type = 'button';
-  toggle.className = 'location-region-toggle';
-  toggle.innerHTML = `<span>${label}</span>${activeCount ? `<span class="filter-dropdown-count">(${activeCount})</span>` : ''}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
-  toggle.classList.toggle('has-selection', activeCount > 0);
-  toggle.addEventListener('click', () => {
-    const willOpen = !itemWrap.classList.contains('open');
-    closeSiblingsIn.querySelectorAll('.location-region.open').forEach(el => el.classList.remove('open'));
-    itemWrap.classList.toggle('open', willOpen);
+  toggle.className = 'location-outside-us-toggle';
+  toggle.classList.toggle('has-selection', anySelected);
+  toggle.innerHTML = `<span>Outside U.S.</span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+  toggle.addEventListener('click', () => container.classList.toggle('open'));
+
+  const panel = document.createElement('div');
+  panel.className = 'location-outside-us-panel';
+  order.forEach(region => {
+    const regionValues = outsideUS[region];
+    if(regionValues.length) panel.appendChild(buildFlatLocationCheckbox(region, regionValues, onAnyChange));
   });
-  itemWrap.appendChild(toggle);
-  itemWrap.appendChild(panelEl);
-  return itemWrap;
+
+  container.appendChild(toggle);
+  container.appendChild(panel);
+  return container;
 }
 
-// North America's panel: instead of one flat checkbox list, a second
-// level of the same accordion holding its 5 sub-regions, plus (per
-// request, see naSubregionForCity above) a trailing plain checkbox list
-// for anything that didn't map to one of those 5.
-function buildNorthAmericaPanel(values, onAnyChange){
-  const wrap = document.createElement('div');
-  wrap.className = 'location-regions location-subregions';
-
-  const bySubregion = {};
-  NA_SUBREGIONS.forEach(s => bySubregion[s] = []);
-  const unmatched = [];
-  values.forEach(v => {
-    const sub = naSubregionForCity(v);
-    if(sub) bySubregion[sub].push(v);
-    else unmatched.push(v);
-  });
-
-  NA_SUBREGIONS.forEach(sub => {
-    const subValues = bySubregion[sub];
-    const subActiveCount = subValues.filter(v => filterState.city.has(v)).length;
-    const subPanel = document.createElement('div');
-    subPanel.className = 'location-region-panel';
-    let subToggleEl;
-    if(subValues.length === 0){
-      const empty = document.createElement('div');
-      empty.className = 'location-region-empty';
-      empty.textContent = 'No alumni listed here yet.';
-      subPanel.appendChild(empty);
-    } else {
-      subPanel.appendChild(buildFilterCheckboxGroup('city', subValues, () => {
-        updateDropdownCountBadge(subToggleEl, subValues.filter(v => filterState.city.has(v)).length);
-        onAnyChange();
-      }));
-    }
-    const subItem = buildAccordionItem(sub, subActiveCount, subPanel, wrap);
-    subToggleEl = subItem.querySelector('.location-region-toggle');
-    wrap.appendChild(subItem);
-  });
-
-  if(unmatched.length){
-    wrap.appendChild(buildFilterCheckboxGroup('city', unmatched, onAnyChange));
-  }
-
-  return wrap;
-}
-
-// Location's own panel: 4 fixed region headers (North America, Europe,
-// Asia, Latin America), each a clickable row that reveals its own
-// nested list only once clicked - the cities/countries inside stay
-// hidden until then, per request. North America's own list is a further
-// nested accordion (see buildNorthAmericaPanel above); the other three
-// stay a flat checkbox list via buildFilterCheckboxGroup. Accordion
-// behavior (per request) - opening one closes any other region already
-// open, rather than letting several stack up at once.
+// Location's own panel: Midwest/East Coast/South/West Coast as plain
+// flat checkboxes, then "Outside U.S." as the one disclosure toggle for
+// Asia/Canada/Latin America/Europe (2026-10-21, per request).
 function buildLocationRegionGroup(values, onAnyChange){
   const wrap = document.createElement('div');
-  wrap.className = 'location-regions';
+  wrap.className = 'location-flat';
 
-  const byRegion = {};
-  LOCATION_REGIONS.forEach(r => byRegion[r] = []);
+  const usBuckets = {};
+  US_REGIONS.forEach(r => usBuckets[r] = []);
+  const outsideUS = { Asia: [], Canada: [], "Latin America": [], Europe: [] };
+
   values.forEach(v => {
-    const region = LOCATION_REGIONS.includes(regionForCity(v)) ? regionForCity(v) : "North America";
-    byRegion[region].push(v);
+    const usRegion = usRegionForCity(v);
+    if(usRegion){ usBuckets[usRegion].push(v); return; }
+    if(isCanadaValue(v)){ outsideUS.Canada.push(v); return; }
+    const region = regionForCity(v);
+    if(region === "Asia" || region === "Latin America" || region === "Europe") outsideUS[region].push(v);
   });
 
-  LOCATION_REGIONS.forEach(region => {
-    const regionValues = byRegion[region];
-    const regionActiveCount = regionValues.filter(v => filterState.city.has(v)).length;
-
-    const regionPanel = document.createElement('div');
-    regionPanel.className = 'location-region-panel';
-    let regionToggleEl;
-    if(regionValues.length === 0){
-      const empty = document.createElement('div');
-      empty.className = 'location-region-empty';
-      empty.textContent = 'No alumni listed here yet.';
-      regionPanel.appendChild(empty);
-    } else if(region === "North America"){
-      regionPanel.appendChild(buildNorthAmericaPanel(regionValues, () => {
-        updateDropdownCountBadge(regionToggleEl, regionValues.filter(v => filterState.city.has(v)).length);
-        onAnyChange();
-      }));
-    } else if(region === "Asia"){
-      // Country-level only (2026-10-21, per request - "if someone is
-      // based in Asia, let's just have the country name on the filter.
-      // no need to show the specific cities in the filter, they can show
-      // up on the alums' cards") - groups every raw city/location value
-      // under its own country via countryForAsiaValue() below, one
-      // checkbox per country, which toggles every underlying raw value
-      // together (same grouped-checkbox mechanism "Select all" already
-      // uses, just scoped per country instead of the whole list).
-      regionPanel.appendChild(buildGroupedFilterCheckboxGroup('city', regionValues, countryForAsiaValue, () => {
-        updateDropdownCountBadge(regionToggleEl, regionValues.filter(v => filterState.city.has(v)).length);
-        onAnyChange();
-      }));
-    } else {
-      regionPanel.appendChild(buildFilterCheckboxGroup('city', regionValues, () => {
-        updateDropdownCountBadge(regionToggleEl, regionValues.filter(v => filterState.city.has(v)).length);
-        onAnyChange();
-      }));
-    }
-
-    const regionItem = buildAccordionItem(region, regionActiveCount, regionPanel, wrap);
-    regionToggleEl = regionItem.querySelector('.location-region-toggle');
-    wrap.appendChild(regionItem);
+  US_REGIONS.forEach(region => {
+    if(usBuckets[region].length) wrap.appendChild(buildFlatLocationCheckbox(region, usBuckets[region], onAnyChange));
   });
+
+  const hasOutside = ["Asia", "Canada", "Latin America", "Europe"].some(r => outsideUS[r].length);
+  if(hasOutside) wrap.appendChild(buildOutsideUSGroup(outsideUS, onAnyChange));
 
   return wrap;
 }
@@ -4795,15 +4668,32 @@ function selectAlum(id, opts){
   // the exact same one already showing (per request - "set it to remain
   // static").
   if(!alreadySelected) renderProfilePanel();
-  if(opts.openMobileDetail){
-    document.getElementById('directorySplit').classList.add('mobile-detail-open');
-    document.getElementById('directoryRight').scrollTop = 0;
-  }
+  if(opts.openMobileDetail) openMobileDetail();
   if(opts.reopenProfile) expandProfilePanel();
 }
 
+// The mobile profile drawer (2026-10-21, per request) - locks the
+// underlying directory's own scroll only while it's open ("lock the
+// underlying directory only while the profile drawer is open"), and
+// hides the search/filter/Review & Submit toolbar so the drawer can
+// start right below the masthead ("hide the entire search/filter/
+// Review & Submit area so the profile can begin immediately below the
+// masthead") - sizeDirectorySplit() is re-run right after toggling the
+// toolbar away so --content-top (the drawer's own `top` offset) shrinks
+// to match the masthead-only height, not the masthead+toolbar height it
+// was measured against a moment ago.
+function openMobileDetail(){
+  document.getElementById('directorySplit').classList.add('mobile-detail-open');
+  document.getElementById('view-listing').classList.add('mobile-detail-open');
+  document.body.classList.add('mobile-drawer-open');
+  document.getElementById('directoryRight').scrollTop = 0;
+  sizeDirectorySplit();
+}
 function closeMobileDetail(){
   document.getElementById('directorySplit').classList.remove('mobile-detail-open');
+  document.getElementById('view-listing').classList.remove('mobile-detail-open');
+  document.body.classList.remove('mobile-drawer-open');
+  sizeDirectorySplit();
 }
 
 // Collapsing/expanding the profile panel (2026-10-17) - only toggles a
@@ -5849,7 +5739,7 @@ function showListing(contextLabel, fromHistory, categoryKey, categoryValue){
   document.getElementById('view-info').style.display = 'none';
   document.getElementById('view-claim-form').style.display = 'none';
   document.body.classList.add('listing-active');
-  document.getElementById('directorySplit').classList.remove('mobile-detail-open');
+  closeMobileDetail();
   // Every time the browsing page is (re)entered, start with the full-
   // width directory and the profile panel closed, per request - not just
   // on first load.
@@ -5964,29 +5854,45 @@ window.addEventListener('popstate', (e) => {
 });
 history.replaceState({view:'landing'}, '', location.href);
 
+// Two hamburger/tabs pairs now (2026-10-21, per request - "keep the
+// hamburger visible on every mobile page/state, not only the landing
+// page") - the landing page's own (#heroHamburger/#topTabs) and the
+// masthead's (#heroHamburgerMasthead/#topTabsMasthead), used by
+// Browse/Profile/About/FAQ/Feedback. Same wiring for both, generalized
+// instead of duplicated.
+const HAMBURGER_PAIRS = [
+  {hamburger: 'heroHamburger', tabs: 'topTabs'},
+  {hamburger: 'heroHamburgerMasthead', tabs: 'topTabsMasthead'}
+];
+function closeAllMobileTabs(){
+  HAMBURGER_PAIRS.forEach(({hamburger, tabs}) => {
+    document.getElementById(tabs)?.classList.remove('open');
+    document.getElementById(hamburger)?.setAttribute('aria-expanded', 'false');
+  });
+}
 document.querySelectorAll('[data-nav]').forEach(btn => {
   btn.addEventListener('click', () => {
     showInfo(btn.dataset.nav);
-    document.getElementById('topTabs').classList.remove('open');
-    document.getElementById('heroHamburger').setAttribute('aria-expanded', 'false');
+    closeAllMobileTabs();
   });
 });
 
-const heroHamburger = document.getElementById('heroHamburger');
-if(heroHamburger){
-  heroHamburger.addEventListener('click', () => {
-    const tabs = document.getElementById('topTabs');
+HAMBURGER_PAIRS.forEach(({hamburger: hamburgerId, tabs: tabsId}) => {
+  const hamburger = document.getElementById(hamburgerId);
+  if(!hamburger) return;
+  hamburger.addEventListener('click', () => {
+    const tabs = document.getElementById(tabsId);
     const isOpen = tabs.classList.toggle('open');
-    heroHamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
   });
   document.addEventListener('click', (e) => {
-    const tabs = document.getElementById('topTabs');
-    if(tabs.classList.contains('open') && !tabs.contains(e.target) && e.target !== heroHamburger && !heroHamburger.contains(e.target)){
+    const tabs = document.getElementById(tabsId);
+    if(tabs.classList.contains('open') && !tabs.contains(e.target) && e.target !== hamburger && !hamburger.contains(e.target)){
       tabs.classList.remove('open');
-      heroHamburger.setAttribute('aria-expanded', 'false');
+      hamburger.setAttribute('aria-expanded', 'false');
     }
   });
-}
+});
 
 document.getElementById('feedbackSend').addEventListener('click', () => {
   const textArea = document.getElementById('feedbackText');
