@@ -950,19 +950,32 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    Back to being seamlessly joined to the directory/profile card below
    it (per request - "nevermind, should not be their own card, restore
    to how it was") - a shared border instead of top/bottom margins. */
-/* Border lives on .directory-toolbar itself (full width, no padding of
-   its own) rather than on the padded .listing-container inside it, so
-   the toolbar's own surface/divider runs edge-to-edge across the whole
-   workspace (2026-10-21, per request) while the search/filter controls
-   keep their exact current position via .listing-container's own
-   (unchanged) padding. */
-.directory-toolbar{ border-bottom: 1px solid var(--border); }
+/* A sibling of .workspace now (2026-10-21, per request), not nested
+   inside it - this surface spans the true viewport width with no
+   left/right outer margin, rather than stopping at .workspace's own
+   inset edges. flex:0 0 auto since it's a direct flex child of
+   #view-listing's own column (natural height, doesn't stretch/shrink
+   - .workspace is the flexible one, via its own flex:1 1 auto). */
+.directory-toolbar{
+  width: 100%;
+  flex: 0 0 auto;
+  background: var(--workspace-bg);
+  border-bottom: 1px solid var(--border);
+}
+/* max-width/margin-inline reproduce .workspace's own centering formula
+   exactly (2026-10-21), so the search box/filters/Review & Submit land
+   at the identical x-position they always have, even though the
+   surface around them is now the full viewport rather than
+   .workspace's own narrower box. */
 .directory-toolbar > .listing-container{
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding-top: 16px;
   padding-bottom: 16px;
+  width: calc(100% - 64px);
+  max-width: 1480px;
+  margin-inline: auto;
 }
 /* .search-box's own `flex: 1 1 280px` sets a WIDTH basis in its other
    context (a row-direction flex parent) - .directory-toolbar is
@@ -1301,15 +1314,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 0;
 }
 .profile-back-btn:hover{ color: var(--ink); }
-/* The divider-bearing element (2026-10-21, per request) - plain
-   width:100%, no padding, no grid of its own; its only CSS job is to
-   carry the border-bottom so that line structurally cannot stop short
-   of the profile column's real edges. All the actual layout (grid,
-   padding, fixed height) lives in .profile-header-inner below. Its
-   own height is left auto so it always exactly wraps its one child -
-   alignProfileHeaderDividerToChevron() stretches that explicitly via
-   an inline height when it needs to nudge the border down to meet the
-   chevron. */
+/* The divider-bearing element - plain width:100%, no padding, no grid
+   of its own; its only CSS job is to carry the border-bottom so that
+   line structurally cannot stop short of the profile column's real
+   edges. All the actual layout (grid, padding, fixed height) lives in
+   .profile-header-inner below. Height is left auto (2026-10-21) so it
+   always exactly wraps its one child - no JS involved in its position
+   at all any more; it just sits at its natural height. */
 .profile-header{
   width: 100%;
   border-bottom: 1px solid var(--border);
@@ -1427,10 +1438,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 /* Restores the 24px inset now that #directoryRight no longer provides
    it (2026-10-21) - the only divider left in the profile is
    .profile-header's own border-bottom (the one that used to sit above
-   Ask Me About is gone); its vertical position is set in JS (see
-   alignProfileHeaderDividerToChevron()) to land exactly on the resizer
-   chevron's own vertical center, not just wherever the header's
-   natural height happens to put it. */
+   Ask Me About is gone), which sits at its natural position directly
+   below the photo/identity content - no JS positioning involved. */
 .profile-sections{ padding: 0 24px; }
 .profile-sections .alum-columns{ margin-top: 0; }
 /* Enclosed field (2026-10-20), replacing the old underline style - a
@@ -2587,16 +2596,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 
 <div id="view-listing" style="display:none">
 
-<!-- Shared toolbar (2026-10-17 redesign; revised again 2026-10-17 to
-     span the full viewport width with its own white background and
-     divider, while the actual search/filter/button content stays
-     nested in a .listing-container so it keeps its 1280px-centered
-     position - see that class's own comment). -->
-<!-- Unified workspace card (2026-10-20 editorial-palette pass) - search,
-     filters, directory and profile all live inside this one centered,
-     rounded card (see .workspace's own comment) instead of two
-     separately-margined white cards on a textured page. -->
-<div class="workspace">
+<!-- Toolbar (2026-10-21, per request) - a sibling of .workspace, not
+     nested inside it, so its own white surface spans the TRUE viewport
+     width with no left/right outer margin, instead of stopping at
+     .workspace's own inset edges. .listing-container's own
+     max-width:1480px/margin-inline:auto (added just for this instance)
+     reproduces .workspace's centering exactly, so the search box,
+     filters and Review & Submit button land at the identical x-position
+     they always have, even though the surface around them is now wider. -->
 <div class="directory-toolbar">
 <div class="listing-container">
   <div class="search-box">
@@ -2614,6 +2621,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 </div>
 </div><!-- /directory-toolbar -->
 
+<!-- Unified workspace card (2026-10-20 editorial-palette pass) - the
+     directory/profile split lives inside this centered, square-cornered
+     card (see .workspace's own comment); the toolbar above it is
+     deliberately outside this card now (see its own comment). -->
+<div class="workspace">
 <div class="listing-container">
 <div id="statusArea"></div>
 
@@ -4426,7 +4438,6 @@ function collapseProfilePanel(){
 function expandProfilePanel(){
   document.getElementById('directorySplit').classList.remove('profile-collapsed');
   enforceDirectoryListMinWidth();
-  alignProfileHeaderDividerToChevron();
 }
 
 function renderProfilePanel(){
@@ -4475,7 +4486,6 @@ function renderProfilePanel(){
   updateProfileSections(a);
 
   collapseIndustryTagsInline();
-  alignProfileHeaderDividerToChevron();
 }
 
 // Capacity badge + Add/Added button - the only two pieces of
@@ -4540,39 +4550,15 @@ function updateProfileSections(a){
   el.innerHTML = profileThreeColumnsHtml(a, visibleTopics);
 }
 
-// Lines up .profile-header's own border-bottom (the profile's one
-// divider, 2026-10-21) with the resizer chevron's vertical center (per
-// request - "align its vertical position exactly with the center/
-// vertex of the chevron... so the intersection looks intentional").
-// The chevron is centered on the whole split's height (viewport-
-// dependent, via .directory-resizer's own align-items:center), while
-// .profile-header's natural height is a fixed, content-independent
-// 205px (see .profile-header-inner) - these only coincide through
-// explicit measurement, not by default layout. Stretches
-// .profile-header's own height (never .profile-header-inner's, which
-// stays fixed) to push the border down to meet the chevron; resets to
-// the CSS default first so repeated calls measure from a known
-// starting point, not a previous call's own adjustment.
-function alignProfileHeaderDividerToChevron(){
-  const header = document.querySelector('.profile-header');
-  const chevron = document.getElementById('directoryCollapseBtn');
-  if(!header || !chevron) return;
-  header.style.height = '';
-  // offsetParent is null anywhere up the hidden-ancestor chain (mobile
-  // view, or the profile panel still collapsed at render time, e.g.
-  // selectAlum() rendering before a separate expandProfilePanel() call)
-  // - bail rather than compute off a zeroed-out rect.
-  if(chevron.offsetParent === null || header.offsetParent === null) return;
-  const chevronRect = chevron.getBoundingClientRect();
-  const headerRect = header.getBoundingClientRect();
-  const chevronMid = chevronRect.top + chevronRect.height / 2;
-  // Never let the border move above the header's own natural bottom
-  // edge (a safety floor, not just the common case) - if the chevron's
-  // center ever comes out above that, fall back to the header's
-  // natural height instead of ever compressing/overlapping its content.
-  const targetHeight = Math.max(chevronMid - headerRect.top, headerRect.height);
-  header.style.height = targetHeight + 'px';
-}
+// .profile-header no longer chases the resizer chevron's position
+// (2026-10-21, per explicit go-ahead) - that previously stretched the
+// header's own height to push its border-bottom down to the chevron's
+// vertical center, but the chevron is centered on the WHOLE split's
+// height while the header's content sits near the top, so matching it
+// exactly meant an increasingly large blank gap on any taller viewport
+// (confirmed: ~120px at a common 900px-tall window). The divider now
+// just sits at its natural position, directly below the content, with
+// no JS involved at all.
 
 // Delegated rather than bound per-render (renderProfilePanel replaces
 // the panel's innerHTML on every call, which would otherwise mean
@@ -4735,7 +4721,7 @@ function sizeDirectorySplit(){
 let directorySplitResizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(directorySplitResizeTimer);
-  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); alignProfileHeaderDividerToChevron(); }, 100);
+  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); }, 100);
 });
 
 // Draggable divider between the directory list and the profile panel
