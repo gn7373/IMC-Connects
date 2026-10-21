@@ -165,14 +165,11 @@ header.site{
      there's no awkward margin") - was inset by clamp(48px,6vw,96px). */
   right: 0;
   bottom: 0;
-  /* Reduced back by 0.5x (2026-10-21, per request - "should not be
-     spilling into the nav bar") - the previous 2x pass (clamp(1520px,
-     108vw, 1840px)) made the artwork tall enough that on a short-ish
-     viewport it reached up into .hero-nav's own territory before
-     .hero-top's overflow:hidden clipped it. Halving the width (and so
-     the height too, via the img's locked aspect-ratio) keeps it clear
-     of the nav at any normal desktop viewport height. */
-  width: clamp(760px, 54vw, 920px);
+  /* Increased 1.5x (2026-10-21, per request) - was clamp(760px, 54vw,
+     920px). .hero-top's own overflow:hidden still clips anything this
+     pushes past the hero section's 100vh bounds, same safety net as
+     before. */
+  width: clamp(1140px, 81vw, 1380px);
   height: auto;
   display: flex;
   align-items: flex-end;
@@ -2042,6 +2039,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   gap: 6px;
 }
 .capacity-icon{ color: var(--ink); flex-shrink: 0; }
+/* Hidden in the profile panel specifically (2026-10-21, per request) -
+   the people icon stays on the directory cards, just not next to the
+   badge in the profile header. */
+.profile-availability .capacity-icon{ display: none; }
 /* Matches the filter controls' own size now (2026-10-21, per request -
    "reduce both the spots left badge and Add to my list button to
    approximately the same height/font size/padding as the filter
@@ -4343,7 +4344,7 @@ function capacityBadgeHtml(capacity, assumed){
     label = '1 spot left';
   } else {
     cls = 'open';
-    label = `${capacity} spots available`;
+    label = `${capacity} spots left`;
   }
   const icon = '<svg class="capacity-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
   return `<span class="capacity-badge-wrap">${icon}<span class="capacity-badge capacity-badge-${cls}">${label}</span></span>`;
