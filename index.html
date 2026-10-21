@@ -2754,8 +2754,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 
 /* ============================================================
-   MOBILE REDESIGN — 2026-10-21 v2
+   MOBILE REDESIGN — 2026-10-21 v3
    6-mobile page.png is the spacing/layout reference.
+   Directory uses generic person icons; profile keeps real photo.
    ============================================================ */
 .mobile-profile-retract,
 .mobile-profile-topbar,
@@ -2777,22 +2778,22 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     padding-left:20px !important;
     padding-right:20px !important;
   }
-  #heroSub.compact .hero-logo{ font-size:11px; }
-  #heroSub.compact .hero-logo .logo-cmi{ font-size:1.72em; }
+  #heroSub.compact .hero-logo{ font-size:11px !important; }
+  #heroSub.compact .hero-logo .logo-cmi{ font-size:1.72em !important; }
 
-  /* Browse toolbar spacing follows the supplied mobile reference. */
+  /* Browse controls: match the reference gutters, not edge-to-edge. */
   .directory-toolbar .listing-container{
     width:100% !important;
     max-width:none !important;
     margin:0 !important;
-    padding:12px 20px 14px !important;
+    padding:14px 20px 16px !important;
   }
   .search-box{
     width:100% !important;
     min-width:0 !important;
-    height:44px !important;
+    height:46px !important;
     flex:1 1 100% !important;
-    padding:0 14px !important;
+    padding:0 15px !important;
     border-radius:12px !important;
   }
   .search-box input{
@@ -2800,23 +2801,23 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     font-size:13.5px !important;
   }
   .toolbar-row2{
-    margin-top:12px !important;
+    margin-top:13px !important;
     gap:12px !important;
     flex-wrap:wrap !important;
   }
   .mobile-filters-toggle{
-    min-height:40px;
+    min-height:40px !important;
     padding:8px 18px !important;
     border-radius:8px !important;
   }
   .pins-toggle-btn{
-    min-height:40px;
+    min-height:40px !important;
     margin-left:auto !important;
     padding:8px 18px !important;
     font-size:13px !important;
   }
 
-  /* Normal page scroll for the directory. */
+  /* Directory: normal document scroll. */
   #view-listing,
   .directory-split{ overflow:visible !important; }
   .directory-list{
@@ -2838,12 +2839,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     padding:0 !important;
   }
   .directory-list-header-inner{
-    padding:8px 20px !important;
+    padding:9px 20px !important;
   }
 
-  /* Directory cards with real headshots, matching the reference scale. */
+  /* Directory cards: generic icon only, using the reference proportions. */
   .directory-entry{
-    grid-template-columns:76px minmax(0,1fr) auto !important;
+    grid-template-columns:72px minmax(0,1fr) auto !important;
     grid-template-rows:auto auto !important;
     grid-template-areas:
       "photo info info"
@@ -2858,8 +2859,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-entry-photo{
     grid-area:photo;
     display:flex !important;
-    width:76px;
-    height:88px;
+    width:72px !important;
+    height:84px !important;
     align-self:start;
     align-items:center;
     justify-content:center;
@@ -2867,21 +2868,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     border-radius:8px;
     background:var(--selected-bg);
   }
-  .directory-entry-photo img{
-    display:block;
-    width:100%;
-    height:100%;
-    object-fit:cover;
-  }
+  .directory-entry-photo img{ display:none !important; }
   .directory-entry-photo-fallback{
-    width:34px;
-    height:34px;
-    display:flex;
+    width:34px !important;
+    height:34px !important;
+    display:flex !important;
     align-items:center;
     justify-content:center;
     color:var(--muted);
   }
-  .directory-entry-photo-fallback svg{ width:34px; height:34px; }
+  .directory-entry-photo-fallback svg{
+    width:34px !important;
+    height:34px !important;
+  }
   .directory-entry-info{
     grid-area:info;
     min-width:0;
@@ -2912,10 +2911,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     font-size:12px !important;
   }
   .directory-entry-location-inline .format-value{
-    min-width:0;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+    min-width:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
   }
   .directory-entry-right{
     grid-area:right !important;
@@ -2926,10 +2925,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
   .directory-entry-spots .capacity-badge{
     font-size:11.5px !important;
-    white-space:nowrap;
+    white-space:nowrap !important;
   }
 
-  /* Keep mobile filters vertical/downward, never side-opening. */
+  /* Filter drawers stay vertical/downward on mobile. */
   .toolbar-row2.mobile-filters-open .filter-dropdowns{
     margin-top:12px !important;
   }
@@ -2937,37 +2936,39 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     max-width:calc(100vw - 40px) !important;
   }
 
-  /* Drawer: roughly right 70% of screen, with directory context visible. */
+  /* Dim EVERYTHING behind the profile, including the global masthead. */
   #view-listing.mobile-detail-open::before{
     content:"";
     position:fixed;
     inset:0;
-    background:rgba(26,30,31,.50);
-    z-index:24;
+    background:rgba(26,30,31,.56);
+    z-index:900;
     pointer-events:none;
   }
   #view-listing.mobile-detail-open .directory-toolbar{
     display:none !important;
   }
+
+  /* Drawer deliberately occupies only the right portion of the phone. */
   .directory-right{
     display:block !important;
     position:fixed !important;
     top:0 !important;
-    left:clamp(88px, 29vw, 126px) !important;
+    left:auto !important;
     right:0 !important;
     bottom:0 !important;
-    width:auto !important;
+    width:clamp(250px, 68vw, 390px) !important;
     min-width:0 !important;
     max-width:none !important;
-    padding:0 0 24px !important;
+    padding:0 0 28px !important;
     overflow-y:auto !important;
     overflow-x:visible !important;
     background:var(--workspace-bg) !important;
-    border-left:1px solid var(--border-strong);
-    border-radius:18px 0 0 18px;
-    box-shadow:-12px 0 30px rgba(24,23,34,.22);
-    z-index:30;
-    transform:translateX(calc(100% + 130px)) !important;
+    border-left:1px solid var(--border-strong) !important;
+    border-radius:18px 0 0 18px !important;
+    box-shadow:-12px 0 30px rgba(24,23,34,.24) !important;
+    z-index:1000 !important;
+    transform:translateX(calc(100% + 24px)) !important;
     transition:transform 280ms cubic-bezier(.22,.8,.32,1) !important;
   }
   .directory-split.mobile-detail-open .directory-right{
@@ -2977,38 +2978,39 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     .directory-right{ transition:none !important; }
   }
 
+  /* Drawer has its own topbar. Global masthead remains dimmed behind it. */
   .mobile-profile-topbar{
-    display:flex;
+    display:flex !important;
     position:relative;
     align-items:center;
     justify-content:flex-end;
-    height:66px;
-    padding:0 18px;
+    height:88px !important;
+    padding:0 20px !important;
   }
   .mobile-profile-menu-btn{
-    width:34px;
-    height:34px;
-    display:flex;
+    width:34px !important;
+    height:34px !important;
+    display:flex !important;
     align-items:center;
     justify-content:center;
-    padding:0;
-    border:0;
-    background:none;
-    color:var(--ink);
+    padding:0 !important;
+    border:0 !important;
+    background:none !important;
+    color:var(--ink) !important;
     cursor:pointer;
   }
   .mobile-profile-nav-menu{
     display:none;
     position:absolute;
-    top:54px;
-    right:14px;
-    min-width:126px;
+    top:64px;
+    right:16px;
+    min-width:128px;
     padding:10px;
     background:#fff;
     border:1px solid var(--border);
     border-radius:10px;
     box-shadow:0 12px 28px rgba(37,37,100,.16);
-    z-index:36;
+    z-index:1100;
   }
   .mobile-profile-nav-menu.open{ display:block; }
   .mobile-profile-nav-menu button{
@@ -3024,46 +3026,46 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
 
   .mobile-profile-retract{
-    display:flex;
+    display:flex !important;
     align-items:center;
     justify-content:center;
     position:absolute;
-    left:-20px;
-    top:50%;
-    width:40px;
-    height:64px;
-    margin-top:-32px;
-    padding:0;
-    border:1px solid var(--border-strong);
-    border-right:0;
-    border-radius:14px 0 0 14px;
-    background:var(--workspace-bg);
-    color:var(--accent);
-    z-index:35;
-    box-shadow:-5px 2px 12px rgba(53,32,95,.14);
+    left:-20px !important;
+    top:50% !important;
+    width:40px !important;
+    height:64px !important;
+    margin-top:-32px !important;
+    padding:0 !important;
+    border:1px solid var(--border-strong) !important;
+    border-right:0 !important;
+    border-radius:14px 0 0 14px !important;
+    background:var(--workspace-bg) !important;
+    color:var(--accent) !important;
+    z-index:1100 !important;
+    box-shadow:-5px 2px 12px rgba(53,32,95,.14) !important;
     cursor:pointer;
   }
 
-  /* Profile header: photo/identity, then metadata+spots, then add. */
+  /* Profile: photo + identity; metadata/spots; add button; divider. */
   .profile-toolbar,
   .profile-back-btn{ display:none !important; }
   .profile-header{
     width:100% !important;
-    padding:4px 18px 16px !important;
+    padding:0 20px 18px !important;
     border-bottom:1px solid var(--border-strong) !important;
-    background:var(--workspace-bg);
+    background:var(--workspace-bg) !important;
   }
   .profile-header-inner,
   .directory-right.narrow .profile-header-inner{
     display:grid !important;
-    grid-template-columns:86px minmax(0,1fr) auto !important;
+    grid-template-columns:88px minmax(0,1fr) auto !important;
     grid-template-rows:auto auto auto !important;
     grid-template-areas:
       "portrait identity identity"
       "meta meta spots"
       "add add add" !important;
     column-gap:14px !important;
-    row-gap:12px !important;
+    row-gap:13px !important;
     width:100% !important;
     height:auto !important;
     min-height:0 !important;
@@ -3079,9 +3081,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .profile-portrait,
   .directory-right.narrow .profile-portrait{
     grid-area:portrait !important;
-    width:86px !important;
-    height:106px !important;
-    min-width:86px !important;
+    width:88px !important;
+    height:112px !important;
+    min-width:88px !important;
     margin:0 !important;
     border-radius:9px !important;
     overflow:hidden !important;
@@ -3089,25 +3091,25 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .profile-info-identity{
     grid-area:identity !important;
     min-width:0 !important;
-    max-height:106px !important;
+    max-height:112px !important;
     overflow:hidden !important;
     align-self:start !important;
   }
   .profile-name{
     margin:0 !important;
-    font-size:19px !important;
+    font-size:20px !important;
     line-height:1.08 !important;
   }
   .profile-info .alum-role{
-    margin-top:5px !important;
-    font-size:12.6px !important;
+    margin-top:6px !important;
+    font-size:13px !important;
     line-height:1.22 !important;
   }
   .profile-info .alum-company{
     margin-top:2px !important;
-    font-size:12.2px !important;
+    font-size:12.5px !important;
     line-height:1.22 !important;
-    overflow-wrap:anywhere;
+    overflow-wrap:anywhere !important;
   }
   .profile-identity-wrap{ margin-top:0 !important; }
 
@@ -3115,12 +3117,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     grid-area:meta !important;
     display:flex !important;
     align-items:center !important;
-    gap:7px !important;
+    gap:8px !important;
     min-width:0 !important;
     overflow:hidden !important;
     margin:0 !important;
     white-space:nowrap !important;
-    font-size:11.8px !important;
+    font-size:12px !important;
   }
   .profile-info .alum-meta .format-value{
     min-width:0 !important;
@@ -3139,20 +3141,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     white-space:nowrap !important;
   }
   .profile-availability .capacity-badge{
-    font-size:11px !important;
+    font-size:11.5px !important;
   }
   .profile-add-btn{
     grid-area:add !important;
     justify-self:start !important;
     margin:0 !important;
-    min-height:34px !important;
-    padding:7px 13px !important;
-    font-size:12px !important;
+    min-height:36px !important;
+    padding:8px 14px !important;
+    font-size:12.5px !important;
   }
 
-  /* Content-driven expertise spacing; no reserved empty section heights. */
+  /* Expertise spacing follows the reference, with no reserved blank height. */
   .profile-sections{
-    padding:16px 18px 28px !important;
+    padding:20px 20px 32px !important;
   }
   .profile-sections .alum-columns{
     display:block !important;
@@ -3169,25 +3171,25 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .profile-sections .topic-tags{
     min-height:0 !important;
     height:auto !important;
-    margin-top:8px !important;
+    margin-top:9px !important;
   }
   .profile-sections .alum-col + .alum-col,
   .profile-sections .alum-columns + .ask-me-about{
-    margin-top:24px !important;
+    margin-top:28px !important;
   }
   .profile-sections .field-label{
     display:block !important;
     margin:0 !important;
-    font-size:14px !important;
+    font-size:15px !important;
     font-weight:700 !important;
     color:var(--ink) !important;
   }
   .profile-sections .topic-tags{
-    gap:6px !important;
+    gap:7px !important;
   }
   .profile-sections .topic-tag{
-    padding:5px 8px !important;
-    font-size:11px !important;
+    padding:6px 9px !important;
+    font-size:11.5px !important;
     line-height:1.2 !important;
   }
 
@@ -3204,7 +3206,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   #infoPanelFaq,
   #infoPanelFeedback{ margin-top:18px !important; }
 
-  /* Landing mobile composition: narrower CTA, artwork pulled upward. */
+  /* Landing: narrower CTA and artwork pulled into the hero composition. */
   .hero-copy{
     margin-top:14px !important;
     padding-left:20px !important;
@@ -3524,7 +3526,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-redesign-2";
+const BUILD_VERSION = "2026-10-21-mobile-redesign-3";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4859,98 +4861,6 @@ const PORTRAIT_PLACEHOLDER_SVG = '<svg width="56" height="56" viewBox="0 0 24 24
 // so this tries every extension actually in use in that folder in turn
 // (via the image's own onerror) and falls back to the placeholder SVG
 // once all of them 404 - never assumes a particular alum has a photo.
-// Exact filename manifest from /photos. This makes directory thumbnails
-// deterministic instead of waiting for a multi-extension fallback chain.
-const PHOTO_FILE_BY_SLUG = {
-  "aastha_desai": "aastha_desai.jfif",
-  "adrena_stubberfield": "adrena_stubberfield.png",
-  "alexandra_barrangan": "alexandra_barrangan.jfif",
-  "alice_liang": "alice_liang.jfif",
-  "amanda_modelski": "amanda_modelski.png",
-  "anni_lundy": "anni_lundy.png",
-  "arjun_kumar": "arjun_kumar.jfif",
-  "ashley_gondorcin_graves": "ashley_gondorcin_graves.jfif",
-  "ashley_owen": "ashley_owen.jfif",
-  "bhawna_n": "bhawna_n.png",
-  "bri_sandack": "bri_sandack.jfif",
-  "brian_weidy": "brian_weidy.jfif",
-  "brittany_thomas": "brittany_thomas.jfif",
-  "camille_vicino": "camille_vicino.jfif",
-  "carmen_gutierrez_de_la_roza": "carmen_gutierrez_de_la_roza.jfif",
-  "christiana_stewart": "christiana_stewart.jfif",
-  "christina_fu": "christina_fu.jfif",
-  "cianna_reeves": "cianna_reeves.png",
-  "constance_yulei_liu": "constance_yulei_liu.jpg",
-  "daniel_allen": "daniel_allen.jfif",
-  "dhriti_trivedi": "dhriti_trivedi.jfif",
-  "fara_goldberg": "fara_goldberg.jfif",
-  "faryal_ali": "faryal_ali.jfif",
-  "gary_gonzalez": "gary_gonzalez.png",
-  "gonzalo_garcia_calderon": "gonzalo_garcia_calderon.jfif",
-  "hanson_hairihan": "hanson_hairihan.jfif",
-  "henry_huang": "henry_huang.jfif",
-  "henry_rogers": "henry_rogers.jfif",
-  "ilina_ewen": "ilina_ewen.jfif",
-  "jasmine_chao": "jasmine_chao.jfif",
-  "jennifer_wang": "jennifer_wang.jfif",
-  "jess_guffey": "jess_guffey.jfif",
-  "jesse_zeng": "jesse_zeng.png",
-  "jiaran_wang": "jiaran_wang.png",
-  "jonathan_kamel": "jonathan_kamel.png",
-  "kali_skidelsky": "kali_skidelsky.jfif",
-  "kandise_le_blanc": "kandise_le_blanc.png",
-  "katie_boardman": "katie_boardman.jfif",
-  "katie_lahti": "katie_lahti.jfif",
-  "katie_mcdonnell": "katie_mcdonnell.jfif",
-  "kay_chung": "kay_chung.jfif",
-  "kevin_miller": "kevin_miller.jfif",
-  "kevin_sidell": "kevin_sidell.jfif",
-  "kiera_luo": "kiera_luo.png",
-  "koushank_ahuja": "koushank_ahuja.jfif",
-  "laura_alencar": "laura_alencar.jfif",
-  "lauren_meltzer": "lauren_meltzer.jfif",
-  "layth_yehyawi": "layth_yehyawi.jfif",
-  "leeann_shelton": "leeann_shelton.jfif",
-  "lily_proudman": "lily_proudman.jfif",
-  "linda_feng": "linda_feng.jfif",
-  "lindsey_schott": "lindsey_schott.jfif",
-  "lucinda_vacura": "lucinda_vacura.jfif",
-  "mahek_parekh": "mahek_parekh.png",
-  "manuel_altomonte": "manuel_altomonte.jfif",
-  "marc_zarefsky": "marc_zarefsky.jfif",
-  "maria_alejandra_alvarado_g": "maria_alejandra_alvarado_g.jfif",
-  "mary_hager": "mary_hager.png",
-  "meena_vetri_wehrs": "meena_vetri_wehrs.jfif",
-  "melanie_greben": "melanie_greben.jfif",
-  "morgan_ho": "morgan_ho.jfif",
-  "nadine_mansour": "nadine_mansour.jfif",
-  "nandini_balu": "nandini_balu.jfif",
-  "naomi_birenbaum": "naomi_birenbaum.jfif",
-  "nikith_deo": "nikith_deo.jfif",
-  "nina_wescott": "nina_wescott.jfif",
-  "olavina_harahap": "olavina_harahap.jfif",
-  "priyal_khanuja": "priyal_khanuja.jfif",
-  "rachel_sova": "rachel_sova.png",
-  "rainn_guo": "rainn_guo.jfif",
-  "riya_bhatia": "riya_bhatia.jfif",
-  "rohana_radhakrishnan": "rohana_radhakrishnan.jfif",
-  "rushil_mohan": "rushil_mohan.jfif",
-  "samone_khalil": "samone_khalil.png",
-  "sarah_koessel": "sarah_koessel.jfif",
-  "sasha_shrimanker": "sasha_shrimanker.png",
-  "selina_wang": "selina_wang.png",
-  "shari_newman": "shari_newman.jfif",
-  "sheryl_xu": "sheryl_xu.jfif",
-  "sumit_jagdale": "sumit_jagdale.jfif",
-  "taerynn_k_owens": "taerynn_k_owens.jfif",
-  "tamara_bendeck": "tamara_bendeck.jfif",
-  "tim_anderson": "tim_anderson.jfif",
-  "victor_yakovlev": "victor_yakovlev.png",
-  "wanyao_xie": "wanyao_xie.jfif",
-  "xuechen_zhang_susan": "xuechen_zhang_susan.jfif",
-  "yuki_fang": "yuki_fang.png"
-};
-
 const PORTRAIT_EXTS = ['jpg', 'jpeg', 'png', 'jfif'];
 function slugifyAlumName(name){
   return (name || '')
@@ -5023,26 +4933,6 @@ function preloadAlumPhotoOnDemand(a){
   resolveAlumPhoto(a);
 }
 
-// Mobile directory thumbnails use the same photo-resolution/cache path
-// as the profile, so non-JPG portraits and missing-photo fallbacks behave
-// consistently. Desktop keeps directory rows text-only.
-function hydrateDirectoryThumbnail(button, a){
-  if(window.innerWidth > 767) return;
-  const shell = button.querySelector('.directory-entry-photo');
-  if(!shell) return;
-  const slug = slugifyAlumName(a.name);
-  const exactFile = PHOTO_FILE_BY_SLUG[slug];
-  if(exactFile){
-    shell.innerHTML = `<img src="photos/${exactFile}" alt="" loading="lazy" decoding="async">`;
-    return;
-  }
-  resolveAlumPhoto(a).then(photoResult => {
-    if(!button.isConnected) return;
-    if(photoResult.src){
-      shell.innerHTML = `<img src="${photoResult.src}" alt="" loading="lazy" decoding="async">`;
-    }
-  });
-}
 // The only thing that actually touches the visible <img>/fallback -
 // called once a photo has resolved (see resolveAlumPhoto above) AND the
 // caller has confirmed (via its own token) that this is still the
@@ -5196,7 +5086,6 @@ function renderDirectoryList(filtered){
     btn.addEventListener('mouseenter', () => preloadAlumPhotoOnDemand(a));
     btn.addEventListener('focus', () => preloadAlumPhotoOnDemand(a));
     list.appendChild(btn);
-    hydrateDirectoryThumbnail(btn, a);
   });
   enforceDirectoryListMinWidth();
   preloadAlumPhotos(filtered);
