@@ -3742,7 +3742,29 @@ const COMPANY_PRIMARY_INDUSTRY = {
   "The Kitchen at Kraft Heinz": "Food & Beverage",
   "Versapay": "Tech/SaaS",
   "Erie Family Health Centers": "Healthcare & Pharmaceuticals",
-  "Hinsdale Township High School District 86": "Education"
+  "Hinsdale Township High School District 86": "Education",
+  "MathCo (prev. BCG)": "Consulting",
+  // 2026-10-20 - full-roster pass for the same "wrong industry
+  // foregrounded" issue (prompted by Gonzalo/MathCo above). Same
+  // confidence bar as the rest of this table - well-known, unambiguous
+  // companies only; agencies/consultancies (TBWA, Chemistry, Ipsos,
+  // Razorfish, etc.) are deliberately left out, same reasoning as the
+  // comment above.
+  "DoorDash": "Tech/SaaS",
+  "Meta": "Tech/SaaS",
+  "The Partnership for Large Election Jurisdictions (prev LinkedIn)": "Nonprofit/Social Impact",
+  "Sticky.io": "Tech/SaaS",
+  "Uber": "Tech/SaaS",
+  "Danaher": "Healthcare & Pharmaceuticals",
+  "DANA (Indonesian-based Fintech Company)": "Financial Services",
+  "SOMOS Hospitality": "Travel & Hospitality",
+  "Capital One": "Financial Services",
+  "Woodstream Corporation": "Consumer Packaged Goods (CPG)",
+  "Amazon": "Retail & E-commerce",
+  "Weill Cornell Medicine Dept. of Pediatrics": "Healthcare & Pharmaceuticals",
+  "Microsoft": "Tech/SaaS",
+  "Johnson and Johnson": "Healthcare & Pharmaceuticals",
+  "Expedia Group": "Travel & Hospitality"
 };
 function primaryIndustryOrderedList(a){
   const wanted = COMPANY_PRIMARY_INDUSTRY[a.company];
