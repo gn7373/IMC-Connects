@@ -1249,7 +1249,29 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .sort-label-btn:hover{ border-color: var(--accent); color: var(--accent); }
 .sort-dropdown.open .sort-label-btn{ border-color: var(--accent); color: var(--accent); }
 .sort-dropdown.open .sort-label-btn svg{ transform: rotate(180deg); }
-.sort-dropdown .filter-dropdown-panel{ left: auto; right: 0; }
+.sort-dropdown .filter-dropdown-panel{ left:auto; right:0; }
+
+/* Sort should read as the compact sibling of the filter popovers, not a
+   large standalone menu. Override the generic filter panel's 240px floor
+   and roomy padding only for Sort. */
+.sort-dropdown .sort-panel{
+  min-width: 178px;
+  width: max-content;
+  max-width: calc(100vw - 40px);
+  padding: 8px 10px;
+  border-radius: 10px;
+  max-height: none;
+  overflow: visible;
+}
+.sort-dropdown .sort-option{
+  padding: 7px 8px;
+  font-size: 13px;
+  line-height: 1.2;
+}
+.sort-dropdown .sort-option.sort-clear{
+  margin-bottom: 3px;
+  padding-bottom: 8px;
+}
 .directory-split{
   display: flex;
   align-items: stretch;
@@ -1809,7 +1831,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .filter-dropdown-toggle svg{ transition: transform 150ms ease; flex-shrink: 0; }
 .filter-dropdown.open .filter-dropdown-toggle{ border-color: var(--accent); color: var(--accent); }
 .filter-dropdown.open .filter-dropdown-toggle svg{ transform: rotate(180deg); }
-.filter-dropdown-toggle .filter-dropdown-count{ color: var(--accent); font-weight: 600; }
+.filter-dropdown-toggle .filter-dropdown-count{ display:none !important; }
 /* Once anything's checked inside it, the whole tab turns solid purple -
    not just the small count badge - so an active filter is obvious at a
    glance across the row. */
@@ -2802,9 +2824,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .search-box{
     width:100% !important;
     min-width:0 !important;
-    height:52px !important;
-    flex:1 1 100% !important;
-    padding:0 16px !important;
+    height:58px !important;
+    min-height:58px !important;
+    flex:0 0 58px !important;
+    box-sizing:border-box !important;
+    padding:0 17px !important;
     border-radius:14px !important;
   }
   .search-box input{
@@ -2959,6 +2983,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
   .filter-dropdown-panel{
     max-width:calc(100vw - 40px) !important;
+  }
+  .sort-dropdown .sort-panel{
+    min-width:178px !important;
+    width:max-content !important;
+    padding:8px 10px !important;
+  }
+  .sort-dropdown .sort-option{
+    padding:7px 8px !important;
+    font-size:13px !important;
   }
 
   /* Real backdrop: dims the page and closes the drawer when tapped. */
@@ -3577,7 +3610,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-redesign-12";
+const BUILD_VERSION = "2026-10-21-mobile-redesign-13";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4486,13 +4519,8 @@ function buildLocationRegionGroup(values, onAnyChange){
 }
 
 function updateDropdownCountBadge(toggle, count){
+  // Active state is communicated by the solid purple highlight only.
   toggle.querySelector('.filter-dropdown-count')?.remove();
-  if(count){
-    toggle.insertBefore(
-      Object.assign(document.createElement('span'), {className: 'filter-dropdown-count', textContent: ` (${count})`}),
-      toggle.querySelector('svg')
-    );
-  }
   toggle.classList.toggle('has-selection', count > 0);
 }
 
@@ -4527,7 +4555,7 @@ function buildFilterPanel(){
     const dropdown = document.createElement('div');
     dropdown.className = 'filter-dropdown';
     const activeCount = filterState[key].size;
-    const toggle = buildFilterDropdownToggle(dropdown, `${CATEGORY_LABELS[key] || key}${activeCount ? ` <span class="filter-dropdown-count">(${activeCount})</span>` : ''}`);
+    const toggle = buildFilterDropdownToggle(dropdown, `${CATEGORY_LABELS[key] || key}`);
     toggle.classList.toggle('has-selection', activeCount > 0);
     dropdown.appendChild(toggle);
 
@@ -4560,7 +4588,7 @@ function buildFilterPanel(){
     const dropdown = document.createElement('div');
     dropdown.className = 'filter-dropdown';
     const activeCount = otherKeysWithValues.reduce((sum, key) => sum + filterState[key].size, 0);
-    const toggle = buildFilterDropdownToggle(dropdown, `Brand vs Agency${activeCount ? ` <span class="filter-dropdown-count">(${activeCount})</span>` : ''}`);
+    const toggle = buildFilterDropdownToggle(dropdown, `Brand vs Agency`);
     toggle.classList.toggle('has-selection', activeCount > 0);
     dropdown.appendChild(toggle);
 
