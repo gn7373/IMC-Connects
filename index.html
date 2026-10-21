@@ -2760,6 +2760,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    ============================================================ */
 .mobile-profile-retract,
 .mobile-profile-backdrop,
+.mobile-profile-meta-row,
 .directory-entry-photo{ display:none; }
 
 @media (max-width: 767px){
@@ -3014,7 +3015,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .profile-back-btn{ display:none !important; }
   .profile-header{
     width:100% !important;
-    padding:22px 20px 18px !important;
+    padding:42px 20px 18px !important;
     border-bottom:1px solid var(--border-strong) !important;
     background:var(--workspace-bg) !important;
   }
@@ -3076,45 +3077,77 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
   .profile-identity-wrap{ margin-top:0 !important; }
 
-  .profile-info .alum-meta{
+  /* Mobile metadata: left-anchored location, mathematically centered
+     LinkedIn, right-anchored spots. The two outer tracks are equal, so
+     LinkedIn stays centered between the row endpoints regardless of label
+     lengths. A long city may wrap to two lines; the other two stay
+     vertically centered against that taller row. */
+  .profile-info .alum-meta,
+  .profile-availability .capacity-badge-wrap{
+    display:none !important;
+  }
+  .mobile-profile-meta-row{
     grid-area:meta !important;
     display:grid !important;
-    grid-template-columns:minmax(0,1fr) auto !important;
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) !important;
     align-items:center !important;
-    column-gap:7px !important;
+    width:100% !important;
+    column-gap:6px !important;
     min-width:0 !important;
-    overflow:visible !important;
-    margin:0 !important;
-    white-space:nowrap !important;
-    font-size:10.5px !important;
-    line-height:1 !important;
-    padding-right:72px !important;
-    position:relative !important;
+    font-family:'Inter', sans-serif !important;
+    font-size:10px !important;
+    line-height:1.18 !important;
+    color:var(--muted) !important;
   }
-  .profile-info .alum-meta .format-value{
+  .mobile-profile-meta-location{
+    justify-self:start !important;
     min-width:0 !important;
-    overflow:visible !important;
-    text-overflow:clip !important;
-    white-space:nowrap !important;
-    font-size:10.5px !important;
+    max-width:100% !important;
+    white-space:normal !important;
+    overflow-wrap:normal !important;
   }
-  .profile-info .alum-meta .alum-linkedin{
-    flex-shrink:0 !important;
-    white-space:nowrap !important;
-    font-size:10.5px !important;
+  .mobile-profile-meta-location .format-value{
+    display:flex !important;
+    align-items:flex-start !important;
+    gap:4px !important;
+    min-width:0 !important;
+    white-space:normal !important;
+    line-height:1.18 !important;
   }
-  .profile-info .alum-meta .sep{ display:none !important; }
-  .profile-availability .capacity-badge-wrap{
-    grid-area:meta !important;
+  .mobile-profile-meta-location .format-icon{
+    flex:0 0 auto !important;
+    margin-top:1px !important;
+    width:10px !important;
+    height:10px !important;
+  }
+  .mobile-profile-meta-linkedin{
+    justify-self:center !important;
     align-self:center !important;
-    justify-self:end !important;
     white-space:nowrap !important;
-    z-index:2;
+    font-size:10px !important;
   }
-  .profile-availability .capacity-badge{
-    font-size:10.5px !important;
+  .mobile-profile-meta-linkedin .alum-linkedin{
+    display:inline-flex !important;
+    align-items:center !important;
+    gap:3px !important;
+    white-space:nowrap !important;
+    font-size:10px !important;
+  }
+  .mobile-profile-meta-linkedin svg{
+    width:10px !important;
+    height:10px !important;
+  }
+  .mobile-profile-meta-spots{
+    justify-self:end !important;
+    align-self:center !important;
+    white-space:nowrap !important;
+    min-width:0 !important;
+  }
+  .mobile-profile-meta-spots .capacity-badge{
+    font-size:10px !important;
     line-height:1 !important;
-    padding:5px 7px !important;
+    padding:5px 6px !important;
+    white-space:nowrap !important;
   }
   .profile-add-btn{
     grid-area:add !important;
@@ -3125,7 +3158,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     font-size:12.5px !important;
   }
 
-  /* Expertise spacing follows the reference, with no reserved blank height. */
+  /* Equal three-section rhythm. Industry and Marketing each end with a
+     divider; spacing from pills -> divider and divider -> next heading is
+     identical, so alumni with different pill counts still feel standardized. */
   .profile-sections{
     padding:20px 20px 32px !important;
   }
@@ -3136,8 +3171,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .profile-sections .alum-col{
     min-height:0 !important;
     height:auto !important;
-    padding:0 !important;
     margin:0 !important;
+  }
+  .profile-sections .alum-columns > .alum-col{
+    padding:0 0 22px !important;
+    margin:0 0 22px !important;
+    border-bottom:1px solid var(--border) !important;
+  }
+  .profile-sections .ask-me-about{
+    margin:0 !important;
+    padding:0 !important;
   }
   .profile-sections .industry-tags,
   .profile-sections .marketing-tags,
@@ -3145,10 +3188,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     min-height:0 !important;
     height:auto !important;
     margin-top:9px !important;
-  }
-  .profile-sections .alum-col + .alum-col,
-  .profile-sections .alum-columns + .ask-me-about{
-    margin-top:28px !important;
   }
   .profile-sections .field-label{
     display:block !important;
@@ -3504,7 +3543,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-redesign-5";
+const BUILD_VERSION = "2026-10-21-mobile-redesign-6";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5224,6 +5263,11 @@ function renderProfilePanel(){
             <div class="profile-availability"></div>
             <div class="profile-identity-wrap"></div>
           </div>
+          <div class="mobile-profile-meta-row" aria-label="Profile contact and availability">
+            <div class="mobile-profile-meta-location"></div>
+            <div class="mobile-profile-meta-linkedin"></div>
+            <div class="mobile-profile-meta-spots"></div>
+          </div>
         </div>
       </div>
       <div class="profile-sections"></div>
@@ -5264,6 +5308,8 @@ function updateProfileAvailability(a){
       ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>
     </button>
   `;
+  const mobileSpots = document.querySelector('.mobile-profile-meta-spots');
+  if(mobileSpots) mobileSpots.innerHTML = capacityBadgeHtml(a.capacity, a.capacityAssumed);
 }
 
 // The lightweight path toggleCart() uses instead of a full
@@ -5300,6 +5346,11 @@ function updateProfileIdentity(a){
     </div>
     ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
   `;
+
+  const mobileLocation = document.querySelector('.mobile-profile-meta-location');
+  const mobileLinkedIn = document.querySelector('.mobile-profile-meta-linkedin');
+  if(mobileLocation) mobileLocation.innerHTML = contactHtml;
+  if(mobileLinkedIn) mobileLinkedIn.innerHTML = linkedinHtml;
 }
 
 // Industry/Marketing Expertise + Ask Me About - also image-free, cheap
