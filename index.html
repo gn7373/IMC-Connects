@@ -1631,6 +1631,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .profile-portrait-img{
   width: 100%;
   height: 100%;
+  min-height: 100%;
   object-fit: cover;
   display: block;
 }
@@ -3046,17 +3047,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-right.narrow .profile-portrait{
     grid-area:portrait !important;
     width:88px !important;
-    height:112px !important;
+    height:auto !important;
+    min-height:112px !important;
     min-width:88px !important;
     margin:0 !important;
     border-radius:9px !important;
     overflow:hidden !important;
+    align-self:stretch !important;
   }
   .profile-info-identity{
     grid-area:identity !important;
     min-width:0 !important;
-    max-height:112px !important;
-    overflow:hidden !important;
+    max-height:none !important;
+    overflow:visible !important;
     align-self:start !important;
   }
   .profile-name{
@@ -3546,7 +3549,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-redesign-7";
+const BUILD_VERSION = "2026-10-21-mobile-redesign-8";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
