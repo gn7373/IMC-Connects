@@ -134,37 +134,61 @@ header.site{
   position: relative;
   overflow: hidden;
 }
-/* Decorative Gothic tower illustration, anchored to the hero's bottom
-   corner - purely atmospheric, so it's hidden from screen readers and
-   dropped on mobile where there isn't room for it alongside the copy.
-   Its width is set by sizeTowerDecor() in the script below, not a CSS
-   clamp - after several rounds of guessing viewport-based clamp/media
-   thresholds that still read as "too small" on whatever window the
-   viewer actually had open, it's simpler and more reliable to measure
-   the real gap between the viewport top and the "Find alumni" button
-   at runtime and size the image to fill it, on load and on resize. This
-   clamp is just the pre-JS/no-JS fallback for the first paint. */
-.hero-tower-decor{
+/* Northwestern Arch illustration (2026-10-21, replaces the old Gothic
+   tower) - a dedicated wrapper (not sized on the <img> itself) so its
+   box is fully deterministic from pure CSS clamp(), never from a
+   runtime JS measurement or the image's own intrinsic size. Anchored
+   bottom-right of .hero-top (which is already position:relative with a
+   stable height - see its own rule above), large enough to be the
+   hero's dominant right-side visual without ever overlapping the
+   headline/paragraph/CTA, which live in .hero-copy's own left-anchored
+   max-width:450px column (see that rule) - the two don't compete for
+   the same space at any width this clamp covers. pointer-events:none
+   and aria-hidden on the wrapper (set in the HTML) keep it decorative,
+   same as the tower illustration it replaces. */
+.hero-illustration{
   position: absolute;
-  left: 0;
+  right: 0;
   bottom: 0;
-  width: clamp(360px, min(62vw, 58vh), 1200px);
+  width: clamp(620px, 56vw, 980px);
   height: auto;
-  /* aspect-ratio (2026-10-20, layout-stability pass) - the image is
-     2303x793 natural pixels. Without this, the browser can't compute a
-     height for width:...;height:auto until the image itself has
-     downloaded and its intrinsic size becomes known, which is a real
-     (if brief) layout shift on first paint - this pins the ratio up
-     front so the box is sized correctly from the very first layout
-     pass, before the image has loaded at all. sizeTowerDecor()'s own
-     runtime width measurement is unrelated and unchanged - this only
-     fixes the gap between "width is set" and "height is known". */
-  aspect-ratio: 2303 / 793;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
   pointer-events: none;
   z-index: 1;
 }
+.hero-illustration img{
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  /* 1672x941 natural pixels - pinning the ratio up front (same
+     reasoning as the old tower illustration's own aspect-ratio) means
+     the wrapper's height is known from first layout, before the image
+     itself has even downloaded. */
+  aspect-ratio: 1672 / 941;
+  object-fit: contain;
+  object-position: right bottom;
+}
+/* Tablet - a smaller share of the hero width (per request), same
+   clamp() mechanism, just a narrower range. */
+@media (max-width: 1100px) and (min-width: 768px){
+  .hero-illustration{ width: clamp(460px, 50vw, 700px); }
+}
+/* Mobile - stacks below the text and centers, rather than squeezing
+   the desktop left-text/right-image composition into a narrow screen
+   (per request). Oversized (110-125% of the viewport) and centered so
+   cropping the sides is an intentional choice, not an accident - the
+   arch itself (the image's own visual center) stays in frame. */
 @media (max-width: 767px){
-  .hero-tower-decor{ display: none; }
+  .hero-illustration{
+    position: static;
+    width: 115%;
+    max-width: none;
+    margin: 24px auto 0;
+    justify-content: center;
+  }
 }
 .hero-options{
   display: contents;
@@ -282,14 +306,13 @@ header.site{
    resize with the same 33.5% value clamped to never sit above a safe
    distance below the nav row, which a flat percentage alone can't do
    (33.5% of a short viewport can collide with the nav, where 33.5% of a
-   tall one won't - see that function's own comment). 33.5% itself
-   (2026-10-17) was hand-tuned so "Northwestern"'s baseline lines up
-   with the tower illustration's tip at a typical viewport, per request
-   - it's not read from or derived from the image's own size in any
-   way, so adjusting .hero-tower-decor's width later won't move this
-   text. If the alignment ever needs re-tuning, re-measure both and
-   adjust the 0.335 figure in positionHeroCopy() (and this fallback to
-   match) - don't wire the two together programmatically. */
+   tall one won't - see that function's own comment). 33.5% itself was
+   hand-tuned at a typical viewport, per request - it's not read from or
+   derived from .hero-illustration's own size in any way (that's pure
+   CSS clamp() now, unrelated to this value), so resizing that
+   illustration later won't move this text. If the vertical alignment
+   ever needs re-tuning, adjust the 0.335 figure in positionHeroCopy()
+   (and this fallback to match) directly. */
 .hero-copy{
   position: absolute;
   top: 33.5%;
@@ -2469,7 +2492,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
         </div>
       </div>
 
-      <img class="hero-tower-decor" src="Gothic%20University%20Tower%20Amidst%20Trees%20Extended.png" alt="" aria-hidden="true">
+      <div class="hero-illustration" aria-hidden="true">
+        <img src="The%20Arch.png" alt="">
+      </div>
     </div>
   </div>
 
@@ -4636,8 +4661,7 @@ window.addEventListener('resize', () => {
 // the nav itself barely shrinks (its own top/padding are clamp()-
 // capped) - on a short enough window that collided with, or even sat
 // above, the nav and its divider line. Computed here instead, measured
-// against the nav's actual position, same "measure, don't guess"
-// approach as sizeTowerDecor below. Skipped under 768px, where
+// against the nav's actual position. Skipped under 768px, where
 // .hero-copy goes back to being laid out in normal flow (see the
 // max-width:767px block) and this inline override would only fight it.
 //
@@ -4671,44 +4695,20 @@ function positionHeroCopy(){
 positionHeroCopy();
 window.addEventListener('load', positionHeroCopy);
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(positionHeroCopy);
-
-// Sizes the hero tower illustration off the gap between the bottom of
-// the "Find alumni" button and the bottom of the viewport, measured at
-// runtime rather than guessed with CSS vw/vh clamps - see the comment
-// on .hero-tower-decor for why. Image is 2303x793 natural pixels
-// (aspect ~2.904:1). Doubled per explicit request - overlapping the
-// hero text/button is accepted now, so this no longer subtracts a
-// safety margin or stops at the button's edge, just uses it as a
-// sizing reference and multiplies past it. Called after
-// positionHeroCopy() everywhere below (load/fonts/resize), since the
-// button it measures lives inside .hero-copy - sizing off a stale
-// pre-reposition button location would be wrong.
-const TOWER_ASPECT = 2303 / 793;
-function sizeTowerDecor(){
-  const img = document.querySelector('.hero-tower-decor');
-  const btn = document.querySelector('.landing-option');
-  if(!img || !btn || window.innerWidth < 768) return;
-  const availableHeight = Math.max(window.innerHeight - btn.getBoundingClientRect().bottom, 40);
-  const width = Math.min(
-    availableHeight * TOWER_ASPECT * 2,
-    window.innerWidth * 1.3,
-    3400
-  );
-  img.style.width = width + 'px';
-}
-sizeTowerDecor();
-window.addEventListener('load', () => { positionHeroCopy(); sizeTowerDecor(); });
-if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { positionHeroCopy(); sizeTowerDecor(); });
-let towerResizeTimer;
+let heroCopyResizeTimer;
 window.addEventListener('resize', () => {
-  clearTimeout(towerResizeTimer);
-  towerResizeTimer = setTimeout(() => { positionHeroCopy(); sizeTowerDecor(); }, 100);
+  clearTimeout(heroCopyResizeTimer);
+  heroCopyResizeTimer = setTimeout(positionHeroCopy, 100);
 });
+// The hero illustration (.hero-illustration, see its own CSS comment)
+// is pure clamp()-sized CSS now (2026-10-21, per request - "not JS or
+// unrestricted vw") - no runtime measuring/sizing needed for it any
+// more, unlike the old tower illustration this replaced.
 
 // Sizes the split-view directory to exactly fill the viewport below the
-// masthead, measured at runtime rather than a guessed px value - same
-// reasoning as sizeTowerDecor above: the masthead's real height varies
-// (padding mixes px and vw), so a hardcoded calc(100vh - Npx) would
+// masthead, measured at runtime rather than a guessed px value - the
+// masthead's real height varies (padding mixes px and vw), so a
+// hardcoded calc(100vh - Npx) would
 // drift at some viewport width. No-ops below 1024px, where the split
 // view isn't in effect (single-column directory scrolls with the page
 // instead).
