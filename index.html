@@ -1263,16 +1263,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   color: var(--line-strong);
   overflow: hidden;
 }
-/* Real photo, when the alum has one uploaded (see portraitImgHtml()) -
+/* Real photo, when the alum has one uploaded (see updateProfilePhoto()) -
    fills the same box the placeholder SVG used to center itself in,
-   cropped to it rather than distorted. */
+   cropped to it rather than distorted. Kept mounted across renders
+   (2026-10-20, per request) - updateProfilePhoto() only ever changes
+   its src, never recreates the element, so switching alums can never
+   flash/reload the image that's already showing. */
 .profile-portrait-img{
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-/* Hidden by default - only shown once handlePortraitImgError() has
+/* Hidden by default - only shown once updateProfilePhoto() has
    exhausted every known extension for this alum's photo without one
    actually loading (i.e. no photo has been uploaded for them yet). */
 .profile-portrait-fallback{ display: none; }
@@ -3996,21 +3999,76 @@ function slugifyAlumName(name){
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
 }
-function portraitImgHtml(alum){
-  const slug = slugifyAlumName(alum.name);
-  if(!slug) return '';
-  return `<img class="profile-portrait-img" alt="" data-slug="${slug}" data-ext-idx="0" src="photos/${slug}.${PORTRAIT_EXTS[0]}" onerror="handlePortraitImgError(this)">`;
-}
-function handlePortraitImgError(img){
-  const nextIdx = parseInt(img.dataset.extIdx, 10) + 1;
-  if(nextIdx < PORTRAIT_EXTS.length){
-    img.dataset.extIdx = nextIdx;
-    img.src = `photos/${img.dataset.slug}.${PORTRAIT_EXTS[nextIdx]}`;
-  } else {
-    img.style.display = 'none';
-    const fallback = img.parentElement.querySelector('.profile-portrait-fallback');
-    if(fallback) fallback.style.display = 'flex';
+// Preloads off-DOM via new Image() + decode(), trying each known
+// extension in turn (same fallback chain the old onerror-based version
+// used) - the VISIBLE <img> is never touched until a candidate actually
+// finishes loading and decoding, so whatever photo is currently showing
+// stays up the whole time (2026-10-20, per request - "never temporarily
+// clear the src or show a blank image state"). Guards against a rapid
+// double-switch (select alum A, then B before A's photo even
+// resolved) by checking the currently-selected alum is still the one
+// this chain was loading for before it swaps anything in.
+function updateProfilePhoto(a){
+  const right = document.getElementById('directoryRight');
+  const img = right.querySelector('.profile-portrait-img');
+  const fallback = right.querySelector('.profile-portrait-fallback');
+  if(!img || !fallback) return;
+  const slug = slugifyAlumName(a.name);
+  if(img.dataset.alumSlug === slug) return; // already showing this alum's photo/placeholder - nothing to do
+
+  const stillCurrent = () => slugifyAlumName((alumni.find(x => x.id === selectedAlumId) || {}).name) === slug;
+
+  function tryExt(extIdx){
+    if(extIdx >= PORTRAIT_EXTS.length){
+      if(!stillCurrent()) return;
+      img.style.display = 'none';
+      fallback.style.display = 'flex';
+      img.dataset.alumSlug = slug;
+      return;
+    }
+    const candidate = new Image();
+    const src = `photos/${slug}.${PORTRAIT_EXTS[extIdx]}`;
+    const swapIn = () => {
+      if(!stillCurrent()) return;
+      img.src = src;
+      img.style.display = '';
+      fallback.style.display = 'none';
+      img.dataset.alumSlug = slug;
+    };
+    candidate.onload = () => {
+      // decode() can hang indefinitely rather than ever resolving or
+      // rejecting (observed in at least one real browser context, not
+      // just a theoretical concern) - onload already means the bytes are
+      // in, so a stuck decode() must never be able to block the swap
+      // forever; race it against a short timeout and swap in either way.
+      if(candidate.decode){
+        let settled = false;
+        const settle = () => { if(!settled){ settled = true; swapIn(); } };
+        candidate.decode().then(settle).catch(settle);
+        setTimeout(settle, 400);
+      } else {
+        swapIn();
+      }
+    };
+    candidate.onerror = () => tryExt(extIdx + 1);
+    candidate.src = src;
   }
+  tryExt(0);
+}
+// Warms the browser's image cache for a batch of alumni ahead of
+// selection (2026-10-20, per request - "preload alumni profile images
+// where practical so moving between profiles feels instantaneous") -
+// fire-and-forget, just the most common extension (jpg handles the
+// overwhelming majority of uploaded photos; the few non-jpg ones still
+// get their full extension-fallback chain in updateProfilePhoto when
+// actually selected, this is only a cache-warming best effort).
+const PRELOAD_PHOTO_COUNT = 25; // above-the-fold + a bit of scroll headroom, not the whole (often 80-100+) list
+function preloadAlumPhotos(alumList){
+  alumList.slice(0, PRELOAD_PHOTO_COUNT).forEach(a => {
+    const slug = slugifyAlumName(a.name);
+    if(!slug) return;
+    new Image().src = `photos/${slug}.${PORTRAIT_EXTS[0]}`;
+  });
 }
 
 // Sort (2026-10-17, revised again) - re-orders whatever matchesFilters
@@ -4118,6 +4176,7 @@ function renderDirectoryList(filtered){
     list.appendChild(btn);
   });
   enforceDirectoryListMinWidth();
+  preloadAlumPhotos(filtered);
 }
 
 // Up/Down arrow-key navigation across the list rows - moves focus to
@@ -4215,43 +4274,101 @@ function renderProfilePanel(){
     return;
   }
 
-  const inCart = cart.includes(a.id);
-  const contactHtml = cardContactLineHtml(a);
-  const linkedinHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
-  const visibleTopics = a.topics.filter(t => !TOPIC_CARD_EXCLUDE.includes(t));
+  // Structural shell, built once and then left alone (2026-10-20, per
+  // request - "do not re-render or replace the entire profile DOM for
+  // small state changes"). .profile-portrait-img in particular stays
+  // mounted across every subsequent call - see updateProfilePhoto()
+  // below, which only ever changes its src once a new photo has
+  // actually finished loading, never recreates it.
+  if(!right.querySelector('.profile-header')){
+    right.innerHTML = `
+      <div class="profile-toolbar">
+        <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
+      </div>
+      <div class="profile-header">
+        <div class="profile-portrait" aria-hidden="true">
+          <img class="profile-portrait-img" alt="" style="display:none">
+          <span class="profile-portrait-fallback" style="display:none">${PORTRAIT_PLACEHOLDER_SVG}</span>
+        </div>
+        <div class="profile-info">
+          <div class="profile-availability"></div>
+          <div class="profile-identity-wrap"></div>
+        </div>
+      </div>
+      <div class="profile-divider"></div>
+      <div class="profile-sections"></div>
+    `;
+  }
 
-  right.innerHTML = `
-    <div class="profile-toolbar">
-      <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
-    </div>
-    <div class="profile-header">
-      <div class="profile-portrait" aria-hidden="true">
-        ${portraitImgHtml(a)}
-        <span class="profile-portrait-fallback">${PORTRAIT_PLACEHOLDER_SVG}</span>
-      </div>
-      <div class="profile-info">
-        <div class="profile-availability">
-          ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
-          <button class="add-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name} from my list` : `Add ${a.name} to my list`}">
-            ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>
-          </button>
-        </div>
-        <div class="profile-info-identity">
-          <div class="profile-name">${a.name}</div>
-          ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
-          <div class="alum-company">${companyHtml(a.company)}</div>
-        </div>
-        ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
-      </div>
-    </div>
-    <div class="profile-divider"></div>
-    <div class="profile-sections">
-      ${profileThreeColumnsHtml(a, visibleTopics)}
-    </div>
-  `;
+  updateProfilePhoto(a);
+  updateProfileAvailability(a);
+  updateProfileIdentity(a);
+  updateProfileSections(a);
 
   collapseIndustryTagsInline();
   alignProfileDividerToChevron();
+}
+
+// Capacity badge + Add/Added button - the only two pieces of
+// .profile-availability that depend on WHICH alum is selected (unlike
+// updateProfileAddButton below, this rebuilds the whole row, since on
+// an actual alum switch the capacity badge and the button's own
+// data-id/aria-label all need to change together).
+function updateProfileAvailability(a){
+  const el = document.querySelector('.profile-availability');
+  if(!el) return;
+  const inCart = cart.includes(a.id);
+  el.innerHTML = `
+    ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
+    <button class="add-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name} from my list` : `Add ${a.name} to my list`}">
+      ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>
+    </button>
+  `;
+}
+
+// The lightweight path toggleCart() uses instead of a full
+// renderProfilePanel() (2026-10-20, per request - "update only the
+// button and corresponding directory-card state... do not recreate the
+// profile image, identity block, or profile container"). Only touches
+// the button already in the DOM; everything else in the profile panel,
+// including the <img>, is left completely untouched.
+function updateProfileAddButton(a){
+  const btn = document.querySelector('.profile-add-btn');
+  if(!btn || Number(btn.dataset.id) !== a.id) return;
+  const inCart = cart.includes(a.id);
+  btn.classList.toggle('added', inCart);
+  btn.setAttribute('aria-pressed', String(inCart));
+  btn.setAttribute('aria-label', inCart ? `Remove ${a.name} from my list` : `Add ${a.name} to my list`);
+  btn.innerHTML = `${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>`;
+}
+
+// Name/role/company/location/LinkedIn - no images involved, so a plain
+// innerHTML rebuild here is cheap and flicker-free; kept in its own
+// wrapper (sibling of .profile-availability, not a shared parent)
+// specifically so this can be rewritten without ever touching the
+// availability row's own DOM (or vice versa).
+function updateProfileIdentity(a){
+  const wrap = document.querySelector('.profile-identity-wrap');
+  if(!wrap) return;
+  const contactHtml = cardContactLineHtml(a);
+  const linkedinHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
+  wrap.innerHTML = `
+    <div class="profile-info-identity">
+      <div class="profile-name">${a.name}</div>
+      ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
+      <div class="alum-company">${companyHtml(a.company)}</div>
+    </div>
+    ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
+  `;
+}
+
+// Industry/Marketing Expertise + Ask Me About - also image-free, cheap
+// to just rebuild outright.
+function updateProfileSections(a){
+  const el = document.querySelector('.profile-sections');
+  if(!el) return;
+  const visibleTopics = a.topics.filter(t => !TOPIC_CARD_EXCLUDE.includes(t));
+  el.innerHTML = profileThreeColumnsHtml(a, visibleTopics);
 }
 
 // Lines up .profile-divider's visible line with the resizer chevron's
@@ -4658,7 +4775,11 @@ function toggleCart(id){
   // being in the list turns a card green - toggled directly on that one
   // row rather than a full re-render for the same scroll-position reason.
   document.querySelector(`.directory-entry[data-id="${id}"]`)?.classList.toggle('in-list', inList);
-  renderProfilePanel();
+  // Updates just the button (2026-10-20, per request) - never the full
+  // renderProfilePanel(), which would recreate the <img> and flash the
+  // photo even though neither the selected alum nor their photo changed.
+  const toggledAlum = alumni.find(x => x.id === id);
+  if(toggledAlum && id === selectedAlumId) updateProfileAddButton(toggledAlum);
   renderPinsDrawer();
 }
 
