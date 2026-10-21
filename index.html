@@ -2752,6 +2752,374 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   cursor: pointer;
   padding: 0;
 }
+
+/* ============================================================
+   MOBILE REDESIGN — 2026-10-21
+   Authoritative mobile layer. Keep desktop rules above intact.
+   ============================================================ */
+.mobile-profile-retract,
+.directory-entry-photo{ display:none; }
+
+@media (max-width: 1023px){
+  .mobile-profile-retract{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:absolute;
+    top:16px;
+    left:12px;
+    width:34px;
+    height:46px;
+    border:1px solid var(--border-strong);
+    border-radius:10px;
+    background:var(--surface);
+    color:var(--accent);
+    z-index:34;
+    cursor:pointer;
+    box-shadow:0 3px 10px rgba(53,32,95,.08);
+  }
+  .profile-toolbar,
+  .profile-back-btn{ display:none !important; }
+}
+
+@media (max-width: 767px){
+  /* Directory is the base mobile screen and must use normal page scroll. */
+  body.listing-active{ height:auto !important; overflow-y:auto !important; }
+  body.mobile-drawer-open{ height:100dvh !important; overflow:hidden !important; }
+  #view-listing{ overflow:visible; }
+  .directory-split{ overflow:visible; }
+  .directory-list{ overflow:visible !important; min-height:auto !important; }
+
+  /* Use nearly the full phone width for browse controls/cards. */
+  .directory-toolbar .listing-container,
+  .workspace .listing-container{
+    width:100%;
+    max-width:none;
+    margin:0;
+    padding-left:8px;
+    padding-right:8px;
+  }
+  .workspace{
+    width:100%;
+    max-width:none;
+    margin:0;
+    padding:0;
+    border-radius:0;
+  }
+  .directory-list{ padding:8px 2px 48px; }
+  .directory-list-header-inner{ padding:7px 6px; }
+
+  /* Search gets the full line so the placeholder remains readable. */
+  .search-box{
+    width:100%;
+    flex:1 1 100%;
+    min-width:0;
+    padding-left:12px;
+    padding-right:12px;
+  }
+  .search-box input{
+    min-width:0;
+    font-size:13px;
+  }
+
+  /* Mobile directory cards gain portraits and use the extra page width. */
+  .directory-entry{
+    grid-template-columns:52px minmax(0,1fr) auto !important;
+    grid-template-rows:auto auto;
+    grid-template-areas:
+      "photo info info"
+      "photo loc right";
+    column-gap:10px;
+    row-gap:7px;
+    width:100%;
+    padding:11px 10px;
+    margin-bottom:8px;
+  }
+  .directory-entry-photo{
+    grid-area:photo;
+    display:flex;
+    width:52px;
+    height:62px;
+    border-radius:8px;
+    overflow:hidden;
+    background:var(--selected-bg);
+    align-items:center;
+    justify-content:center;
+    align-self:start;
+  }
+  .directory-entry-photo img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .directory-entry-photo-fallback{
+    width:28px;
+    height:28px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--muted);
+  }
+  .directory-entry-photo-fallback svg{ width:28px; height:28px; }
+  .directory-entry-info{ grid-area:info; min-width:0; }
+  .directory-entry-name{ font-size:16px; line-height:1.18; }
+  .directory-entry-info .alum-role{ font-size:12.5px; line-height:1.2; margin-top:2px; }
+  .directory-entry-info .alum-company{ font-size:12px; line-height:1.2; margin-top:1px; }
+  .directory-entry-location-inline{
+    grid-area:loc;
+    display:flex !important;
+    min-width:0;
+    max-width:100%;
+    justify-self:stretch;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:12px;
+  }
+  .directory-entry-location-inline .format-value{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .directory-entry-right{
+    grid-area:right;
+    display:flex !important;
+    justify-self:end;
+    gap:6px;
+  }
+  .directory-entry-spots .capacity-badge{ font-size:11.5px; }
+
+  /* Dim the directory rather than replacing it; the drawer deliberately
+     stops short of the left edge so browsing context remains visible. */
+  #view-listing.mobile-detail-open::before{
+    content:"";
+    position:fixed;
+    top:var(--content-top, 58px);
+    left:0;
+    right:0;
+    bottom:0;
+    background:rgba(53,32,95,.14);
+    backdrop-filter:blur(1px);
+    -webkit-backdrop-filter:blur(1px);
+    z-index:24;
+    pointer-events:none;
+  }
+  #view-listing.mobile-detail-open .directory-toolbar{ display:none !important; }
+
+  .directory-right{
+    top:var(--content-top, 58px) !important;
+    left:34px !important;
+    right:0 !important;
+    bottom:0 !important;
+    width:auto !important;
+    min-width:0 !important;
+    max-width:none !important;
+    padding:0 0 24px !important;
+    background:var(--workspace-bg) !important;
+    overflow-y:auto !important;
+    overflow-x:visible !important;
+    z-index:30;
+    transform:translateX(calc(100% + 34px)) !important;
+    border-left:1px solid var(--border-strong);
+    box-shadow:-10px 0 28px rgba(53,32,95,.16);
+  }
+  .directory-split.mobile-detail-open .directory-right{
+    transform:translateX(0) !important;
+  }
+  .mobile-profile-retract{
+    top:50%;
+    left:-19px;
+    width:38px;
+    height:62px;
+    margin-top:-31px;
+    border-radius:12px 0 0 12px;
+    border-right:0;
+    background:var(--workspace-bg);
+    box-shadow:-4px 2px 12px rgba(53,32,95,.12);
+  }
+
+  /* Exact mobile profile information hierarchy:
+     photo + identity, then location/LinkedIn/spots on one line,
+     Add to my list below, then the section divider. */
+  .profile-header{
+    position:relative;
+    width:100%;
+    padding:14px 14px 13px;
+    border-bottom:1px solid var(--border-strong);
+    background:var(--workspace-bg);
+  }
+  .profile-header-inner,
+  .directory-right.narrow .profile-header-inner{
+    display:grid !important;
+    grid-template-columns:92px minmax(0,1fr) auto !important;
+    grid-template-rows:auto auto auto;
+    grid-template-areas:
+      "portrait identity identity"
+      "meta meta spots"
+      "add add add";
+    column-gap:12px !important;
+    row-gap:9px !important;
+    width:100%;
+    height:auto !important;
+    min-height:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
+    align-items:start;
+  }
+  .profile-info,
+  .profile-identity-wrap,
+  .profile-availability{
+    display:contents !important;
+  }
+  .profile-portrait,
+  .directory-right.narrow .profile-portrait{
+    grid-area:portrait;
+    width:92px !important;
+    height:112px !important;
+    min-width:92px;
+    margin:0 !important;
+    border-radius:9px;
+    overflow:hidden;
+  }
+  .profile-info-identity{
+    grid-area:identity;
+    align-self:start;
+    max-height:112px;
+    overflow:hidden;
+    min-width:0;
+  }
+  .profile-name{
+    font-size:20px !important;
+    line-height:1.08;
+  }
+  .profile-info .alum-role{
+    font-size:13px;
+    line-height:1.22;
+    margin-top:4px;
+  }
+  .profile-info .alum-company{
+    font-size:12.5px;
+    line-height:1.22;
+    margin-top:2px;
+  }
+  .profile-identity-wrap{ margin-top:0 !important; }
+  .profile-info .alum-meta{
+    grid-area:meta;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    min-width:0;
+    overflow:hidden;
+    white-space:nowrap;
+    margin:0 !important;
+    font-size:12px;
+  }
+  .profile-info .alum-meta .format-value{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .profile-info .alum-meta .alum-linkedin{
+    flex-shrink:0;
+    white-space:nowrap;
+  }
+  .profile-availability .capacity-badge-wrap{
+    grid-area:spots;
+    align-self:center;
+    justify-self:end;
+    white-space:nowrap;
+  }
+  .profile-availability .capacity-badge{ font-size:11.5px; }
+  .profile-add-btn{
+    grid-area:add;
+    justify-self:start;
+    margin:0 !important;
+    min-height:34px;
+    padding:7px 12px !important;
+    font-size:12.5px !important;
+  }
+
+  /* Expertise sections are content-driven, never equal-height. */
+  .profile-sections{
+    padding:14px 14px 24px !important;
+  }
+  .profile-sections .alum-columns{
+    display:block !important;
+    margin:0 !important;
+  }
+  .profile-sections .alum-col{
+    min-height:0 !important;
+    height:auto !important;
+    padding:0 !important;
+    margin:0 !important;
+  }
+  .profile-sections .industry-tags,
+  .profile-sections .marketing-tags,
+  .profile-sections .topic-tags{
+    min-height:0 !important;
+    height:auto !important;
+    margin-top:7px;
+  }
+  .profile-sections .alum-col + .alum-col,
+  .profile-sections .alum-columns + .ask-me-about{
+    margin-top:23px !important;
+  }
+  .profile-sections .field-label{
+    display:block;
+    margin:0;
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .profile-sections .topic-tag{
+    font-size:11.5px;
+    line-height:1.2;
+    padding:5px 8px;
+  }
+
+  /* Keep the mobile masthead compact and consistent everywhere. */
+  #heroSub.compact{
+    padding-left:14px;
+    padding-right:14px;
+  }
+  #heroSub.compact .hero-logo{ font-size:11px; }
+  #heroSub.compact .hero-logo .logo-cmi{ font-size:1.7em; }
+
+  /* Secondary pages: one continuous cream surface with floating titles. */
+  #view-info,
+  .info-title-band,
+  .info-layout{ background:var(--page-bg) !important; }
+  .info-title-band-inner{
+    width:100%;
+    padding:24px 20px 0 !important;
+  }
+  .info-layout{ padding:0 20px 44px !important; }
+  #infoPanelAbout,
+  #infoPanelFaq,
+  #infoPanelFeedback{ margin-top:18px !important; }
+
+  /* Landing: keep artwork visually connected to the hero copy. */
+  .hero-copy{ margin-top:14px !important; padding-left:20px; padding-right:20px; }
+  .landing-option{
+    min-width:0 !important;
+    width:148px !important;
+    padding:12px 18px !important;
+  }
+  .hero-illustration{
+    width:100% !important;
+    margin:2px 0 0 !important;
+    padding:0 0 0 28px;
+    justify-content:flex-end !important;
+  }
+  .hero-illustration img{
+    width:100%;
+    max-width:100%;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -3049,7 +3417,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-15-19";
+const BUILD_VERSION = "2026-10-21-mobile-redesign-1";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -3591,10 +3959,10 @@ function normalizeRow(row, index){
     company: (row[COLUMNS.company] || "").trim(),
     // "Other" write-ins are dropped from this field per request.
     format: rawFormat.filter(v => CANONICAL_FORMAT_OPTIONS.includes(v)),
-    // Free-text short answer, not a checkbox field - normalized below
-    // since alumni wrote it every which way ("NYC", "San Fransisco",
-    // "Chicagoland", "Toronto, Ontario Canada"...).
-    city: normalizeCityValue(row[COLUMNS.city]),
+    // Display the location exactly as written in the source spreadsheet.
+    // Region bucketing for the Location filter is handled separately and
+    // must never rewrite the visible label (e.g. "NYC" stays "NYC").
+    city: [(row[COLUMNS.city] || "").trim()].filter(Boolean),
     industries: rawIndustries.filter(v => CANONICAL_INDUSTRIES.includes(v)),
     marketingAreas: smartSplit(row[COLUMNS.marketingAreas], KNOWN_OPTIONS.marketingAreas),
     brandAgency: (row[COLUMNS.brandAgency] || "").trim(),
@@ -3812,14 +4180,14 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
 const US_REGIONS = ["Midwest", "East Coast", "South", "West Coast"];
 const US_REGION_BY_CITY = {
   "boston": "East Coast", "cambridge": "East Coast", "new york": "East Coast",
-  "new york city": "East Coast", "washington, d.c.": "East Coast",
+  "new york city": "East Coast", "nyc": "East Coast", "washington, d.c.": "East Coast",
   "pittsburgh": "East Coast", "boca raton": "East Coast",
   "lancaster": "East Coast", "montville": "East Coast",
   "chicago": "Midwest", "minneapolis": "Midwest", "urbana": "Midwest",
   "deerfield": "Midwest", "columbus": "Midwest", "park ridge": "Midwest",
   "wilmette": "Midwest",
   "los angeles": "West Coast", "bay area": "West Coast",
-  "san francisco bay area": "West Coast", "salt lake city": "West Coast",
+  "san francisco": "West Coast", "san francisco bay area": "West Coast", "salt lake city": "West Coast",
   "denver": "West Coast", "phoenix": "West Coast", "boise": "West Coast",
   "reno": "West Coast", "palo alto": "West Coast",
   "vacaville, california": "West Coast",
@@ -4030,7 +4398,7 @@ function matchesFilters(alum){
   // here, so changing filters or search can never remove anyone from it.
   const q = document.getElementById('searchInput').value.trim();
   if(q){
-    const hay = [alum.name, alum.company, ...alum.industries, ...alum.marketingAreas, ...alum.topics]
+    const hay = [alum.name, alum.company, ...alum.city, ...alum.industries, ...alum.marketingAreas, ...alum.topics]
       .join(" ");
     // Match at a word boundary rather than any substring, so a short query
     // like "AI" doesn't match text that merely contains those letters in
@@ -4455,6 +4823,21 @@ function preloadAlumPhotoOnDemand(a){
   if(resolvedPhotoCache.has(slugifyAlumName(a.name))) return;
   resolveAlumPhoto(a);
 }
+
+// Mobile directory thumbnails use the same photo-resolution/cache path
+// as the profile, so non-JPG portraits and missing-photo fallbacks behave
+// consistently. Desktop keeps directory rows text-only.
+function hydrateDirectoryThumbnail(button, a){
+  if(window.innerWidth > 767) return;
+  const shell = button.querySelector('.directory-entry-photo');
+  if(!shell) return;
+  resolveAlumPhoto(a).then(photoResult => {
+    if(!button.isConnected) return;
+    if(photoResult.src){
+      shell.innerHTML = `<img src="${photoResult.src}" alt="" loading="lazy">`;
+    }
+  });
+}
 // The only thing that actually touches the visible <img>/fallback -
 // called once a photo has resolved (see resolveAlumPhoto above) AND the
 // caller has confirmed (via its own token) that this is still the
@@ -4590,6 +4973,9 @@ function renderDirectoryList(filtered){
     btn.dataset.id = a.id;
     btn.setAttribute('aria-pressed', String(a.id === selectedAlumId));
     btn.innerHTML = `
+      <div class="directory-entry-photo" aria-hidden="true">
+        <span class="directory-entry-photo-fallback">${PORTRAIT_PLACEHOLDER_SVG}</span>
+      </div>
       <div class="directory-entry-info">
         <div class="directory-entry-name">${a.name}</div>
         ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
@@ -4605,6 +4991,7 @@ function renderDirectoryList(filtered){
     btn.addEventListener('mouseenter', () => preloadAlumPhotoOnDemand(a));
     btn.addEventListener('focus', () => preloadAlumPhotoOnDemand(a));
     list.appendChild(btn);
+    hydrateDirectoryThumbnail(btn, a);
   });
   enforceDirectoryListMinWidth();
   preloadAlumPhotos(filtered);
@@ -4742,9 +5129,6 @@ function renderProfilePanel(){
       ? 'Select an alum from the list to view their profile.'
       : 'No alumni match those filters right now. Try clearing a few.';
     right.innerHTML = `
-      <div class="profile-toolbar">
-        <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
-      </div>
       <div class="directory-empty">${message}</div>
     `;
     return;
@@ -4758,9 +5142,9 @@ function renderProfilePanel(){
   // finished loading, never recreates it.
   if(!right.querySelector('.profile-header')){
     right.innerHTML = `
-      <div class="profile-toolbar">
-        <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
-      </div>
+      <button type="button" class="mobile-profile-retract" id="mobileProfileRetract" aria-label="Retract profile">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 6 9 12 15 18"/></svg>
+      </button>
       <div class="profile-header">
         <div class="profile-header-inner">
           <div class="profile-portrait" aria-hidden="true">
@@ -4882,7 +5266,7 @@ function updateProfileSections(a){
 // the panel's innerHTML on every call, which would otherwise mean
 // rebinding - or leaking - a listener every time).
 document.getElementById('directoryRight').addEventListener('click', (e) => {
-  if(e.target.closest('#profileBackBtn')){ closeMobileDetail(); return; }
+  if(e.target.closest('#mobileProfileRetract')){ closeMobileDetail(); return; }
   const addBtn = e.target.closest('.profile-add-btn');
   if(addBtn) toggleCart(parseInt(addBtn.dataset.id, 10));
 });
