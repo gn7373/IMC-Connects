@@ -82,8 +82,29 @@
    scroll is very slightly narrower than one that isn't, which shifts
    the masthead's own content by the scrollbar's width between pages. */
 html{ scrollbar-gutter: stable; }
+/* Makes the reserved gutter itself invisible (2026-10-21, per request -
+   "the narrow strip on the far right... make the gutter visually
+   disappear") - scrollbar-gutter:stable above still reserves the space
+   (so page-to-page nav positioning stays stable, per the comment above),
+   this just stops it from rendering as a contrasting beige strip. Firefox/
+   other scrollbar-color browsers get a transparent track directly;
+   WebKit/Chromium need the ::-webkit-scrollbar-track rule below instead,
+   since scrollbar-color has no effect there. Never 100vw on page shells
+   to "compensate" for the gutter - that reintroduces real horizontal
+   overflow, which is exactly what reserving the gutter was meant to avoid. */
+html{ scrollbar-color: rgba(78,42,132,.35) transparent; }
+::-webkit-scrollbar{ width: 12px; }
+::-webkit-scrollbar-track{ background: transparent; }
+::-webkit-scrollbar-thumb{
+  background: rgba(78,42,132,.25);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
 body{
-  margin:0;
+  margin: 0;
+  width: 100%;
+  overflow-x: hidden;
   /* Full-height app shell (per request) - header/toolbar take their own
      natural height, #view-listing (when it's the active view) stretches
      to fill whatever's left via the flex chain below, rather than JS
@@ -454,52 +475,68 @@ header.site{
   width: calc(100% - 64px);
   max-width: 1480px;
   margin-inline: auto;
-  /* Vertical padding tuned so this band's total height (~123px) matches
-     Browse's own search/filter toolbar height, per request. */
-  padding: 40px 24px;
+  /* Vertical padding reduced from 40px (2026-10-21, per request - bigger
+     bold text, but "do not change...page-title-band height") to hold
+     the band's total height roughly where it was (~105-123px) now that
+     the text itself is taller - still centered vertically/horizontally
+     within the band either way. */
+  padding: 31px 24px;
   text-align: center;
   font-family: 'Libre Baskerville', serif;
-  font-weight: 500;
-  font-size: 20px;
+  /* Bigger and bold (2026-10-21, per request), same serif family - was
+     20px/500. */
+  font-weight: 700;
+  font-size: 35px;
+  line-height: 1.2;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink);
 }
-/* Vertically centers whichever panel is active within the space below
-   the title band (2026-10-21, per request - "contents...should be
-   vertically centered relative to the sections they occupy") - min-height
+/* Beige content area below the title-band divider (2026-10-21, per
+   request) - same warm beige as the page/browser margins elsewhere
+   (var(--page-bg), #F7F4EC), not the title band's own white. min-height
    is set by sizeInfoLayout() to fill exactly down to the viewport's own
    bottom edge (measured from wherever this element actually starts, so
    it's correct regardless of the masthead/title-band's real height),
-   same measure-don't-guess approach as sizeDirectorySplit() elsewhere.
-   If a panel's own content is taller than that, flex just grows the
-   container instead of clipping - the page still scrolls normally. */
+   same measure-don't-guess approach as sizeDirectorySplit() elsewhere -
+   that's what makes this beige fill the whole section even when a
+   panel's own content is short, rather than stopping at the content's
+   own height.
+   Top-anchored now, not vertically centered (2026-10-21, per request -
+   About's "roughly 64-72px top spacing" and Feedback's "begin roughly
+   56-72px below the divider, not near the vertical center" both
+   describe top-anchored placement) - each panel supplies its own
+   margin-top below instead of this container centering everything;
+   FAQ's own content is long enough that centering never had a visible
+   effect for it anyway.) */
 .info-layout{
-  /* Symmetric top/bottom padding (2026-10-21) - was 0 top/60px bottom,
-     which skewed the "centered" content down by that same 60px once
-     justify-content:center was added below (centering happens within
-     the padded content box, so asymmetric padding = asymmetric result). */
-  padding: 60px 6vw;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  padding: 0 6vw 60px;
+  background: var(--page-bg);
+  /* Establishes a new block-formatting context (2026-10-21) so a
+     panel's own margin-top (see #infoPanelAbout etc. below) can't
+     collapse through this element's zero top padding - without this,
+     that margin-top would just push .info-layout ITSELF down instead
+     of creating space between this element's own top (where the beige
+     background starts) and the panel inside it, leaving the first
+     ~70px below the divider un-beige. */
+  display: flow-root;
 }
 /* Each panel gets its own centered max-width (2026-10-21, per request)
    instead of .info-layout's old near-full-width column. */
 #infoPanelAbout{
   max-width: 1000px;
-  margin: 0 auto;
+  margin: 68px auto 0;
 }
 #infoPanelFaq{
   max-width: 960px;
-  margin: 0 auto;
+  margin: 60px auto 0;
   flex-direction: column;
   gap: 12px;
 }
 #infoPanelFaq.active{ display: flex; }
 #infoPanelFeedback{
   max-width: 960px;
-  margin: 0 auto;
+  margin: 64px auto 0;
 }
 
 /* ---------- EMBEDDED CLAIM FORM ---------- */
@@ -700,13 +737,16 @@ header.site{
 .info-panel.active{ display: block; }
 #feedbackText{
   width: 100%;
-  min-height: 100px;
+  /* 16px/1.4/14-16px padding/100-120px height (2026-10-21, per request) -
+     was 20.25px/10px padding/100px min-height with no explicit line-height. */
+  min-height: 110px;
   background: var(--paper);
   border: 1px solid var(--line-strong);
   color: var(--ink);
   font-family: 'Inter', sans-serif;
-  font-size: 20.25px;
-  padding: 10px;
+  font-size: 16px;
+  line-height: 1.4;
+  padding: 15px;
   resize: vertical;
 }
 #feedbackText::placeholder{ color: var(--muted); }
@@ -718,7 +758,8 @@ header.site{
 }
 .feedback-error.show{ display: block; }
 .feedback-send{
-  margin-top: 10px;
+  /* 12-14px gap beneath the textarea (2026-10-21, per request), was 10px. */
+  margin-top: 13px;
   width: 100%;
   background: var(--accent);
   color: #fff;
@@ -749,11 +790,10 @@ header.site{
   border-radius: 6px;
   padding: 1px 8px;
 }
-/* Lifted (2026-10-21, per request) - was 24px, tightened along with
-   .info-layout's own top padding to pull the whole block up and help
-   it fit in one view with no scroll. */
-.about-body:first-child{ margin-top: 8px; }
-#feedbackText{ margin-top: 24px; }
+/* No extra margin-top of its own any more (2026-10-21) -
+   #infoPanelAbout's own margin-top now fully owns the top spacing
+   (~68px, per request), so stacking another one here would overshoot it. */
+.about-body:first-child{ margin-top: 0; }
 .about-body:last-child{ margin-bottom: 0; }
 
 /* Compact accordion cards (2026-10-21, per request), replacing the old
@@ -805,9 +845,7 @@ header.site{
 .faq-item.open .faq-a{ margin-top: 12px; }
 @media (max-width: 700px){
   .about-body{ font-size: 16px; line-height: 1.6; }
-  .about-body:first-child{ margin-top: 16px; }
   .about-mobile-break{ display: block; margin-top: 20px; }
-  #feedbackText{ margin-top: 16px; font-size: 16px; }
   .feedback-send{ font-size: 15px; }
   .faq-item{ padding: 15px 16px; }
   .faq-q{ font-size: 16px; }
@@ -4398,6 +4436,10 @@ function capacityBadgeHtml(capacity, assumed){
 // left list and makes sure there's a valid selection, then renders the
 // right-hand profile panel for whichever alum ends up selected.
 let selectedAlumId = null;
+// Lets renderProfilePanel() tell "nothing matches the current filters"
+// apart from "nothing's been clicked yet" - both leave selectedAlumId
+// null, but only one of them is a real empty state (2026-10-21).
+let directoryHasResults = true;
 
 const PORTRAIT_PLACEHOLDER_SVG = '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg>';
 
@@ -4426,12 +4468,25 @@ function slugifyAlumName(name){
 // current selection" itself any more - renderProfilePanel's own token
 // check is what discards a stale result, so this function stays a pure
 // "what photo does this alum have" lookup.
+// Caches a resolved {slug, src} by slug (2026-10-21, per request -
+// "cache already loaded photos so revisiting someone does not reload
+// their image") - once an alum's photo (or lack of one) has been
+// resolved once, every later call (re-selecting them, or a hover-
+// preload finishing before they're clicked - see
+// preloadAlumPhotoOnDemand below) returns instantly instead of re-
+// running the whole extension-fallback/decode race again.
+const resolvedPhotoCache = new Map();
 function resolveAlumPhoto(a){
   const slug = slugifyAlumName(a.name);
+  if(resolvedPhotoCache.has(slug)) return Promise.resolve(resolvedPhotoCache.get(slug));
   return new Promise(resolve => {
+    function settleWith(result){
+      resolvedPhotoCache.set(slug, result);
+      resolve(result);
+    }
     function tryExt(extIdx){
       if(extIdx >= PORTRAIT_EXTS.length){
-        resolve({slug, src: null});
+        settleWith({slug, src: null});
         return;
       }
       const candidate = new Image();
@@ -4444,11 +4499,11 @@ function resolveAlumPhoto(a){
         // forever; race it against a short timeout and resolve either way.
         if(candidate.decode){
           let settled = false;
-          const settle = () => { if(!settled){ settled = true; resolve({slug, src}); } };
+          const settle = () => { if(!settled){ settled = true; settleWith({slug, src}); } };
           candidate.decode().then(settle).catch(settle);
           setTimeout(settle, 400);
         } else {
-          resolve({slug, src});
+          settleWith({slug, src});
         }
       };
       candidate.onerror = () => tryExt(extIdx + 1);
@@ -4456,6 +4511,15 @@ function resolveAlumPhoto(a){
     }
     tryExt(0);
   });
+}
+// Fire-and-forget hover/focus preload (2026-10-21, per request - "so
+// clicking them feels immediate") - just runs the real resolveAlumPhoto()
+// chain ahead of time and lets its own cache absorb the result; a click
+// that lands before this finishes just falls through to the normal
+// resolve path, no worse off than without this.
+function preloadAlumPhotoOnDemand(a){
+  if(resolvedPhotoCache.has(slugifyAlumName(a.name))) return;
+  resolveAlumPhoto(a);
 }
 // The only thing that actually touches the visible <img>/fallback -
 // called once a photo has resolved (see resolveAlumPhoto above) AND the
@@ -4530,11 +4594,19 @@ function renderGrid(){
 
   if(filtered.length === 0){
     selectedAlumId = null;
-  } else if(!filtered.some(a => a.id === selectedAlumId)){
-    // Either nothing was selected yet (first load) or the previous
-    // selection got filtered out - either way, default to the first
-    // alum in the current result set, per request.
-    selectedAlumId = filtered[0].id;
+    directoryHasResults = false;
+  } else {
+    directoryHasResults = true;
+    // Only re-pick a fallback when there WAS a real selection that a
+    // filter/search change just filtered out (2026-10-21, per request -
+    // "do not default the selected alum to Koushank or any other
+    // person" on first load) - selectedAlumId stays null (profile pane
+    // stays in its neutral/unselected state) until the user actually
+    // clicks an alum. !== null here is what distinguishes "nothing
+    // selected yet" from "the previous pick is gone now".
+    if(selectedAlumId !== null && !filtered.some(a => a.id === selectedAlumId)){
+      selectedAlumId = filtered[0].id;
+    }
   }
   renderProfilePanel();
 }
@@ -4596,6 +4668,8 @@ function renderDirectoryList(filtered){
       </div>
     `;
     btn.addEventListener('click', () => selectAlum(a.id, {openMobileDetail: true, reopenProfile: true}));
+    btn.addEventListener('mouseenter', () => preloadAlumPhotoOnDemand(a));
+    btn.addEventListener('focus', () => preloadAlumPhotoOnDemand(a));
     list.appendChild(btn);
   });
   enforceDirectoryListMinWidth();
@@ -4710,11 +4784,17 @@ function renderProfilePanel(){
 
   if(!a){
     lastRenderedAlumId = null;
+    // Neutral "nothing selected yet" state (2026-10-21, per request) is
+    // its own message, distinct from the real empty-filters state -
+    // both leave selectedAlumId null, but they're not the same thing.
+    const message = directoryHasResults
+      ? 'Select an alum from the list to view their profile.'
+      : 'No alumni match those filters right now. Try clearing a few.';
     right.innerHTML = `
       <div class="profile-toolbar">
         <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
       </div>
-      <div class="directory-empty">No alumni match those filters right now. Try clearing a few.</div>
+      <div class="directory-empty">${message}</div>
     `;
     return;
   }
