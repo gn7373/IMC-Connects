@@ -2802,7 +2802,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     overflow-x:hidden !important;
   }
   body.mobile-drawer-open{
-    height:100dvh !important;
+    position:fixed !important;
+    top:var(--mobile-scroll-lock-offset, 0px) !important;
+    left:0 !important;
+    right:0 !important;
+    width:100% !important;
+    height:auto !important;
     overflow:hidden !important;
   }
 
@@ -2819,7 +2824,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     width:100% !important;
     max-width:none !important;
     margin:0 !important;
-    padding:14px 20px 16px !important;
+    padding:16px 20px !important;
+    gap:16px !important;
   }
   .search-box{
     width:100% !important;
@@ -2836,7 +2842,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     font-size:13.5px !important;
   }
   .toolbar-row2{
-    margin-top:13px !important;
+    margin-top:0 !important;
     gap:12px !important;
     flex-wrap:wrap !important;
   }
@@ -3610,7 +3616,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-redesign-13";
+const BUILD_VERSION = "2026-10-21-mobile-hotfix-14";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5424,18 +5430,27 @@ function selectAlum(id, opts){
 // toolbar away so --content-top (the drawer's own `top` offset) shrinks
 // to match the masthead-only height, not the masthead+toolbar height it
 // was measured against a moment ago.
+let mobileDirectoryScrollY = 0;
+
 function openMobileDetail(){
+  mobileDirectoryScrollY = window.scrollY || window.pageYOffset || 0;
+  document.body.style.setProperty('--mobile-scroll-lock-offset', `-${mobileDirectoryScrollY}px`);
   document.getElementById('directorySplit').classList.add('mobile-detail-open');
   document.getElementById('view-listing').classList.add('mobile-detail-open');
   document.body.classList.add('mobile-drawer-open');
   document.getElementById('directoryRight').scrollTop = 0;
   sizeDirectorySplit();
 }
+
 function closeMobileDetail(){
+  const restoreY = mobileDirectoryScrollY;
   document.getElementById('directorySplit').classList.remove('mobile-detail-open');
   document.getElementById('view-listing').classList.remove('mobile-detail-open');
   document.body.classList.remove('mobile-drawer-open');
+  document.body.style.removeProperty('--mobile-scroll-lock-offset');
   sizeDirectorySplit();
+  window.scrollTo(0, restoreY);
+  requestAnimationFrame(() => window.scrollTo(0, restoreY));
 }
 
 // Collapsing/expanding the profile panel (2026-10-17) - only toggles a
