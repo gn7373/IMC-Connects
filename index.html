@@ -2754,128 +2754,162 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 
 /* ============================================================
-   MOBILE REDESIGN — 2026-10-21
-   Authoritative mobile layer. Keep desktop rules above intact.
+   MOBILE REDESIGN — 2026-10-21 v2
+   6-mobile page.png is the spacing/layout reference.
    ============================================================ */
 .mobile-profile-retract,
+.mobile-profile-topbar,
 .directory-entry-photo{ display:none; }
 
-@media (max-width: 1023px){
-  .mobile-profile-retract{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    position:absolute;
-    top:16px;
-    left:12px;
-    width:34px;
-    height:46px;
-    border:1px solid var(--border-strong);
-    border-radius:10px;
-    background:var(--surface);
-    color:var(--accent);
-    z-index:34;
-    cursor:pointer;
-    box-shadow:0 3px 10px rgba(53,32,95,.08);
-  }
-  .profile-toolbar,
-  .profile-back-btn{ display:none !important; }
-}
-
 @media (max-width: 767px){
-  /* Directory is the base mobile screen and must use normal page scroll. */
-  body.listing-active{ height:auto !important; overflow-y:auto !important; }
-  body.mobile-drawer-open{ height:100dvh !important; overflow:hidden !important; }
-  #view-listing{ overflow:visible; }
-  .directory-split{ overflow:visible; }
-  .directory-list{ overflow:visible !important; min-height:auto !important; }
-
-  /* Use nearly the full phone width for browse controls/cards. */
-  .directory-toolbar .listing-container,
-  .workspace .listing-container{
-    width:100%;
-    max-width:none;
-    margin:0;
-    padding-left:8px;
-    padding-right:8px;
+  body.listing-active{
+    height:auto !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
   }
-  .workspace{
-    width:100%;
-    max-width:none;
-    margin:0;
-    padding:0;
-    border-radius:0;
+  body.mobile-drawer-open{
+    height:100dvh !important;
+    overflow:hidden !important;
   }
-  .directory-list{ padding:8px 2px 48px; }
-  .directory-list-header-inner{ padding:7px 6px; }
 
-  /* Search gets the full line so the placeholder remains readable. */
+  /* Compact universal masthead. */
+  #heroSub.compact{
+    padding-left:20px !important;
+    padding-right:20px !important;
+  }
+  #heroSub.compact .hero-logo{ font-size:11px; }
+  #heroSub.compact .hero-logo .logo-cmi{ font-size:1.72em; }
+
+  /* Browse toolbar spacing follows the supplied mobile reference. */
+  .directory-toolbar .listing-container{
+    width:100% !important;
+    max-width:none !important;
+    margin:0 !important;
+    padding:12px 20px 14px !important;
+  }
   .search-box{
-    width:100%;
-    flex:1 1 100%;
-    min-width:0;
-    padding-left:12px;
-    padding-right:12px;
+    width:100% !important;
+    min-width:0 !important;
+    height:44px !important;
+    flex:1 1 100% !important;
+    padding:0 14px !important;
+    border-radius:12px !important;
   }
   .search-box input{
-    min-width:0;
-    font-size:13px;
+    min-width:0 !important;
+    font-size:13.5px !important;
+  }
+  .toolbar-row2{
+    margin-top:12px !important;
+    gap:12px !important;
+    flex-wrap:wrap !important;
+  }
+  .mobile-filters-toggle{
+    min-height:40px;
+    padding:8px 18px !important;
+    border-radius:8px !important;
+  }
+  .pins-toggle-btn{
+    min-height:40px;
+    margin-left:auto !important;
+    padding:8px 18px !important;
+    font-size:13px !important;
   }
 
-  /* Mobile directory cards gain portraits and use the extra page width. */
+  /* Normal page scroll for the directory. */
+  #view-listing,
+  .directory-split{ overflow:visible !important; }
+  .directory-list{
+    overflow:visible !important;
+    min-height:auto !important;
+    padding:10px 20px 48px !important;
+  }
+  .workspace{
+    width:100% !important;
+    max-width:none !important;
+    margin:0 !important;
+    padding:0 !important;
+    border-radius:0 !important;
+  }
+  .workspace .listing-container{
+    width:100% !important;
+    max-width:none !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+  .directory-list-header-inner{
+    padding:8px 20px !important;
+  }
+
+  /* Directory cards with real headshots, matching the reference scale. */
   .directory-entry{
-    grid-template-columns:52px minmax(0,1fr) auto !important;
-    grid-template-rows:auto auto;
+    grid-template-columns:76px minmax(0,1fr) auto !important;
+    grid-template-rows:auto auto !important;
     grid-template-areas:
       "photo info info"
-      "photo loc right";
-    column-gap:10px;
-    row-gap:7px;
-    width:100%;
-    padding:11px 10px;
-    margin-bottom:8px;
+      "photo loc right" !important;
+    column-gap:12px !important;
+    row-gap:8px !important;
+    width:100% !important;
+    padding:10px 12px !important;
+    margin-bottom:10px !important;
+    border-radius:10px !important;
   }
   .directory-entry-photo{
     grid-area:photo;
-    display:flex;
-    width:52px;
-    height:62px;
-    border-radius:8px;
-    overflow:hidden;
-    background:var(--selected-bg);
+    display:flex !important;
+    width:76px;
+    height:88px;
+    align-self:start;
     align-items:center;
     justify-content:center;
-    align-self:start;
+    overflow:hidden;
+    border-radius:8px;
+    background:var(--selected-bg);
   }
   .directory-entry-photo img{
+    display:block;
     width:100%;
     height:100%;
     object-fit:cover;
-    display:block;
   }
   .directory-entry-photo-fallback{
-    width:28px;
-    height:28px;
+    width:34px;
+    height:34px;
     display:flex;
     align-items:center;
     justify-content:center;
     color:var(--muted);
   }
-  .directory-entry-photo-fallback svg{ width:28px; height:28px; }
-  .directory-entry-info{ grid-area:info; min-width:0; }
-  .directory-entry-name{ font-size:16px; line-height:1.18; }
-  .directory-entry-info .alum-role{ font-size:12.5px; line-height:1.2; margin-top:2px; }
-  .directory-entry-info .alum-company{ font-size:12px; line-height:1.2; margin-top:1px; }
-  .directory-entry-location-inline{
-    grid-area:loc;
-    display:flex !important;
+  .directory-entry-photo-fallback svg{ width:34px; height:34px; }
+  .directory-entry-info{
+    grid-area:info;
     min-width:0;
-    max-width:100%;
-    justify-self:stretch;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    font-size:12px;
+  }
+  .directory-entry-name{
+    font-size:16.5px !important;
+    line-height:1.18 !important;
+  }
+  .directory-entry-info .alum-role{
+    font-size:12.7px !important;
+    line-height:1.2 !important;
+    margin-top:3px !important;
+  }
+  .directory-entry-info .alum-company{
+    font-size:12.2px !important;
+    line-height:1.2 !important;
+    margin-top:2px !important;
+  }
+  .directory-entry-location-inline{
+    grid-area:loc !important;
+    display:flex !important;
+    justify-self:stretch !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    font-size:12px !important;
   }
   .directory-entry-location-inline .format-value{
     min-width:0;
@@ -2884,89 +2918,158 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     white-space:nowrap;
   }
   .directory-entry-right{
-    grid-area:right;
+    grid-area:right !important;
     display:flex !important;
-    justify-self:end;
-    gap:6px;
+    justify-self:end !important;
+    gap:6px !important;
+    flex-shrink:0 !important;
   }
-  .directory-entry-spots .capacity-badge{ font-size:11.5px; }
+  .directory-entry-spots .capacity-badge{
+    font-size:11.5px !important;
+    white-space:nowrap;
+  }
 
-  /* Dim the directory rather than replacing it; the drawer deliberately
-     stops short of the left edge so browsing context remains visible. */
+  /* Keep mobile filters vertical/downward, never side-opening. */
+  .toolbar-row2.mobile-filters-open .filter-dropdowns{
+    margin-top:12px !important;
+  }
+  .filter-dropdown-panel{
+    max-width:calc(100vw - 40px) !important;
+  }
+
+  /* Drawer: roughly right 70% of screen, with directory context visible. */
   #view-listing.mobile-detail-open::before{
     content:"";
     position:fixed;
-    top:var(--content-top, 58px);
-    left:0;
-    right:0;
-    bottom:0;
-    background:rgba(53,32,95,.14);
-    backdrop-filter:blur(1px);
-    -webkit-backdrop-filter:blur(1px);
+    inset:0;
+    background:rgba(26,30,31,.50);
     z-index:24;
     pointer-events:none;
   }
-  #view-listing.mobile-detail-open .directory-toolbar{ display:none !important; }
-
+  #view-listing.mobile-detail-open .directory-toolbar{
+    display:none !important;
+  }
   .directory-right{
-    top:var(--content-top, 58px) !important;
-    left:34px !important;
+    display:block !important;
+    position:fixed !important;
+    top:0 !important;
+    left:clamp(88px, 29vw, 126px) !important;
     right:0 !important;
     bottom:0 !important;
     width:auto !important;
     min-width:0 !important;
     max-width:none !important;
     padding:0 0 24px !important;
-    background:var(--workspace-bg) !important;
     overflow-y:auto !important;
     overflow-x:visible !important;
-    z-index:30;
-    transform:translateX(calc(100% + 34px)) !important;
+    background:var(--workspace-bg) !important;
     border-left:1px solid var(--border-strong);
-    box-shadow:-10px 0 28px rgba(53,32,95,.16);
+    border-radius:18px 0 0 18px;
+    box-shadow:-12px 0 30px rgba(24,23,34,.22);
+    z-index:30;
+    transform:translateX(calc(100% + 130px)) !important;
+    transition:transform 280ms cubic-bezier(.22,.8,.32,1) !important;
   }
   .directory-split.mobile-detail-open .directory-right{
     transform:translateX(0) !important;
   }
-  .mobile-profile-retract{
-    top:50%;
-    left:-19px;
-    width:38px;
-    height:62px;
-    margin-top:-31px;
-    border-radius:12px 0 0 12px;
-    border-right:0;
-    background:var(--workspace-bg);
-    box-shadow:-4px 2px 12px rgba(53,32,95,.12);
+  @media (prefers-reduced-motion: reduce){
+    .directory-right{ transition:none !important; }
   }
 
-  /* Exact mobile profile information hierarchy:
-     photo + identity, then location/LinkedIn/spots on one line,
-     Add to my list below, then the section divider. */
-  .profile-header{
+  .mobile-profile-topbar{
+    display:flex;
     position:relative;
+    align-items:center;
+    justify-content:flex-end;
+    height:66px;
+    padding:0 18px;
+  }
+  .mobile-profile-menu-btn{
+    width:34px;
+    height:34px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+    border:0;
+    background:none;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .mobile-profile-nav-menu{
+    display:none;
+    position:absolute;
+    top:54px;
+    right:14px;
+    min-width:126px;
+    padding:10px;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:10px;
+    box-shadow:0 12px 28px rgba(37,37,100,.16);
+    z-index:36;
+  }
+  .mobile-profile-nav-menu.open{ display:block; }
+  .mobile-profile-nav-menu button{
+    display:block;
     width:100%;
-    padding:14px 14px 13px;
-    border-bottom:1px solid var(--border-strong);
+    padding:8px 10px;
+    border:0;
+    background:none;
+    text-align:left;
+    font:500 13px 'Inter', sans-serif;
+    color:var(--ink);
+    cursor:pointer;
+  }
+
+  .mobile-profile-retract{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:absolute;
+    left:-20px;
+    top:50%;
+    width:40px;
+    height:64px;
+    margin-top:-32px;
+    padding:0;
+    border:1px solid var(--border-strong);
+    border-right:0;
+    border-radius:14px 0 0 14px;
+    background:var(--workspace-bg);
+    color:var(--accent);
+    z-index:35;
+    box-shadow:-5px 2px 12px rgba(53,32,95,.14);
+    cursor:pointer;
+  }
+
+  /* Profile header: photo/identity, then metadata+spots, then add. */
+  .profile-toolbar,
+  .profile-back-btn{ display:none !important; }
+  .profile-header{
+    width:100% !important;
+    padding:4px 18px 16px !important;
+    border-bottom:1px solid var(--border-strong) !important;
     background:var(--workspace-bg);
   }
   .profile-header-inner,
   .directory-right.narrow .profile-header-inner{
     display:grid !important;
-    grid-template-columns:92px minmax(0,1fr) auto !important;
-    grid-template-rows:auto auto auto;
+    grid-template-columns:86px minmax(0,1fr) auto !important;
+    grid-template-rows:auto auto auto !important;
     grid-template-areas:
       "portrait identity identity"
       "meta meta spots"
-      "add add add";
-    column-gap:12px !important;
-    row-gap:9px !important;
-    width:100%;
+      "add add add" !important;
+    column-gap:14px !important;
+    row-gap:12px !important;
+    width:100% !important;
     height:auto !important;
     min-height:0 !important;
     padding:0 !important;
     overflow:visible !important;
-    align-items:start;
+    align-items:start !important;
   }
   .profile-info,
   .profile-identity-wrap,
@@ -2975,76 +3078,81 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
   .profile-portrait,
   .directory-right.narrow .profile-portrait{
-    grid-area:portrait;
-    width:92px !important;
-    height:112px !important;
-    min-width:92px;
+    grid-area:portrait !important;
+    width:86px !important;
+    height:106px !important;
+    min-width:86px !important;
     margin:0 !important;
-    border-radius:9px;
-    overflow:hidden;
+    border-radius:9px !important;
+    overflow:hidden !important;
   }
   .profile-info-identity{
-    grid-area:identity;
-    align-self:start;
-    max-height:112px;
-    overflow:hidden;
-    min-width:0;
+    grid-area:identity !important;
+    min-width:0 !important;
+    max-height:106px !important;
+    overflow:hidden !important;
+    align-self:start !important;
   }
   .profile-name{
-    font-size:20px !important;
-    line-height:1.08;
+    margin:0 !important;
+    font-size:19px !important;
+    line-height:1.08 !important;
   }
   .profile-info .alum-role{
-    font-size:13px;
-    line-height:1.22;
-    margin-top:4px;
+    margin-top:5px !important;
+    font-size:12.6px !important;
+    line-height:1.22 !important;
   }
   .profile-info .alum-company{
-    font-size:12.5px;
-    line-height:1.22;
-    margin-top:2px;
+    margin-top:2px !important;
+    font-size:12.2px !important;
+    line-height:1.22 !important;
+    overflow-wrap:anywhere;
   }
   .profile-identity-wrap{ margin-top:0 !important; }
+
   .profile-info .alum-meta{
-    grid-area:meta;
-    display:flex;
-    align-items:center;
-    gap:7px;
-    min-width:0;
-    overflow:hidden;
-    white-space:nowrap;
+    grid-area:meta !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:7px !important;
+    min-width:0 !important;
+    overflow:hidden !important;
     margin:0 !important;
-    font-size:12px;
+    white-space:nowrap !important;
+    font-size:11.8px !important;
   }
   .profile-info .alum-meta .format-value{
-    min-width:0;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+    min-width:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
   }
   .profile-info .alum-meta .alum-linkedin{
-    flex-shrink:0;
-    white-space:nowrap;
+    flex-shrink:0 !important;
+    white-space:nowrap !important;
   }
   .profile-availability .capacity-badge-wrap{
-    grid-area:spots;
-    align-self:center;
-    justify-self:end;
-    white-space:nowrap;
+    grid-area:spots !important;
+    align-self:center !important;
+    justify-self:end !important;
+    white-space:nowrap !important;
   }
-  .profile-availability .capacity-badge{ font-size:11.5px; }
+  .profile-availability .capacity-badge{
+    font-size:11px !important;
+  }
   .profile-add-btn{
-    grid-area:add;
-    justify-self:start;
+    grid-area:add !important;
+    justify-self:start !important;
     margin:0 !important;
-    min-height:34px;
-    padding:7px 12px !important;
-    font-size:12.5px !important;
+    min-height:34px !important;
+    padding:7px 13px !important;
+    font-size:12px !important;
   }
 
-  /* Expertise sections are content-driven, never equal-height. */
+  /* Content-driven expertise spacing; no reserved empty section heights. */
   .profile-sections{
-    padding:14px 14px 24px !important;
+    padding:16px 18px 28px !important;
   }
   .profile-sections .alum-columns{
     display:block !important;
@@ -3061,39 +3169,34 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .profile-sections .topic-tags{
     min-height:0 !important;
     height:auto !important;
-    margin-top:7px;
+    margin-top:8px !important;
   }
   .profile-sections .alum-col + .alum-col,
   .profile-sections .alum-columns + .ask-me-about{
-    margin-top:23px !important;
+    margin-top:24px !important;
   }
   .profile-sections .field-label{
-    display:block;
-    margin:0;
-    font-size:13px;
-    font-weight:600;
-    color:var(--ink);
+    display:block !important;
+    margin:0 !important;
+    font-size:14px !important;
+    font-weight:700 !important;
+    color:var(--ink) !important;
+  }
+  .profile-sections .topic-tags{
+    gap:6px !important;
   }
   .profile-sections .topic-tag{
-    font-size:11.5px;
-    line-height:1.2;
-    padding:5px 8px;
+    padding:5px 8px !important;
+    font-size:11px !important;
+    line-height:1.2 !important;
   }
 
-  /* Keep the mobile masthead compact and consistent everywhere. */
-  #heroSub.compact{
-    padding-left:14px;
-    padding-right:14px;
-  }
-  #heroSub.compact .hero-logo{ font-size:11px; }
-  #heroSub.compact .hero-logo .logo-cmi{ font-size:1.7em; }
-
-  /* Secondary pages: one continuous cream surface with floating titles. */
+  /* Secondary pages remain one continuous cream-white surface. */
   #view-info,
   .info-title-band,
   .info-layout{ background:var(--page-bg) !important; }
   .info-title-band-inner{
-    width:100%;
+    width:100% !important;
     padding:24px 20px 0 !important;
   }
   .info-layout{ padding:0 20px 44px !important; }
@@ -3101,8 +3204,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   #infoPanelFaq,
   #infoPanelFeedback{ margin-top:18px !important; }
 
-  /* Landing: keep artwork visually connected to the hero copy. */
-  .hero-copy{ margin-top:14px !important; padding-left:20px; padding-right:20px; }
+  /* Landing mobile composition: narrower CTA, artwork pulled upward. */
+  .hero-copy{
+    margin-top:14px !important;
+    padding-left:20px !important;
+    padding-right:20px !important;
+  }
   .landing-option{
     min-width:0 !important;
     width:148px !important;
@@ -3110,13 +3217,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
   .hero-illustration{
     width:100% !important;
-    margin:2px 0 0 !important;
-    padding:0 0 0 28px;
+    margin:0 !important;
+    padding:0 0 0 26px !important;
     justify-content:flex-end !important;
   }
   .hero-illustration img{
-    width:100%;
-    max-width:100%;
+    width:100% !important;
+    max-width:100% !important;
   }
 }
 
@@ -3417,7 +3524,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-redesign-1";
+const BUILD_VERSION = "2026-10-21-mobile-redesign-2";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4752,6 +4859,98 @@ const PORTRAIT_PLACEHOLDER_SVG = '<svg width="56" height="56" viewBox="0 0 24 24
 // so this tries every extension actually in use in that folder in turn
 // (via the image's own onerror) and falls back to the placeholder SVG
 // once all of them 404 - never assumes a particular alum has a photo.
+// Exact filename manifest from /photos. This makes directory thumbnails
+// deterministic instead of waiting for a multi-extension fallback chain.
+const PHOTO_FILE_BY_SLUG = {
+  "aastha_desai": "aastha_desai.jfif",
+  "adrena_stubberfield": "adrena_stubberfield.png",
+  "alexandra_barrangan": "alexandra_barrangan.jfif",
+  "alice_liang": "alice_liang.jfif",
+  "amanda_modelski": "amanda_modelski.png",
+  "anni_lundy": "anni_lundy.png",
+  "arjun_kumar": "arjun_kumar.jfif",
+  "ashley_gondorcin_graves": "ashley_gondorcin_graves.jfif",
+  "ashley_owen": "ashley_owen.jfif",
+  "bhawna_n": "bhawna_n.png",
+  "bri_sandack": "bri_sandack.jfif",
+  "brian_weidy": "brian_weidy.jfif",
+  "brittany_thomas": "brittany_thomas.jfif",
+  "camille_vicino": "camille_vicino.jfif",
+  "carmen_gutierrez_de_la_roza": "carmen_gutierrez_de_la_roza.jfif",
+  "christiana_stewart": "christiana_stewart.jfif",
+  "christina_fu": "christina_fu.jfif",
+  "cianna_reeves": "cianna_reeves.png",
+  "constance_yulei_liu": "constance_yulei_liu.jpg",
+  "daniel_allen": "daniel_allen.jfif",
+  "dhriti_trivedi": "dhriti_trivedi.jfif",
+  "fara_goldberg": "fara_goldberg.jfif",
+  "faryal_ali": "faryal_ali.jfif",
+  "gary_gonzalez": "gary_gonzalez.png",
+  "gonzalo_garcia_calderon": "gonzalo_garcia_calderon.jfif",
+  "hanson_hairihan": "hanson_hairihan.jfif",
+  "henry_huang": "henry_huang.jfif",
+  "henry_rogers": "henry_rogers.jfif",
+  "ilina_ewen": "ilina_ewen.jfif",
+  "jasmine_chao": "jasmine_chao.jfif",
+  "jennifer_wang": "jennifer_wang.jfif",
+  "jess_guffey": "jess_guffey.jfif",
+  "jesse_zeng": "jesse_zeng.png",
+  "jiaran_wang": "jiaran_wang.png",
+  "jonathan_kamel": "jonathan_kamel.png",
+  "kali_skidelsky": "kali_skidelsky.jfif",
+  "kandise_le_blanc": "kandise_le_blanc.png",
+  "katie_boardman": "katie_boardman.jfif",
+  "katie_lahti": "katie_lahti.jfif",
+  "katie_mcdonnell": "katie_mcdonnell.jfif",
+  "kay_chung": "kay_chung.jfif",
+  "kevin_miller": "kevin_miller.jfif",
+  "kevin_sidell": "kevin_sidell.jfif",
+  "kiera_luo": "kiera_luo.png",
+  "koushank_ahuja": "koushank_ahuja.jfif",
+  "laura_alencar": "laura_alencar.jfif",
+  "lauren_meltzer": "lauren_meltzer.jfif",
+  "layth_yehyawi": "layth_yehyawi.jfif",
+  "leeann_shelton": "leeann_shelton.jfif",
+  "lily_proudman": "lily_proudman.jfif",
+  "linda_feng": "linda_feng.jfif",
+  "lindsey_schott": "lindsey_schott.jfif",
+  "lucinda_vacura": "lucinda_vacura.jfif",
+  "mahek_parekh": "mahek_parekh.png",
+  "manuel_altomonte": "manuel_altomonte.jfif",
+  "marc_zarefsky": "marc_zarefsky.jfif",
+  "maria_alejandra_alvarado_g": "maria_alejandra_alvarado_g.jfif",
+  "mary_hager": "mary_hager.png",
+  "meena_vetri_wehrs": "meena_vetri_wehrs.jfif",
+  "melanie_greben": "melanie_greben.jfif",
+  "morgan_ho": "morgan_ho.jfif",
+  "nadine_mansour": "nadine_mansour.jfif",
+  "nandini_balu": "nandini_balu.jfif",
+  "naomi_birenbaum": "naomi_birenbaum.jfif",
+  "nikith_deo": "nikith_deo.jfif",
+  "nina_wescott": "nina_wescott.jfif",
+  "olavina_harahap": "olavina_harahap.jfif",
+  "priyal_khanuja": "priyal_khanuja.jfif",
+  "rachel_sova": "rachel_sova.png",
+  "rainn_guo": "rainn_guo.jfif",
+  "riya_bhatia": "riya_bhatia.jfif",
+  "rohana_radhakrishnan": "rohana_radhakrishnan.jfif",
+  "rushil_mohan": "rushil_mohan.jfif",
+  "samone_khalil": "samone_khalil.png",
+  "sarah_koessel": "sarah_koessel.jfif",
+  "sasha_shrimanker": "sasha_shrimanker.png",
+  "selina_wang": "selina_wang.png",
+  "shari_newman": "shari_newman.jfif",
+  "sheryl_xu": "sheryl_xu.jfif",
+  "sumit_jagdale": "sumit_jagdale.jfif",
+  "taerynn_k_owens": "taerynn_k_owens.jfif",
+  "tamara_bendeck": "tamara_bendeck.jfif",
+  "tim_anderson": "tim_anderson.jfif",
+  "victor_yakovlev": "victor_yakovlev.png",
+  "wanyao_xie": "wanyao_xie.jfif",
+  "xuechen_zhang_susan": "xuechen_zhang_susan.jfif",
+  "yuki_fang": "yuki_fang.png"
+};
+
 const PORTRAIT_EXTS = ['jpg', 'jpeg', 'png', 'jfif'];
 function slugifyAlumName(name){
   return (name || '')
@@ -4831,10 +5030,16 @@ function hydrateDirectoryThumbnail(button, a){
   if(window.innerWidth > 767) return;
   const shell = button.querySelector('.directory-entry-photo');
   if(!shell) return;
+  const slug = slugifyAlumName(a.name);
+  const exactFile = PHOTO_FILE_BY_SLUG[slug];
+  if(exactFile){
+    shell.innerHTML = `<img src="photos/${exactFile}" alt="" loading="lazy" decoding="async">`;
+    return;
+  }
   resolveAlumPhoto(a).then(photoResult => {
     if(!button.isConnected) return;
     if(photoResult.src){
-      shell.innerHTML = `<img src="${photoResult.src}" alt="" loading="lazy">`;
+      shell.innerHTML = `<img src="${photoResult.src}" alt="" loading="lazy" decoding="async">`;
     }
   });
 }
@@ -5145,6 +5350,16 @@ function renderProfilePanel(){
       <button type="button" class="mobile-profile-retract" id="mobileProfileRetract" aria-label="Retract profile">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 6 9 12 15 18"/></svg>
       </button>
+      <div class="mobile-profile-topbar">
+        <button type="button" class="mobile-profile-menu-btn" id="mobileProfileMenuBtn" aria-label="Menu" aria-expanded="false">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="mobile-profile-nav-menu" id="mobileProfileNavMenu">
+          <button type="button" data-profile-nav="about">About</button>
+          <button type="button" data-profile-nav="faq">FAQ</button>
+          <button type="button" data-profile-nav="feedback">Feedback</button>
+        </div>
+      </div>
       <div class="profile-header">
         <div class="profile-header-inner">
           <div class="profile-portrait" aria-hidden="true">
@@ -5267,6 +5482,20 @@ function updateProfileSections(a){
 // rebinding - or leaking - a listener every time).
 document.getElementById('directoryRight').addEventListener('click', (e) => {
   if(e.target.closest('#mobileProfileRetract')){ closeMobileDetail(); return; }
+  const menuBtn = e.target.closest('#mobileProfileMenuBtn');
+  if(menuBtn){
+    const menu = document.getElementById('mobileProfileNavMenu');
+    const willOpen = !menu.classList.contains('open');
+    menu.classList.toggle('open', willOpen);
+    menuBtn.setAttribute('aria-expanded', String(willOpen));
+    return;
+  }
+  const navBtn = e.target.closest('[data-profile-nav]');
+  if(navBtn){
+    closeMobileDetail();
+    showInfo(navBtn.dataset.profileNav);
+    return;
+  }
   const addBtn = e.target.closest('.profile-add-btn');
   if(addBtn) toggleCart(parseInt(addBtn.dataset.id, 10));
 });
