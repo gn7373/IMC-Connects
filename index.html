@@ -3143,6 +3143,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     white-space:nowrap !important;
     min-width:0 !important;
   }
+  .mobile-profile-meta-spots .capacity-icon{
+    display:none !important;
+  }
   .mobile-profile-meta-spots .capacity-badge{
     font-size:10px !important;
     line-height:1 !important;
@@ -3543,7 +3546,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-redesign-6";
+const BUILD_VERSION = "2026-10-21-mobile-redesign-7";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4878,6 +4881,99 @@ const PORTRAIT_PLACEHOLDER_SVG = '<svg width="56" height="56" viewBox="0 0 24 24
 // so this tries every extension actually in use in that folder in turn
 // (via the image's own onerror) and falls back to the placeholder SVG
 // once all of them 404 - never assumes a particular alum has a photo.
+// Exact portrait filenames from /photos. Using the manifest avoids the
+// extension-by-extension 404 chain and lets visible cards preload the
+// precise asset before a profile is opened.
+const PHOTO_FILE_BY_SLUG = {
+  "aastha_desai": "aastha_desai.jfif",
+  "adrena_stubberfield": "adrena_stubberfield.png",
+  "alexandra_barrangan": "alexandra_barrangan.jfif",
+  "alice_liang": "alice_liang.jfif",
+  "amanda_modelski": "amanda_modelski.png",
+  "anni_lundy": "anni_lundy.png",
+  "arjun_kumar": "arjun_kumar.jfif",
+  "ashley_gondorcin_graves": "ashley_gondorcin_graves.jfif",
+  "ashley_owen": "ashley_owen.jfif",
+  "bhawna_n": "bhawna_n.png",
+  "bri_sandack": "bri_sandack.jfif",
+  "brian_weidy": "brian_weidy.jfif",
+  "brittany_thomas": "brittany_thomas.jfif",
+  "camille_vicino": "camille_vicino.jfif",
+  "carmen_gutierrez_de_la_roza": "carmen_gutierrez_de_la_roza.jfif",
+  "christiana_stewart": "christiana_stewart.jfif",
+  "christina_fu": "christina_fu.jfif",
+  "cianna_reeves": "cianna_reeves.png",
+  "constance_yulei_liu": "constance_yulei_liu.jpg",
+  "daniel_allen": "daniel_allen.jfif",
+  "dhriti_trivedi": "dhriti_trivedi.jfif",
+  "fara_goldberg": "fara_goldberg.jfif",
+  "faryal_ali": "faryal_ali.jfif",
+  "gary_gonzalez": "gary_gonzalez.png",
+  "gonzalo_garcia_calderon": "gonzalo_garcia_calderon.jfif",
+  "hanson_hairihan": "hanson_hairihan.jfif",
+  "henry_huang": "henry_huang.jfif",
+  "henry_rogers": "henry_rogers.jfif",
+  "ilina_ewen": "ilina_ewen.jfif",
+  "jasmine_chao": "jasmine_chao.jfif",
+  "jennifer_wang": "jennifer_wang.jfif",
+  "jess_guffey": "jess_guffey.jfif",
+  "jesse_zeng": "jesse_zeng.png",
+  "jiaran_wang": "jiaran_wang.png",
+  "jonathan_kamel": "jonathan_kamel.png",
+  "kali_skidelsky": "kali_skidelsky.jfif",
+  "kandise_le_blanc": "kandise_le_blanc.png",
+  "katie_boardman": "katie_boardman.jfif",
+  "katie_lahti": "katie_lahti.jfif",
+  "katie_mcdonnell": "katie_mcdonnell.jfif",
+  "kay_chung": "kay_chung.jfif",
+  "kevin_miller": "kevin_miller.jfif",
+  "kevin_sidell": "kevin_sidell.jfif",
+  "kiera_luo": "kiera_luo.png",
+  "koushank_ahuja": "koushank_ahuja.jfif",
+  "laura_alencar": "laura_alencar.jfif",
+  "lauren_meltzer": "lauren_meltzer.jfif",
+  "layth_yehyawi": "layth_yehyawi.jfif",
+  "leeann_shelton": "leeann_shelton.jfif",
+  "lily_proudman": "lily_proudman.jfif",
+  "linda_feng": "linda_feng.jfif",
+  "lindsey_schott": "lindsey_schott.jfif",
+  "lucinda_vacura": "lucinda_vacura.jfif",
+  "mahek_parekh": "mahek_parekh.png",
+  "manuel_altomonte": "manuel_altomonte.jfif",
+  "marc_zarefsky": "marc_zarefsky.jfif",
+  "maria_alejandra_alvarado_g": "maria_alejandra_alvarado_g.jfif",
+  "mary_hager": "mary_hager.png",
+  "meena_vetri_wehrs": "meena_vetri_wehrs.jfif",
+  "melanie_greben": "melanie_greben.jfif",
+  "morgan_ho": "morgan_ho.jfif",
+  "nadine_mansour": "nadine_mansour.jfif",
+  "nandini_balu": "nandini_balu.jfif",
+  "naomi_birenbaum": "naomi_birenbaum.jfif",
+  "nikith_deo": "nikith_deo.jfif",
+  "nina_wescott": "nina_wescott.jfif",
+  "olavina_harahap": "olavina_harahap.jfif",
+  "priyal_khanuja": "priyal_khanuja.jfif",
+  "rachel_sova": "rachel_sova.png",
+  "rainn_guo": "rainn_guo.jfif",
+  "riya_bhatia": "riya_bhatia.jfif",
+  "rohana_radhakrishnan": "rohana_radhakrishnan.jfif",
+  "rushil_mohan": "rushil_mohan.jfif",
+  "samone_khalil": "samone_khalil.png",
+  "sarah_koessel": "sarah_koessel.jfif",
+  "sasha_shrimanker": "sasha_shrimanker.png",
+  "selina_wang": "selina_wang.png",
+  "shari_newman": "shari_newman.jfif",
+  "sheryl_xu": "sheryl_xu.jfif",
+  "sumit_jagdale": "sumit_jagdale.jfif",
+  "taerynn_k_owens": "taerynn_k_owens.jfif",
+  "tamara_bendeck": "tamara_bendeck.jfif",
+  "tim_anderson": "tim_anderson.jfif",
+  "victor_yakovlev": "victor_yakovlev.png",
+  "wanyao_xie": "wanyao_xie.jfif",
+  "xuechen_zhang_susan": "xuechen_zhang_susan.jfif",
+  "yuki_fang": "yuki_fang.png"
+};
+
 const PORTRAIT_EXTS = ['jpg', 'jpeg', 'png', 'jfif'];
 function slugifyAlumName(name){
   return (name || '')
@@ -4907,6 +5003,37 @@ const resolvedPhotoCache = new Map();
 function resolveAlumPhoto(a){
   const slug = slugifyAlumName(a.name);
   if(resolvedPhotoCache.has(slug)) return Promise.resolve(resolvedPhotoCache.get(slug));
+
+  const exactFile = PHOTO_FILE_BY_SLUG[slug];
+  if(exactFile){
+    return new Promise(resolve => {
+      const candidate = new Image();
+      const src = `photos/${exactFile}`;
+      const settle = () => {
+        const result = {slug, src};
+        resolvedPhotoCache.set(slug, result);
+        resolve(result);
+      };
+      candidate.onload = () => {
+        if(candidate.decode){
+          let done = false;
+          const finish = () => { if(!done){ done = true; settle(); } };
+          candidate.decode().then(finish).catch(finish);
+          setTimeout(finish, 150);
+        } else {
+          settle();
+        }
+      };
+      candidate.onerror = () => {
+        const result = {slug, src: null};
+        resolvedPhotoCache.set(slug, result);
+        resolve(result);
+      };
+      candidate.src = src;
+    });
+  }
+
+  // Fallback for any future photo not yet present in the manifest.
   return new Promise(resolve => {
     function settleWith(result){
       resolvedPhotoCache.set(slug, result);
@@ -4919,27 +5046,14 @@ function resolveAlumPhoto(a){
       }
       const candidate = new Image();
       const src = `photos/${slug}.${PORTRAIT_EXTS[extIdx]}`;
-      candidate.onload = () => {
-        // decode() can hang indefinitely rather than ever resolving or
-        // rejecting (observed in at least one real browser context, not
-        // just a theoretical concern) - onload already means the bytes
-        // are in, so a stuck decode() must never be able to block this
-        // forever; race it against a short timeout and resolve either way.
-        if(candidate.decode){
-          let settled = false;
-          const settle = () => { if(!settled){ settled = true; settleWith({slug, src}); } };
-          candidate.decode().then(settle).catch(settle);
-          setTimeout(settle, 400);
-        } else {
-          settleWith({slug, src});
-        }
-      };
+      candidate.onload = () => settleWith({slug, src});
       candidate.onerror = () => tryExt(extIdx + 1);
       candidate.src = src;
     }
     tryExt(0);
   });
 }
+
 // Fire-and-forget hover/focus preload (2026-10-21, per request - "so
 // clicking them feels immediate") - just runs the real resolveAlumPhoto()
 // chain ahead of time and lets its own cache absorb the result; a click
@@ -4978,13 +5092,34 @@ function applyAlumPhoto(photoResult){
 // overwhelming majority of uploaded photos; the few non-jpg ones still
 // get their full extension-fallback chain in resolveAlumPhoto when
 // actually selected, this is only a cache-warming best effort).
-const PRELOAD_PHOTO_COUNT = 25; // above-the-fold + a bit of scroll headroom, not the whole (often 80-100+) list
-function preloadAlumPhotos(alumList){
-  alumList.slice(0, PRELOAD_PHOTO_COUNT).forEach(a => {
-    const slug = slugifyAlumName(a.name);
-    if(!slug) return;
-    new Image().src = `photos/${slug}.${PORTRAIT_EXTS[0]}`;
-  });
+let directoryPhotoPreloadObserver = null;
+
+function preloadDirectoryViewportPhotos(alumList){
+  // Immediately resolve the first screenful so a quick tap after the
+  // directory opens is already hot in cache.
+  alumList.slice(0, 10).forEach(preloadAlumPhotoOnDemand);
+
+  if(directoryPhotoPreloadObserver){
+    directoryPhotoPreloadObserver.disconnect();
+    directoryPhotoPreloadObserver = null;
+  }
+
+  if(!('IntersectionObserver' in window)){
+    alumList.slice(0, 25).forEach(preloadAlumPhotoOnDemand);
+    return;
+  }
+
+  const byId = new Map(alumList.map(a => [String(a.id), a]));
+  directoryPhotoPreloadObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if(!entry.isIntersecting) return;
+      const a = byId.get(entry.target.dataset.id);
+      if(a) preloadAlumPhotoOnDemand(a);
+      directoryPhotoPreloadObserver.unobserve(entry.target);
+    });
+  }, {root:null, rootMargin:'700px 0px'});
+
+  document.querySelectorAll('.directory-entry').forEach(el => directoryPhotoPreloadObserver.observe(el));
 }
 
 // Sort (2026-10-17, revised again) - re-orders whatever matchesFilters
@@ -5102,10 +5237,12 @@ function renderDirectoryList(filtered){
     btn.addEventListener('click', () => selectAlum(a.id, {openMobileDetail: true, reopenProfile: true}));
     btn.addEventListener('mouseenter', () => preloadAlumPhotoOnDemand(a));
     btn.addEventListener('focus', () => preloadAlumPhotoOnDemand(a));
+    btn.addEventListener('pointerdown', () => preloadAlumPhotoOnDemand(a), {passive:true});
+    btn.addEventListener('touchstart', () => preloadAlumPhotoOnDemand(a), {passive:true});
     list.appendChild(btn);
   });
   enforceDirectoryListMinWidth();
-  preloadAlumPhotos(filtered);
+  preloadDirectoryViewportPhotos(filtered);
 }
 
 // Up/Down arrow-key navigation across the list rows - moves focus to
@@ -5274,17 +5411,24 @@ function renderProfilePanel(){
     `;
   }
 
-  // Text is deliberately NOT updated here, synchronously - that's the
-  // exact bug this closes ("the profile must never display text for one
-  // alum with the image of another"). Whatever profile is already on
-  // screen (the previously-selected alum's photo AND text, both) stays
-  // fully intact and untouched until the new alum's photo has actually
-  // resolved (decoded, or determined to have no photo at all) - then
-  // every piece of this alum's content swaps in together, in the same
-  // synchronous block below, so there's no in-between frame where they
-  // can be mismatched.
+  // If this portrait was preloaded from the visible directory, commit the
+  // entire profile synchronously. This prevents reopening the drawer with
+  // the previous alum's face for even one frame.
+  const slug = slugifyAlumName(a.name);
+  const cachedPhoto = resolvedPhotoCache.get(slug);
+  if(cachedPhoto){
+    lastRenderedAlumId = a.id;
+    applyAlumPhoto(cachedPhoto);
+    updateProfileAvailability(a);
+    updateProfileIdentity(a);
+    updateProfileSections(a);
+    return;
+  }
+
+  // Uncached portraits resolve atomically; the viewport preloader above
+  // makes this path uncommon for a card the user can currently tap.
   resolveAlumPhoto(a).then(photoResult => {
-    if(myToken !== profileRenderToken) return; // superseded - discard
+    if(myToken !== profileRenderToken) return;
     lastRenderedAlumId = a.id;
     applyAlumPhoto(photoResult);
     updateProfileAvailability(a);
