@@ -247,14 +247,17 @@ header.site{
   padding-bottom: clamp(8px, 1.2vh, 14px);
   border-bottom: 1px solid #CFCFCF;
 }
-/* Horizontal padding matches #heroSub.compact's own (the browsing
-   page's masthead) exactly - plain 6vw, no max-width/auto-margin
-   centering - so the logo and nav links sit at the same x-coordinates
-   on both pages, per request (2026-10-17; this used to be a separate
-   max-width:1320px/clamp() formula, which drifted from the browsing
-   page's at wide viewports). */
+/* Horizontal padding matches #heroSub.compact's own CURRENT formula
+   exactly (2026-10-21, per request - "the nav bar should be the same as
+   the nav bar on the browsing page in terms of size and distance
+   between components") - was a flat 6vw, which #heroSub.compact itself
+   moved off of back on 2026-10-20 (see that rule's own comment) without
+   this rule following along, so the two masthead instances had quietly
+   drifted apart. .hero-copy's own padding is intentionally left as its
+   own separate 6vw (per explicit request to keep the text box exactly
+   where it already is) - only the nav row itself changes here. */
 .hero-nav-inner{
-  padding: 0 6vw;
+  padding: 0 max(32px, calc((100vw - 1480px) / 2));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1856,6 +1859,21 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   z-index: 20;
 }
 .location-region.open .location-region-panel{ display: block; }
+/* Internal scroll instead of showing the whole list (2026-10-21, per
+   request - "for location options that run long, just have a scroll
+   feature nestled within them rather than showcasing the whole list")
+   - scoped to the checkbox lists specifically (leaf content, no flyouts
+   of their own), not to .location-region-panel itself, since that
+   panel can also hold a further nested accordion (North America's own
+   5 sub-regions) whose own flyouts rely on their ancestors staying
+   overflow:visible to not get clipped - see the comment on
+   .filter-dropdown-panel-grouped above for that same constraint. */
+.location-region-panel .filter-checkboxes,
+.location-subregions > .filter-checkboxes{
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
 .location-region-empty{
   font-family: 'Inter', sans-serif;
   font-size: 12.5px;
@@ -2186,37 +2204,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 /* padding-top gives the column text its own breathing room below the
    (flush) horizontal divider above it. */
 .alum-col{ flex: 1 1 140px; min-width: 0; padding-top: 14px; }
-/* "+N more" / "Show less" for Industry Expertise (2026-10-20 - replaces
-   the old popover with an inline expand: clicking it reveals every
-   industry pill in place, wrapping naturally onto further lines,
-   rather than opening a floating list). Still used as a plain inline
-   pill-style button, just with no wrap/popover around it any more -
-   see collapseIndustryTagsInline(). */
-.industry-more-btn{
-  display: inline-block;
-  background: none;
-  border: 1px solid var(--line-strong);
-  border-radius: 20px;
-  padding: 3px 10px;
-  margin-left: 6px;
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--accent);
-  cursor: pointer;
-  line-height: 1.4;
-  white-space: nowrap;
-}
-.industry-more-btn:hover{ color: var(--accent-deep); border-color: var(--accent); }
 .alum-labeled-line{ margin-top: 12px; }
 .topic-tags{
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
-/* Wraps freely to however many lines it needs (2026-10-20, per request -
-   no collapsing/fixed height here any more; only Industry Expertise
-   still collapses, see collapseIndustryTagsInline()). */
+/* Wraps freely to however many lines it needs - no collapsing/"+N more"
+   for either column any more (2026-10-21, per request - Industry
+   Expertise used to foreground one pill and fold the rest behind a
+   click; now it behaves exactly like Marketing Expertise here). A
+   ~2-line min-height is just a default sizing target so a short list
+   doesn't look cramped next to a taller column; it's a minimum, not a
+   cap - more pills just wrap onto further lines beyond it. */
+.industry-tags{ min-height: 54px; align-content: flex-start; }
 .marketing-tags{ align-content: flex-start; }
 /* Light lavender fill per the reference image (2026-10-15) - was an
    outlined/unfilled pill before. Reuses --accent-tint rather than a new
@@ -2319,8 +2320,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .alum-row.pinned .linkedin-icon{ fill: #fff; }
 .alum-row.pinned .capacity-icon{ color: #fff; }
 .alum-row.pinned .topic-tag{ color: #fff; background: rgba(255,255,255,0.18); }
-.alum-row.pinned .industry-more-btn{ color: #fff; border-color: rgba(255,255,255,0.6); }
-.alum-row.pinned .industry-more-btn:hover{ border-color: #fff; }
 .alum-row.pinned .alum-divider{ background: rgba(255,255,255,0.35); }
 
 /* The pin drop - the site's signature interaction. A small pin appears
@@ -3443,6 +3442,7 @@ const CITY_REGION_OVERRIDES = {
   "singapore": "Asia", "hong kong": "Asia", "tokyo": "Asia", "seoul": "Asia",
   "mumbai": "Asia", "delhi": "Asia", "bangalore": "Asia", "shanghai": "Asia",
   "beijing": "Asia", "dubai": "Asia", "manila": "Asia", "bangkok": "Asia",
+  "shenzhen": "Asia",
   "mexico city": "Latin America", "sao paulo": "Latin America",
   "são paulo": "Latin America", "bogota": "Latin America",
   "bogotá": "Latin America", "buenos aires": "Latin America",
@@ -3688,6 +3688,88 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
   return optionsList;
 }
 
+// Country name for a raw Asia city/location value (2026-10-21, per
+// request) - comma-suffixed values (the common case, e.g. "Mumbai,
+// India") just take whatever follows the last comma; bare values that
+// are already a country name (e.g. "Singapore") pass through unchanged;
+// a short override list covers the rest (bare city names, and the one
+// multi-location value in the real data).
+const ASIA_VALUE_TO_COUNTRY = {
+  "seoul": "South Korea",
+  "shenzhen": "China",
+  "shanghai, china & singapore, singapore": "China & Singapore"
+};
+function countryForAsiaValue(value){
+  const trimmed = (value || "").trim();
+  const lower = trimmed.toLowerCase();
+  if(ASIA_VALUE_TO_COUNTRY[lower]) return ASIA_VALUE_TO_COUNTRY[lower];
+  const commaIdx = trimmed.lastIndexOf(",");
+  if(commaIdx !== -1) return trimmed.slice(commaIdx + 1).trim();
+  return trimmed;
+}
+
+// Same idea as buildFilterCheckboxGroup above, but one checkbox per
+// GROUP of raw values (as bucketed by groupFn) rather than one per raw
+// value - toggling a group's checkbox adds/removes every raw value in
+// that group together. Currently only used for Asia's country-level
+// rollup (see buildLocationRegionGroup), but written generically in
+// case another filter wants the same "show the group, not every raw
+// value" treatment later.
+function buildGroupedFilterCheckboxGroup(key, values, groupFn, onAnyChange){
+  const optionsList = document.createElement('div');
+  optionsList.className = 'filter-checkboxes';
+
+  const groups = {};
+  values.forEach(v => {
+    const g = groupFn(v);
+    (groups[g] = groups[g] || []).push(v);
+  });
+  const groupNames = Object.keys(groups).sort();
+
+  const selectAllLabel = document.createElement('label');
+  selectAllLabel.className = 'filter-checkbox-option filter-select-all';
+  const selectAllBox = document.createElement('input');
+  selectAllBox.type = 'checkbox';
+  selectAllBox.checked = values.every(v => filterState[key].has(v));
+  const groupCheckboxes = [];
+  selectAllBox.onchange = () => {
+    if(selectAllBox.checked) values.forEach(v => filterState[key].add(v));
+    else values.forEach(v => filterState[key].delete(v));
+    groupCheckboxes.forEach(cb => cb.checked = selectAllBox.checked);
+    resetMastheadToGeneric();
+    pendingShuffle = true;
+    renderGrid();
+    onAnyChange();
+  };
+  selectAllLabel.appendChild(selectAllBox);
+  selectAllLabel.appendChild(document.createTextNode('Select all'));
+  optionsList.appendChild(selectAllLabel);
+
+  groupNames.forEach(name => {
+    const groupValues = groups[name];
+    const optionLabel = document.createElement('label');
+    optionLabel.className = 'filter-checkbox-option';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = groupValues.every(v => filterState[key].has(v));
+    checkbox.onchange = () => {
+      if(checkbox.checked) groupValues.forEach(v => filterState[key].add(v));
+      else groupValues.forEach(v => filterState[key].delete(v));
+      selectAllBox.checked = values.every(v => filterState[key].has(v));
+      resetMastheadToGeneric();
+      pendingShuffle = true;
+      renderGrid();
+      onAnyChange();
+    };
+    optionLabel.appendChild(checkbox);
+    optionLabel.appendChild(document.createTextNode(name));
+    groupCheckboxes.push(checkbox);
+    optionsList.appendChild(optionLabel);
+  });
+
+  return optionsList;
+}
+
 // North America's own further breakdown (per request) - "East Coast,
 // Midwest, West Coast, South, Canada", nested one level inside the
 // North America region using the exact same accordion pattern (see
@@ -3698,15 +3780,28 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
 // America's own list rather than nested under one of the five - better
 // than silently dropping it or guessing a region for it.
 const NA_SUBREGIONS = ["East Coast", "Midwest", "West Coast", "South", "Canada"];
+// Covers every North America value actually in the roster (cross-checked
+// against collectFilterOptions().city directly, 2026-10-21, per request -
+// the previous ~15-entry list left most of them falling through to the
+// generic "unmatched" list at the bottom of this panel, which is both
+// mis-categorized (e.g. nothing here is really "unsorted", every one of
+// these has a real US/Canada region) and was the actual source of the
+// long, unscrolled list the request flagged).
 const NA_SUBREGION_BY_CITY = {
   "boston": "East Coast", "cambridge": "East Coast", "new york": "East Coast",
-  "washington, d.c.": "East Coast", "pittsburgh": "East Coast",
+  "new york city": "East Coast", "washington, d.c.": "East Coast",
+  "pittsburgh": "East Coast", "boca raton": "East Coast",
+  "lancaster": "East Coast", "montville": "East Coast",
   "chicago": "Midwest", "minneapolis": "Midwest", "urbana": "Midwest",
-  "deerfield": "Midwest",
+  "deerfield": "Midwest", "columbus": "Midwest", "park ridge": "Midwest",
+  "wilmette": "Midwest",
   "los angeles": "West Coast", "bay area": "West Coast",
   "san francisco bay area": "West Coast", "salt lake city": "West Coast",
-  "denver": "West Coast", "phoenix": "West Coast",
-  "atlanta": "South", "houston": "South", "miami": "South"
+  "denver": "West Coast", "phoenix": "West Coast", "boise": "West Coast",
+  "reno": "West Coast", "palo alto": "West Coast",
+  "vacaville, california": "West Coast",
+  "atlanta": "South", "houston": "South", "miami": "South",
+  "san antonio": "South"
 };
 function naSubregionForCity(value){
   const lower = (value || "").trim().toLowerCase();
@@ -3818,6 +3913,19 @@ function buildLocationRegionGroup(values, onAnyChange){
       regionPanel.appendChild(empty);
     } else if(region === "North America"){
       regionPanel.appendChild(buildNorthAmericaPanel(regionValues, () => {
+        updateDropdownCountBadge(regionToggleEl, regionValues.filter(v => filterState.city.has(v)).length);
+        onAnyChange();
+      }));
+    } else if(region === "Asia"){
+      // Country-level only (2026-10-21, per request - "if someone is
+      // based in Asia, let's just have the country name on the filter.
+      // no need to show the specific cities in the filter, they can show
+      // up on the alums' cards") - groups every raw city/location value
+      // under its own country via countryForAsiaValue() below, one
+      // checkbox per country, which toggles every underlying raw value
+      // together (same grouped-checkbox mechanism "Select all" already
+      // uses, just scoped per country instead of the whole list).
+      regionPanel.appendChild(buildGroupedFilterCheckboxGroup('city', regionValues, countryForAsiaValue, () => {
         updateDropdownCountBadge(regionToggleEl, regionValues.filter(v => filterState.city.has(v)).length);
         onAnyChange();
       }));
@@ -4084,74 +4192,6 @@ function cardContactLineHtml(a){
 // Industry + type of experience (brand/agency-side), each its own
 // labeled column - matches the reference page's two-column field layout
 // rather than pill tags.
-// Best-effort company -> industry lookup, used below to promote the
-// industry matching an alum's CURRENT company to the front of their
-// Industry Expertise list, instead of whichever one they happened to
-// check first on the form. Deliberately only covers companies/pairings
-// I'm actually confident about from recognizing the company - agencies,
-// consultancies and a number of smaller/unfamiliar names are left out on
-// purpose rather than guessed, since their listed industries are often
-// client/practice areas, not the firm's own category, and a wrong guess
-// would look just as authoritative on the card as a right one. For an
-// alum whose company isn't here (or where this guess is wrong), nothing
-// breaks - it just falls back to their original form order, which is
-// also the fix: reordering the comma-separated list in that alum's
-// "industries" cell in the source sheet so the right one comes first
-// overrides this table automatically, no code change needed. Keyed by
-// the exact "company" text as stored (not cleaned), mapped to one exact
-// string from that alum's own a.industries - only takes effect if the
-// alum actually selected that industry themselves.
-const COMPANY_PRIMARY_INDUSTRY = {
-  "Boston Consulting Group": "Consulting",
-  "Cartier NA": "Fashion & Luxury",
-  "Dyson, ex-Ulta Beauty": "Consumer Packaged Goods (CPG)",
-  "Hichew": "Food & Beverage",
-  "Jetblue": "Travel & Hospitality",
-  "Kering Eyewear (parent company for Gucci, Cartier, Bottega Veneta, Balenciaga etc)": "Fashion & Luxury",
-  "Mayer Brown": "Law",
-  "NBC Universal": "Media & Entertainment",
-  "Match Group": "Tech/SaaS",
-  "Instawork": "Tech/SaaS",
-  "IManage": "Tech/SaaS",
-  "Retell AI": "Tech/SaaS",
-  "Treasure AI": "Tech/SaaS",
-  "ThreeFlow": "Tech/SaaS",
-  "Royal Cyber": "Tech/SaaS",
-  "OpenWeb": "Tech/SaaS",
-  "The Kitchen at Kraft Heinz": "Food & Beverage",
-  "Versapay": "Tech/SaaS",
-  "Erie Family Health Centers": "Healthcare & Pharmaceuticals",
-  "Hinsdale Township High School District 86": "Education",
-  "MathCo (prev. BCG)": "Consulting",
-  // 2026-10-20 - full-roster pass for the same "wrong industry
-  // foregrounded" issue (prompted by Gonzalo/MathCo above). Same
-  // confidence bar as the rest of this table - well-known, unambiguous
-  // companies only; agencies/consultancies (TBWA, Chemistry, Ipsos,
-  // Razorfish, etc.) are deliberately left out, same reasoning as the
-  // comment above.
-  "DoorDash": "Tech/SaaS",
-  "Meta": "Tech/SaaS",
-  "The Partnership for Large Election Jurisdictions (prev LinkedIn)": "Nonprofit/Social Impact",
-  "Sticky.io": "Tech/SaaS",
-  "Uber": "Tech/SaaS",
-  "Danaher": "Healthcare & Pharmaceuticals",
-  "DANA (Indonesian-based Fintech Company)": "Financial Services",
-  "SOMOS Hospitality": "Travel & Hospitality",
-  "Capital One": "Financial Services",
-  "Woodstream Corporation": "Consumer Packaged Goods (CPG)",
-  "Amazon": "Retail & E-commerce",
-  "Weill Cornell Medicine Dept. of Pediatrics": "Healthcare & Pharmaceuticals",
-  "Microsoft": "Tech/SaaS",
-  "Johnson and Johnson": "Healthcare & Pharmaceuticals",
-  "Expedia Group": "Travel & Hospitality"
-};
-function primaryIndustryOrderedList(a){
-  const wanted = COMPANY_PRIMARY_INDUSTRY[a.company];
-  if(wanted && a.industries.includes(wanted)){
-    return [wanted, ...a.industries.filter(v => v !== wanted)];
-  }
-  return a.industries;
-}
 
 // Industry Expertise and Marketing Expertise side by side as two aligned
 // columns, per request - previously Marketing Expertise was its own full-
@@ -4170,15 +4210,16 @@ function primaryIndustryOrderedList(a){
 function profileThreeColumnsHtml(a, visibleTopics){
   const cols = [];
 
-  // Industry Expertise - pills, all of them, rendered up front (the
-  // primary one first - see primaryIndustryOrderedList) and then
-  // measured/collapsed to a 1-line "+N more" (inline-expandable, not a
-  // popover) by collapseIndustryTagsInline(). Marketing Expertise and
-  // Ask Me About below are NOT collapsed at all (2026-10-20, per
-  // request) - they just wrap freely onto however many lines they need.
-  const allIndustries = primaryIndustryOrderedList(a);
-  if(allIndustries.length){
-    cols.push(`<div class="alum-col"><span class="field-label">Industry Expertise</span><div class="topic-tags industry-tags">${allIndustries.map(v => `<span class="topic-tag">${applyTextRules(v)}</span>`).join('')}</div></div>`);
+  // Industry Expertise - every pill, in the alum's own original order
+  // (2026-10-21, per request - "stop with the thing where we foreground
+  // the main industry and fold everything else into +# more") - no
+  // reordering, no collapsing; wraps freely onto however many lines it
+  // needs, same treatment as Marketing Expertise below. The column's own
+  // min-height (see .industry-tags) just reserves about 2 lines of
+  // space by default so short lists don't look oddly cramped next to a
+  // taller Marketing Expertise column.
+  if(a.industries.length){
+    cols.push(`<div class="alum-col"><span class="field-label">Industry Expertise</span><div class="topic-tags industry-tags">${a.industries.map(v => `<span class="topic-tag">${applyTextRules(v)}</span>`).join('')}</div></div>`);
   }
 
   const marketingParts = cardMarketingLineValues(a);
@@ -4721,7 +4762,6 @@ function renderProfilePanel(){
     updateProfileAvailability(a);
     updateProfileIdentity(a);
     updateProfileSections(a);
-    collapseIndustryTagsInline();
   });
 }
 
@@ -4823,76 +4863,6 @@ document.getElementById('directoryCollapseBtn').addEventListener('pointerdown', 
 document.getElementById('directoryCollapseBtn').addEventListener('click', (e) => {
   e.stopPropagation();
   collapseProfilePanel();
-});
-
-// When a pill row (Ask me about, or Marketing Expertise) wraps past its
-// first line, hides whatever wrapped and replaces it with a single
-// clickable "+N more" that pops open a list of the rest - same
-// interaction pattern (and CSS classes, so it also gets the existing
-// outside-click/Escape close handling for free) as the industry "+N more"
-// popover. Re-measures from the full tag list every call (not
-// cumulative), so it's safe to call again after a resize. Forces a
-// synchronous layout per container (offsetTop) - fine at this page's
-// scale (dozens of cards), but keep it to one pass.
-// Industry Expertise only (2026-10-20, per request - replaces the old
-// shared popover mechanism). Collapsed: the primary pill + "+N more".
-// Clicking it expands inline - every pill shown, wrapping naturally
-// onto further lines - and swaps the button to "Show less"; clicking
-// that re-collapses. Expand state lives on the container's own class
-// so a resize (which re-runs this to recheck how much fits on line 1)
-// doesn't un-expand something the student deliberately opened.
-function collapseIndustryTagsInline(){
-  document.querySelectorAll('.industry-tags').forEach(container => {
-    const existingBtn = container.querySelector('.industry-more-btn');
-    if(existingBtn) existingBtn.remove();
-    const tags = [...container.querySelectorAll('.topic-tag')];
-    tags.forEach(t => { t.style.display = ''; });
-    if(!tags.length) return;
-
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'industry-more-btn';
-
-    if(container.classList.contains('industry-expanded')){
-      // Every pill is already visible (left shown above) - just add
-      // "Show less" at the end, no line-fit measuring needed.
-      btn.textContent = 'Show less';
-      btn.setAttribute('aria-expanded', 'true');
-      container.appendChild(btn);
-      btn.addEventListener('click', () => {
-        container.classList.remove('industry-expanded');
-        collapseIndustryTagsInline();
-      });
-      return;
-    }
-
-    const lineTop = tags[0].offsetTop;
-    let overflowIndex = tags.findIndex(t => t.offsetTop > lineTop);
-    if(overflowIndex === -1) return; // everything already fits on one line - no toggle needed
-    if(overflowIndex === 0) overflowIndex = 1; // always keep at least one real pill visible
-
-    container.appendChild(btn);
-    btn.setAttribute('aria-expanded', 'false');
-    // The "+N more" pill itself takes up room on line 1 - if adding it
-    // pushed it onto line 2, hide one more real pill and recheck, until
-    // it fits.
-    while(overflowIndex > 0){
-      for(let i = overflowIndex; i < tags.length; i++) tags[i].style.display = 'none';
-      btn.textContent = `+${tags.length - overflowIndex} more`;
-      if(btn.offsetTop <= lineTop) break;
-      overflowIndex--;
-    }
-
-    btn.addEventListener('click', () => {
-      container.classList.add('industry-expanded');
-      collapseIndustryTagsInline();
-    });
-  });
-}
-let industryTagsResizeTimer;
-window.addEventListener('resize', () => {
-  clearTimeout(industryTagsResizeTimer);
-  industryTagsResizeTimer = setTimeout(collapseIndustryTagsInline, 150);
 });
 
 // Keeps the hero headline at its tuned position, but never lets it
