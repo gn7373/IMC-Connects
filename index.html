@@ -2909,14 +2909,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
 
   /* Mobile directory card:
-     portrait + identity on the left/top, availability at the same right-hand
-     x-position but aligned to the top of the card. Location returns to the
-     identity stack directly beneath company. */
+     portrait + identity keep the full two-column width. Availability sits
+     independently in the card's top-right corner so it does not create a
+     permanent third grid column that squeezes names, roles, and companies. */
   .directory-entry{
-    grid-template-columns:72px minmax(0,1fr) auto !important;
+    position:relative !important;
+    grid-template-columns:72px minmax(0,1fr) !important;
     grid-template-rows:auto !important;
     grid-template-areas:
-      "photo info right" !important;
+      "photo info" !important;
     column-gap:12px !important;
     row-gap:0 !important;
     width:100% !important;
@@ -2959,10 +2960,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-entry-info{
     grid-area:info;
     min-width:0;
+    width:100%;
   }
   .directory-entry-name{
     font-size:16.5px !important;
     line-height:1.18 !important;
+    /* Reserve only the name line for the top-right availability controls.
+       Role/company/location regain the full identity-column width below it. */
+    max-width:calc(100% - 100px) !important;
   }
   .directory-entry-info .alum-role{
     font-size:12.7px !important;
@@ -3004,13 +3009,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     line-height:1.2 !important;
   }
   .directory-entry-right{
-    grid-area:right !important;
+    position:absolute !important;
+    top:10px !important;
+    right:12px !important;
     display:flex !important;
     align-items:center !important;
-    justify-self:end !important;
-    align-self:start !important;
     gap:6px !important;
     flex-shrink:0 !important;
+    z-index:2 !important;
   }
   .directory-entry-spots .capacity-badge{
     font-size:11.5px !important;
@@ -3672,7 +3678,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-mobile-directory-card-4";
+const BUILD_VERSION = "2026-10-22-mobile-directory-card-5";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
