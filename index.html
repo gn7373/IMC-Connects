@@ -209,26 +209,21 @@ header.site{
   justify-content: flex-end;
   pointer-events: none;
   z-index: 1;
-  /* Part of the one coordinated entrance (2026-10-21, per request) -
-     the box's own final size/position above is never touched by this
-     (so there's zero layout shift, the composition is already fully
-     reserved before the animation starts), only opacity/transform/
-     clip-path animate. Starts 120ms after .hero-copy's own entrance
-     begins, so the text leads and the art follows, not simultaneous. */
-  opacity: 0;
-  animation: heroArtReveal 700ms cubic-bezier(.22, .61, .36, 1) 120ms both;
+  /* First-paint transition is readiness-driven rather than an immediate
+     keyframe. This prevents the illustration from "blinking" if its
+     image bytes finish loading after CSS animation has already begun. */
+  opacity:0;
+  transform:translateX(12px);
+  transition:
+    opacity 620ms cubic-bezier(.22,.61,.36,1) 90ms,
+    transform 620ms cubic-bezier(.22,.61,.36,1) 90ms;
 }
-@keyframes heroArtReveal{
-  from{
-    opacity: 0;
-    transform: translateX(20px);
-    clip-path: inset(0 0 0 18%);
-  }
-  to{
-    opacity: 1;
-    transform: translateX(0);
-    clip-path: inset(0 0 0 0);
-  }
+#heroLanding.hero-text-ready .hero-copy{
+  opacity:1;
+}
+#heroLanding.hero-art-ready .hero-illustration{
+  opacity:1;
+  transform:translateX(0);
 }
 .hero-illustration img{
   display: block;
@@ -266,11 +261,11 @@ header.site{
     /* Size from BOTH phone width and phone height. Tall phones can give
        the only hero image real prominence; short phones cap it before it
        can collide with the copy/CTA. The source artwork itself is unchanged. */
-    left:44%;
+    left:42%;
     right:auto;
     bottom:0;
     translate:-50% 0;
-    width:min(160vw, 76svh, 720px);
+    width:min(168vw, 79svh, 760px);
     max-width:none;
     margin:0;
     padding:0;
@@ -424,12 +419,14 @@ header.site{
   z-index: 3;
   padding: 0 6vw;
   box-sizing: border-box;
-  opacity: 0;
-  animation: heroCopyIn 500ms cubic-bezier(.22, .61, .36, 1) forwards;
+  opacity:0;
+  transform:translateY(calc(-50% + 10px));
+  transition:
+    opacity 520ms cubic-bezier(.22,.61,.36,1),
+    transform 520ms cubic-bezier(.22,.61,.36,1);
 }
-@keyframes heroCopyIn{
-  from{ opacity: 0; transform: translateY(calc(-50% + 14px)); }
-  to{ opacity: 1; transform: translateY(-50%); }
+#heroLanding.hero-text-ready .hero-copy{
+  transform:translateY(-50%);
 }
 .hero-copy > *{ max-width: 450px; }
 
@@ -923,8 +920,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    request) - no fade/rise/reveal at all for anyone who's asked their OS
    to minimize motion. */
 @media (prefers-reduced-motion: reduce){
-  .hero-copy{ animation: none; opacity: 1; transform: translateY(-50%); }
-  .hero-illustration{ animation: none; opacity: 1; transform: translateX(0); clip-path: none; }
+  .hero-copy{ transition:none; opacity:1; transform:translateY(-50%); }
+  .hero-illustration{ transition:none; opacity:1; transform:translateX(0); }
 }
 @media (max-width: 767px) and (prefers-reduced-motion: reduce){
   .hero-copy{ transform: none; }
@@ -985,11 +982,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     flex:0 0 auto;
     margin:28px 0 0;
     padding:0 20px;
-    animation-name:heroCopyInMobile;
+    opacity:0;
+    transform:translateY(10px);
   }
-  @keyframes heroCopyInMobile{
-    from{ opacity: 0; transform: translateY(14px); }
-    to{ opacity: 1; transform: translateY(0); }
+  #heroLanding.hero-text-ready .hero-copy{
+    opacity:1;
+    transform:translateY(0);
   }
   .hero-copy > *{ max-width:none; }
   header.site h1{ font-size:clamp(38px, 11vw, 54px); margin-bottom:18px; }
@@ -1006,8 +1004,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 @media (max-width: 767px) and (max-height: 640px){
   .hero-copy{ margin-top:20px; }
   .hero-illustration{
-    width:min(145vw, 68svh, 600px);
-    left:45%;
+    width:min(150vw, 70svh, 640px);
+    left:43%;
   }
 }
 
@@ -3470,11 +3468,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
   .hero-illustration{
     position:absolute !important;
-    left:44% !important;
+    left:42% !important;
     right:auto !important;
     bottom:0 !important;
     translate:-50% 0 !important;
-    width:min(160vw, 76svh, 720px) !important;
+    width:min(168vw, 79svh, 760px) !important;
     max-width:none !important;
     margin:0 !important;
     padding:0 !important;
@@ -3525,7 +3523,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
       </div>
 
       <div class="hero-illustration" aria-hidden="true">
-        <img src="The%20Arch%20No%20background.png" alt="" width="1672" height="941">
+        <img src="The%20Arch%20No%20background.png" alt="" width="1672" height="941" decoding="async" fetchpriority="high">
       </div>
     </div>
   </div>
@@ -3782,6 +3780,42 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 if('scrollRestoration' in history) history.scrollRestoration = 'manual';
 window.scrollTo(0, 0);
 
+// Smooth first paint: wait until the browser has laid out the hero text
+// (and fonts where supported), then reveal that whole block once. The
+// illustration gets its own ready flag only after the actual image has
+// loaded/decoded, preventing a late image load from flashing into an
+// already-finished CSS animation.
+(function prepareLandingEntrance(){
+  const hero = document.getElementById('heroLanding');
+  if(!hero) return;
+
+  const revealText = () => requestAnimationFrame(() =>
+    requestAnimationFrame(() => hero.classList.add('hero-text-ready'))
+  );
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(revealText, revealText);
+  } else {
+    revealText();
+  }
+
+  const img = hero.querySelector('.hero-illustration img');
+  const revealArt = () => requestAnimationFrame(() =>
+    hero.classList.add('hero-art-ready')
+  );
+  if(!img){ revealArt(); return; }
+
+  if(img.complete){
+    if(typeof img.decode === 'function'){
+      img.decode().then(revealArt, revealArt);
+    } else {
+      revealArt();
+    }
+  } else {
+    img.addEventListener('load', revealArt, {once:true});
+    img.addEventListener('error', revealArt, {once:true});
+  }
+})();
+
 // Bump this string on every deploy (any distinct value works - a
 // timestamp is simplest). checkForNewVersion() below periodically
 // re-fetches this same page with caching disabled and compares its
@@ -3789,7 +3823,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-mobile-tray-shell-1";
+const BUILD_VERSION = "2026-10-22-mobile-landing-transition-4";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
