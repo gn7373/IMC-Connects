@@ -2056,12 +2056,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     .directory-right{ transition: none; }
   }
   .directory-split.mobile-detail-open .directory-right{ transform: translateX(0); }
-  /* Hides the whole search/filter/Review & Submit toolbar while the
-     drawer is open (2026-10-21, per request), so the drawer - which
-     starts at --content-top, re-measured right as this class toggles
-     (see openMobileDetail()) - begins immediately below the masthead
-     instead of leaving a dead gap where the toolbar used to be. */
-  #view-listing.mobile-detail-open .directory-toolbar{ display: none; }
+  /* Keep the toolbar's exact layout space while the profile is open.
+     Using display:none here used to reflow the directory upward as the
+     tray opened, then push it back down as the tray closed. The backdrop
+     already covers this area, so visibility:hidden preserves the scroll
+     geometry without leaving interactive controls underneath. */
+  #view-listing.mobile-detail-open .directory-toolbar{
+    visibility:hidden;
+    pointer-events:none;
+  }
   .profile-back-btn{ display: inline-block; }
   .profile-toolbar{ justify-content: space-between; margin-bottom: 12px; }
   /* Compact photo-left/identity-right (2026-10-21, per request - "make
@@ -3127,7 +3130,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     display:block;
   }
   #view-listing.mobile-detail-open .directory-toolbar{
-    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
   }
 
   /* Drawer deliberately occupies only the right portion of the phone. */
@@ -3749,7 +3753,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-mobile-landing-responsive-3";
+const BUILD_VERSION = "2026-10-22-mobile-drawer-scroll-stability-1";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5722,16 +5726,10 @@ function selectAlum(id, opts){
   if(opts.reopenProfile) expandProfilePanel();
 }
 
-// The mobile profile drawer (2026-10-21, per request) - locks the
-// underlying directory's own scroll only while it's open ("lock the
-// underlying directory only while the profile drawer is open"), and
-// hides the search/filter/Review & Submit toolbar so the drawer can
-// start right below the masthead ("hide the entire search/filter/
-// Review & Submit area so the profile can begin immediately below the
-// masthead") - sizeDirectorySplit() is re-run right after toggling the
-// toolbar away so --content-top (the drawer's own `top` offset) shrinks
-// to match the masthead-only height, not the masthead+toolbar height it
-// was measured against a moment ago.
+// The mobile profile drawer locks the underlying directory at its exact
+// scroll position while open. The toolbar is made invisible by CSS but
+// deliberately keeps its layout space; removing it from layout caused
+// the directory to jump upward on open and downward on close.
 let mobileDirectoryScrollY = 0;
 
 function openMobileDetail(){
