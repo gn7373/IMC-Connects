@@ -1423,6 +1423,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .directory-entry.in-list .directory-entry-chevron{ color: var(--list-added); }
 .directory-entry-info{ min-width: 0; }
+.directory-entry-location-mobile{ display:none; }
 /* Natural wrapping, no truncation/ellipsis and no dynamic font shrink
    for long names - per explicit request for this list. Semi-bold per
    request (2026-10-17; was briefly full bold - toned down one step). */
@@ -2908,19 +2909,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
 
   /* Mobile directory card:
-     row 1 = photo + full identity block;
-     row 2 = location from the card's left edge + availability/actions right.
-     This gives long role/company text room to wrap beside the photo and gives
-     legitimate multi-word locations (e.g. Cambridge, MA) substantially more
-     horizontal space without competing with the portrait. */
+     portrait + identity on the left/top, availability at the same right-hand
+     x-position but aligned to the top of the card. Location returns to the
+     identity stack directly beneath company. */
   .directory-entry{
     grid-template-columns:72px minmax(0,1fr) auto !important;
-    grid-template-rows:auto auto !important;
+    grid-template-rows:auto !important;
     grid-template-areas:
-      "photo info info"
-      "loc loc right" !important;
+      "photo info right" !important;
     column-gap:12px !important;
-    row-gap:10px !important;
+    row-gap:0 !important;
     width:100% !important;
     padding:10px 12px !important;
     margin-bottom:10px !important;
@@ -2977,20 +2975,29 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     margin-top:2px !important;
   }
   .directory-entry-location-inline{
-    grid-area:loc !important;
+    display:none !important;
+  }
+  .directory-entry-location-mobile{
     display:flex !important;
-    justify-self:start !important;
-    align-self:center !important;
+    align-items:center !important;
+    gap:4px !important;
     min-width:0 !important;
     max-width:100% !important;
+    margin-top:5px !important;
     overflow:visible !important;
     text-overflow:clip !important;
     white-space:normal !important;
+    font-family:'Inter', sans-serif !important;
     font-size:12px !important;
     line-height:1.2 !important;
+    color:var(--muted) !important;
   }
-  .directory-entry-location-inline .format-value{
+  .directory-entry-location-mobile .format-value{
+    display:inline-flex !important;
+    align-items:center !important;
+    gap:4px !important;
     min-width:0 !important;
+    max-width:100% !important;
     overflow:visible !important;
     text-overflow:clip !important;
     white-space:normal !important;
@@ -3001,7 +3008,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     display:flex !important;
     align-items:center !important;
     justify-self:end !important;
-    align-self:center !important;
+    align-self:start !important;
     gap:6px !important;
     flex-shrink:0 !important;
   }
@@ -3665,7 +3672,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-mobile-contact-row-3";
+const BUILD_VERSION = "2026-10-22-mobile-directory-card-4";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5527,6 +5534,7 @@ function renderDirectoryList(filtered){
         <div class="directory-entry-name">${a.name}</div>
         ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
         <div class="alum-company">${companyHtml(a.company)}</div>
+        ${contactHtml ? `<div class="directory-entry-location-mobile">${contactHtml}</div>` : ''}
       </div>
       ${contactHtml ? `<div class="directory-entry-location-inline">${contactHtml}</div>` : '<div></div>'}
       <div class="directory-entry-right">
