@@ -1423,8 +1423,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .directory-entry.in-list .directory-entry-chevron{ color: var(--list-added); }
 .directory-entry-info{ min-width: 0; }
-.directory-entry-location-mobile,
-.directory-entry-right-mobile{ display:none; }
+.directory-entry-mobile-meta{ display:none; }
 /* Natural wrapping, no truncation/ellipsis and no dynamic font shrink
    for long names - per explicit request for this list. Semi-bold per
    request (2026-10-17; was briefly full bold - toned down one step). */
@@ -2980,13 +2979,24 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-entry-location-inline{
     display:none !important;
   }
+  .directory-entry-right{
+    display:none !important;
+  }
+  .directory-entry-mobile-meta{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:10px !important;
+    width:100% !important;
+    min-width:0 !important;
+    margin-top:5px !important;
+  }
   .directory-entry-location-mobile{
     display:flex !important;
     align-items:center !important;
     gap:4px !important;
     min-width:0 !important;
     max-width:100% !important;
-    margin-top:5px !important;
     overflow:visible !important;
     text-overflow:clip !important;
     white-space:normal !important;
@@ -3006,16 +3016,18 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     white-space:normal !important;
     line-height:1.2 !important;
   }
-  .directory-entry-right{
-    display:none !important;
-  }
   .directory-entry-right-mobile{
     display:flex !important;
-    float:right !important;
     align-items:center !important;
     gap:6px !important;
-    margin:0 0 4px 10px !important;
+    flex:0 0 auto !important;
     white-space:nowrap !important;
+  }
+  .directory-entry-right-mobile .capacity-icon{
+    display:none !important;
+  }
+  .directory-entry-right-mobile .capacity-badge-wrap{
+    gap:0 !important;
   }
   .directory-entry-right-mobile .capacity-badge{
     font-size:11.5px !important;
@@ -3680,7 +3692,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-mobile-directory-card-6";
+const BUILD_VERSION = "2026-10-22-mobile-directory-card-7";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5539,14 +5551,16 @@ function renderDirectoryList(filtered){
     btn.innerHTML = `
       ${directoryPortraitHtml(a)}
       <div class="directory-entry-info">
-        <div class="directory-entry-right-mobile">
-          <div class="directory-entry-spots">${capacityBadgeHtml(a.capacity, a.capacityAssumed)}</div>
-          <svg class="directory-entry-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
-        </div>
         <div class="directory-entry-name">${a.name}</div>
         ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
         <div class="alum-company">${companyHtml(a.company)}</div>
-        ${contactHtml ? `<div class="directory-entry-location-mobile">${contactHtml}</div>` : ''}
+        <div class="directory-entry-mobile-meta">
+          ${contactHtml ? `<div class="directory-entry-location-mobile">${contactHtml}</div>` : '<div></div>'}
+          <div class="directory-entry-right-mobile">
+            <div class="directory-entry-spots">${capacityBadgeHtml(a.capacity, a.capacityAssumed)}</div>
+            <svg class="directory-entry-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+          </div>
+        </div>
       </div>
       ${contactHtml ? `<div class="directory-entry-location-inline">${contactHtml}</div>` : '<div></div>'}
       <div class="directory-entry-right">
