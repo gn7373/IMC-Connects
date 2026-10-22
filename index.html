@@ -3692,7 +3692,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-three-pick-submission-1";
+const BUILD_VERSION = "2026-10-22-three-pick-submission-2";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6290,7 +6290,7 @@ function setPinsDrawerMode(mode){
   document.getElementById('pinsDrawerListFooter').style.display = isReview ? 'none' : '';
   document.getElementById('pinsDrawerReviewPane').style.display = isReview ? '' : 'none';
   document.getElementById('pinsDrawerReviewFooter').style.display = isReview ? '' : 'none';
-  document.getElementById('pinsDrawerTitle').firstChild.textContent = isReview ? 'Your 3-pick submission' : 'Select up to 3 alums to submit. The rest stay on your wish list.';
+  document.getElementById('pinsDrawerTitle').firstChild.textContent = isReview ? 'Your submission' : 'Select up to 3 alums to submit. The rest stay on your wish list.';
   renderPinsDrawer();
 }
 
