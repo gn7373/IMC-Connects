@@ -2091,20 +2091,21 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      the Filters button opens them (not a flyout popover - there are 5
      of them, a stacked sheet reads better than one on top of another). */
   .toolbar-row2{ flex-wrap: wrap; }
-  .filter-dropdowns{ display: none; order: 3; width: 100%; }
-  .clear-btn{ display: none; order: 4; }
+  .filter-dropdowns{ display: none; order: 4; width: 100%; }
+  .desktop-clear-btn{ display: none !important; }
+  .mobile-clear-btn{ display: none; order: 3; }
+  .toolbar-row2.mobile-filters-open .mobile-clear-btn{
+    display: inline-flex;
+    margin-top: 10px;
+    width: 100%;
+    justify-content: flex-start;
+  }
   .toolbar-row2.mobile-filters-open .filter-dropdowns{
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
-    margin-top: 12px;
-  }
-  .toolbar-row2.mobile-filters-open .clear-btn{
-    display: inline-flex;
-    margin-top: 10px;
-    width: 100%;
-    justify-content: center;
+    margin-top: 8px;
   }
   .toolbar-row2.mobile-filters-open .filter-dropdown{ width: 100%; }
   .toolbar-row2.mobile-filters-open .filter-dropdown-toggle{
@@ -3486,7 +3487,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   <div class="toolbar-row2" id="toolbarRow2">
     <button type="button" class="mobile-filters-toggle" id="mobileFiltersToggle" aria-expanded="false" aria-controls="filterPanel">Filters</button>
     <div class="filter-dropdowns" id="filterPanel"></div>
-    <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
+    <button class="clear-btn desktop-clear-btn" id="clearFiltersBtn">Clear all</button>
+    <button class="clear-btn mobile-clear-btn" id="mobileClearFiltersBtn">Clear all</button>
     <button class="pins-toggle-btn" id="pinsToggleBtn">Review &amp; Submit</button>
   </div>
 </div>
@@ -3607,7 +3609,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-redesign-13";
+const BUILD_VERSION = "2026-10-21-mobile-redesign-14";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4151,7 +4153,7 @@ const CITY_REGION_OVERRIDES = {
   "madrid": "Europe", "rome": "Europe", "amsterdam": "Europe",
   "dublin": "Europe", "uk": "Europe", "united kingdom": "Europe"
 };
-function regionForCity(value){
+function regionForSingleLocation(value){
   const trimmed = (value || "").trim();
   const lower = trimmed.toLowerCase();
   if(CITY_REGION_OVERRIDES[lower]) return CITY_REGION_OVERRIDES[lower];
@@ -4165,6 +4167,26 @@ function regionForCity(value){
     if(CITY_REGION_OVERRIDES[cityPart]) return CITY_REGION_OVERRIDES[cityPart];
   }
   return "North America";
+}
+
+// Alumni sometimes list more than one location in the free-text city field
+// (for example "Shanghai & Singapore"). Classify each location separately
+// so a compound answer can participate in the correct regional filter(s)
+// without changing the exact location text shown on the profile.
+function splitLocationParts(value){
+  return (value || "")
+    .split(/\s*(?:&|\/|;|\band\b)\s*/i)
+    .map(v => v.trim())
+    .filter(Boolean);
+}
+function regionsForCity(value){
+  const parts = splitLocationParts(value);
+  const regions = new Set();
+  (parts.length ? parts : [value]).forEach(part => regions.add(regionForSingleLocation(part)));
+  return [...regions];
+}
+function regionForCity(value){
+  return regionsForCity(value)[0] || "North America";
 }
 
 // A name written into the Form with a parenthetical aside (e.g. a former
@@ -4253,7 +4275,7 @@ const CATEGORY_PROMPTS = {
   marketingAreas: "Choose a marketing area"
 };
 
-const INDUSTRY_DISCLAIMER = "We asked alums to tell us all the industries they've worked in. This may not be the industry they're in now.";
+const INDUSTRY_DISCLAIMER = "Alumni shared all the industries they've worked in, not just the ones they're in now.";
 
 // Most filter categories read fine sorted alphabetically, but these three
 // have a natural order alphabetical sorting doesn't respect (chronological
@@ -4389,7 +4411,7 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
     optionLabel.appendChild(checkbox);
     let displayVal = val;
     if(key === 'topics') displayVal = topicShortLabel(val);
-    else if(key === 'brandAgency') displayVal = brandAgencyDisplayLabel(val);
+    else if(key === 'brandAgency') displayVal = brandAgencyFilterDisplayLabel(val);
     else if(key === 'marketingAreas') displayVal = marketingAreaDisplayLabel(val);
     else if(key === 'format') displayVal = formatDisplayLabel(val);
     optionLabel.appendChild(document.createTextNode(displayVal));
@@ -4498,11 +4520,25 @@ function buildLocationRegionGroup(values, onAnyChange){
   const outsideUS = { Asia: [], Canada: [], "Latin America": [], Europe: [] };
 
   values.forEach(v => {
-    const usRegion = usRegionForCity(v);
-    if(usRegion){ usBuckets[usRegion].push(v); return; }
-    if(isCanadaValue(v)){ outsideUS.Canada.push(v); return; }
-    const region = regionForCity(v);
-    if(region === "Asia" || region === "Latin America" || region === "Europe") outsideUS[region].push(v);
+    const parts = splitLocationParts(v);
+    const locationParts = parts.length ? parts : [v];
+    const matchedBuckets = new Set();
+
+    locationParts.forEach(part => {
+      const usRegion = usRegionForCity(part);
+      if(usRegion){ matchedBuckets.add(usRegion); return; }
+      if(isCanadaValue(part)){ matchedBuckets.add("Canada"); return; }
+      const region = regionForSingleLocation(part);
+      if(region === "Asia" || region === "Latin America" || region === "Europe") matchedBuckets.add(region);
+    });
+
+    // Preserve the raw location string as the actual filter value; it can
+    // belong to more than one regional bucket when an alum listed multiple
+    // locations in the same response.
+    matchedBuckets.forEach(bucket => {
+      if(US_REGIONS.includes(bucket)) usBuckets[bucket].push(v);
+      else outsideUS[bucket].push(v);
+    });
   });
 
   US_REGIONS.forEach(region => {
@@ -4913,9 +4949,17 @@ const BRAND_AGENCY_DISPLAY_OVERRIDES = {
   "Brand-side (in-house at a company, e.g., marketing team at a tech company)": "Brand-side",
   "Both": "Both agency and brand-side"
 };
+const BRAND_AGENCY_FILTER_DISPLAY_OVERRIDES = {
+  "Agency-side (working at an agency serving multiple clients)": "Agency experience",
+  "Brand-side (in-house at a company, e.g., marketing team at a tech company)": "Brand experience",
+  "Both": "Both"
+};
 
 function brandAgencyDisplayLabel(value){
   return BRAND_AGENCY_DISPLAY_OVERRIDES[value] || value;
+}
+function brandAgencyFilterDisplayLabel(value){
+  return BRAND_AGENCY_FILTER_DISPLAY_OVERRIDES[value] || value;
 }
 
 const FORMAT_DISPLAY_OVERRIDES = {
@@ -6204,7 +6248,7 @@ document.getElementById('pinsDrawerClose').addEventListener('click', closePinsDr
 document.getElementById('pinsDrawerBackdrop').addEventListener('click', closePinsDrawer);
 document.getElementById('pinsDrawerContinueExploring').addEventListener('click', closePinsDrawer);
 
-document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+function clearAllFilters(){
   FILTERABLE.forEach(key => filterState[key] = new Set());
   document.getElementById('searchInput').value = '';
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
@@ -6216,7 +6260,9 @@ document.getElementById('clearFiltersBtn').addEventListener('click', () => {
   buildFilterPanel();
   pendingShuffle = true;
   renderGrid();
-});
+}
+document.getElementById('clearFiltersBtn').addEventListener('click', clearAllFilters);
+document.getElementById('mobileClearFiltersBtn').addEventListener('click', clearAllFilters);
 
 function setStatus(html, type){
   document.getElementById('statusArea').innerHTML = html ? `<div class="status-banner ${type}">${html}</div>` : '';
