@@ -1730,6 +1730,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .search-clear-btn:hover{ color: var(--ink); background: var(--border); }
 .search-clear-btn:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+.mobile-clear-btn{ display:none; }
 .clear-btn{
   background:none;
   border:none;
@@ -5328,10 +5329,11 @@ let pendingShuffle = false;
 // button reads as clutter when there's nothing to clear. Search text
 // doesn't count; this tracks the filter pills specifically.
 function updateClearButtonVisibility(){
-  const btn = document.getElementById('clearFiltersBtn');
-  if(!btn) return;
+  const desktopBtn = document.getElementById('clearFiltersBtn');
+  const mobileBtn = document.getElementById('mobileClearFiltersBtn');
   const hasActiveFilter = FILTERABLE.some(key => filterState[key] && filterState[key].size > 0);
-  btn.style.display = hasActiveFilter ? '' : 'none';
+  if(desktopBtn) desktopBtn.style.display = hasActiveFilter ? '' : 'none';
+  if(mobileBtn) mobileBtn.style.display = hasActiveFilter ? '' : 'none';
 }
 
 function directoryPortraitHtml(a){
