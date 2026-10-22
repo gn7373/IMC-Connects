@@ -2983,6 +2983,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-entry-info .directory-company-mobile{
     display:block !important;
   }
+  .directory-entry-info .directory-company-mobile .alum-company-note{
+    display:block !important;
+    margin-left:0 !important;
+    margin-top:2px !important;
+    max-width:100% !important;
+    white-space:normal !important;
+  }
   .directory-entry-info .mobile-directory-company-secondary{
     display:block !important;
     margin-top:2px !important;
@@ -3583,7 +3590,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <button type="button" class="mobile-clear-filters" id="mobileClearFiltersBtn">Clear all</button>
     <div class="filter-dropdowns" id="filterPanel"></div>
     <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
-    <button class="pins-toggle-btn" id="pinsToggleBtn">Review &amp; Submit · 3 max</button>
+    <button class="pins-toggle-btn" id="pinsToggleBtn">Review &amp; Submit</button>
   </div>
 </div>
 </div><!-- /directory-toolbar -->
@@ -3703,7 +3710,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-lauren-industry-company-fix-1";
+const BUILD_VERSION = "2026-10-22-mobile-company-line-2";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
