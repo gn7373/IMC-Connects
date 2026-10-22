@@ -262,12 +262,15 @@ header.site{
    to bleed past the viewport edge to do it. */
 @media (max-width: 767px){
   .hero-illustration{
-    position:static;
-    flex:0 0 auto;
-    width:100%;
+    position:absolute;
+    left:50%;
+    right:auto;
+    bottom:0;
+    translate:-50% 0;
+    width:clamp(540px, 175vw, 760px);
     max-width:none;
-    margin:auto 0 0;
-    padding-top:18px;
+    margin:0;
+    padding:0;
     justify-content:center;
   }
 }
@@ -977,7 +980,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .hero-copy{
     position:static;
     flex:0 0 auto;
-    margin:14px 0 0;
+    margin:22px 0 0;
     padding:0 20px;
     animation-name:heroCopyInMobile;
   }
@@ -3407,7 +3410,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   /* Mobile landing spacing/layout only: preserve the existing copy and
      typography while matching the supplied reference's proportions. */
   .hero-copy{
-    margin-top:14px !important;
+    margin-top:22px !important;
     padding-left:20px !important;
     padding-right:20px !important;
   }
@@ -3418,14 +3421,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     padding:0 18px !important;
   }
   .hero-illustration{
-    width:100% !important;
-    margin:auto 0 0 !important;
-    padding:18px 0 0 18px !important;
-    justify-content:flex-end !important;
+    position:absolute !important;
+    left:50% !important;
+    right:auto !important;
+    bottom:0 !important;
+    translate:-50% 0 !important;
+    width:clamp(540px, 175vw, 760px) !important;
+    max-width:none !important;
+    margin:0 !important;
+    padding:0 !important;
+    justify-content:center !important;
   }
   .hero-illustration img{
     width:100% !important;
-    max-width:100% !important;
+    max-width:none !important;
   }
 }
 
@@ -3730,7 +3739,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-mobile-landing-spacing-1";
+const BUILD_VERSION = "2026-10-22-mobile-landing-prominence-2";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
