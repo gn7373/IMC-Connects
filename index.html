@@ -2058,7 +2058,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    inline-block in every browser, so this was visible on desktop too
    until this explicit base rule was added). */
 .mobile-filters-toggle,
-.mobile-clear-filters{ display: none; }
+.mobile-clear-filters,
+.mobile-profile-location-inline{ display: none; }
 /* Mobile-only Browse pass (2026-10-21, per request - "do a mobile-only
    responsive pass... do not alter the desktop design"). Nothing here
    touches any rule above 767px. */
@@ -3185,12 +3186,39 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .profile-info .alum-meta{
     display:none !important;
   }
+  .mobile-profile-location-inline{
+    display:flex !important;
+    align-items:flex-start !important;
+    gap:5px !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    margin-top:5px !important;
+    font-family:'Inter', sans-serif !important;
+    font-size:10.5px !important;
+    line-height:1.25 !important;
+    color:var(--muted) !important;
+  }
+  .mobile-profile-location-inline .format-value{
+    display:flex !important;
+    align-items:flex-start !important;
+    gap:4px !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    white-space:normal !important;
+  }
+  .mobile-profile-location-inline .format-icon{
+    flex:0 0 auto !important;
+    width:10px !important;
+    height:10px !important;
+    margin-top:1px !important;
+    opacity:.72 !important;
+  }
   .mobile-profile-meta-row{
     grid-area:meta !important;
     display:grid !important;
-    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) !important;
+    grid-template-columns:minmax(0,1fr) auto !important;
     align-items:center !important;
-    column-gap:8px !important;
+    column-gap:12px !important;
     width:100% !important;
     min-width:0 !important;
     margin-top:8px !important;
@@ -3199,31 +3227,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     line-height:1.2 !important;
     color:var(--muted) !important;
   }
-  .mobile-profile-meta-location{
-    min-width:0 !important;
-    max-width:100% !important;
-    white-space:normal !important;
-  }
-  .mobile-profile-meta-location .format-value{
-    display:flex !important;
-    align-items:baseline !important;
-    gap:5px !important;
-    min-width:0 !important;
-    white-space:normal !important;
-    line-height:1.2 !important;
-    font-size:11.5px !important;
-  }
-  .mobile-profile-meta-location .format-value.two-line-location{
-    align-items:center !important;
-  }
-  .mobile-profile-meta-location .format-icon{
-    flex:0 0 auto !important;
-    margin-top:0 !important;
-    width:11px !important;
-    height:11px !important;
-  }
   .mobile-profile-meta-linkedin{
-    justify-self:center !important;
+    justify-self:start !important;
     align-self:center !important;
     white-space:nowrap !important;
     font-size:11.5px !important;
@@ -3661,7 +3666,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-main-mobile-restored-1";
+const BUILD_VERSION = "2026-10-22-mobile-profile-meta-1";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5703,7 +5708,6 @@ function renderProfilePanel(){
             <div class="profile-identity-wrap"></div>
           </div>
           <div class="mobile-profile-meta-row" aria-label="Profile contact and availability">
-            <div class="mobile-profile-meta-location"></div>
             <div class="mobile-profile-meta-linkedin"></div>
             <div class="mobile-profile-meta-spots"></div>
           </div>
@@ -5790,28 +5794,13 @@ function updateProfileIdentity(a){
       <div class="profile-name">${a.name}</div>
       ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
       <div class="alum-company">${companyHtml(a.company)}</div>
+      ${mobileContactHtml ? `<div class="mobile-profile-location-inline">${mobileContactHtml}</div>` : ''}
     </div>
     ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
   `;
 
-  const mobileLocation = document.querySelector('.mobile-profile-meta-location');
   const mobileLinkedIn = document.querySelector('.mobile-profile-meta-linkedin');
-  if(mobileLocation){
-    mobileLocation.innerHTML = mobileContactHtml;
-    requestAnimationFrame(updateMobileLocationWrapAlignment);
-  }
   if(mobileLinkedIn) mobileLinkedIn.innerHTML = linkedinHtml;
-}
-
-function updateMobileLocationWrapAlignment(){
-  const location = document.querySelector('.mobile-profile-meta-location .format-value');
-  if(!location) return;
-  location.classList.remove('two-line-location');
-  const computed = getComputedStyle(location);
-  const lineHeight = parseFloat(computed.lineHeight) || 12;
-  if(location.getBoundingClientRect().height > lineHeight * 1.45){
-    location.classList.add('two-line-location');
-  }
 }
 
 // Industry/Marketing Expertise + Ask Me About - also image-free, cheap
