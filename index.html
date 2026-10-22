@@ -1424,6 +1424,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .directory-entry.in-list .directory-entry-chevron{ color: var(--list-added); }
 .directory-entry-info{ min-width: 0; }
 .directory-entry-mobile-meta{ display:none; }
+.directory-company-mobile{ display:none; }
 /* Natural wrapping, no truncation/ellipsis and no dynamic font shrink
    for long names - per explicit request for this list. Semi-bold per
    request (2026-10-17; was briefly full bold - toned down one step). */
@@ -2976,6 +2977,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     line-height:1.2 !important;
     margin-top:2px !important;
   }
+  .directory-entry-info .directory-company-desktop{
+    display:none !important;
+  }
+  .directory-entry-info .directory-company-mobile{
+    display:block !important;
+  }
+  .directory-entry-info .mobile-directory-company-secondary{
+    display:block !important;
+    margin-top:2px !important;
+  }
   .directory-entry-location-inline{
     display:none !important;
   }
@@ -3692,7 +3703,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-three-pick-submission-2";
+const BUILD_VERSION = "2026-10-22-lauren-industry-company-fix-1";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -3884,6 +3895,7 @@ const MASTHEAD_LABEL_OVERRIDES = {
   "Brand Management & Strategy": "Brand"
 };
 const FILTER_ALLOW_LISTS = {
+  industries: CANONICAL_INDUSTRIES,
   marketingAreas: CANONICAL_MARKETING_AREAS,
   topics: APPROVED_CONVERSATION_TOPICS,
   // "Both in person and virtual" cut from the filter checkboxes per
@@ -4292,7 +4304,11 @@ function normalizeRow(row, index){
     // Region bucketing for the Location filter is handled separately and
     // must never rewrite the visible label (e.g. "NYC" stays "NYC").
     city: [(row[COLUMNS.city] || "").trim()].filter(Boolean),
-    industries: rawIndustries.filter(v => CANONICAL_INDUSTRIES.includes(v)),
+    // Preserve the alum's actual industry responses for profile display.
+    // The filter UI is separately constrained to CANONICAL_INDUSTRIES via
+    // FILTER_ALLOW_LISTS, so a newer/write-in industry can never disappear
+    // from Industry Expertise just because it is not yet a filter option.
+    industries: rawIndustries,
     marketingAreas: smartSplit(row[COLUMNS.marketingAreas], KNOWN_OPTIONS.marketingAreas),
     brandAgency: (row[COLUMNS.brandAgency] || "").trim(),
     topics: smartSplit(row[COLUMNS.topics], KNOWN_OPTIONS.topics, TOPICS_IS_COMPLETE_LIST),
@@ -5152,6 +5168,27 @@ function companyHtml(company){
   return `${applyTextRules(main)}<span class="alum-company-note">${applyTextRules(note)}</span>`;
 }
 
+function mobileDirectoryCompanyHtml(company){
+  const value = (company || '').trim();
+  if(!value) return '';
+
+  // Some alumni list a corporate employer plus their own company in the
+  // same response, e.g. "Pivot Energy (corporate job), Pets of Honor
+  // (my company)". On mobile directory cards, keep the second affiliation
+  // intact but give it its own line so the company block stays readable.
+  const parts = value.split(/\s*[,;]\s*/).filter(Boolean);
+  const ownCompanyIndex = parts.findIndex((part, index) =>
+    index > 0 && /\(\s*my company\s*\)/i.test(part)
+  );
+  if(ownCompanyIndex !== -1){
+    const primary = parts.slice(0, ownCompanyIndex).join(', ');
+    const secondary = parts.slice(ownCompanyIndex).join(', ');
+    return `${applyTextRules(primary)}<span class="mobile-directory-company-secondary">${applyTextRules(secondary)}</span>`;
+  }
+
+  return companyHtml(value);
+}
+
 function capacityBadgeHtml(capacity, assumed){
   let cls, label;
   if(capacity <= 0){
@@ -5551,7 +5588,7 @@ function renderDirectoryList(filtered){
       <div class="directory-entry-info">
         <div class="directory-entry-name">${a.name}</div>
         ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
-        <div class="alum-company">${companyHtml(a.company)}</div>
+        <div class="alum-company"><span class="directory-company-desktop">${companyHtml(a.company)}</span><span class="directory-company-mobile">${mobileDirectoryCompanyHtml(a.company)}</span></div>
         <div class="directory-entry-mobile-meta">
           ${contactHtml ? `<div class="directory-entry-location-mobile">${contactHtml}</div>` : '<div></div>'}
           <div class="directory-entry-right-mobile">
