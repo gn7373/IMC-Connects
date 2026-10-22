@@ -479,15 +479,10 @@ header.site{
 }
 .tab-link:hover{ color: var(--accent); border-bottom-color: var(--accent); }
 
-/* No more white card/title-band + divider (2026-10-21, per request -
-   "remove the white card/title-band treatment... remove the separator
-   line... the headings should simply float on the page") - the heading
-   is just centered text now, sharing the exact same cream background
-   (var(--page-bg)) as the content area below it, so there's one
-   continuous surface from the masthead down rather than a white band
-   over a beige body. Font size is a clamp() now ("sizing responsive
-   rather than oversized"), not a flat 35px. */
-.info-title-band{ width: 100%; background: var(--page-bg); }
+/* About / FAQ / Feedback use a clean white canvas. The heading still
+   floats directly on the page with no card or separator treatment. */
+#view-info{ background:#fff; }
+.info-title-band{ width: 100%; background: #fff; }
 .info-title-band-inner{
   width: calc(100% - 64px);
   max-width: 1480px;
@@ -502,15 +497,10 @@ header.site{
   letter-spacing: 0.06em;
   color: var(--ink);
 }
-/* Same cream background continuing straight down from the heading
-   above (2026-10-21) - min-height is set by sizeInfoLayout() to fill
-   exactly down to the viewport's own bottom edge (measured from
-   wherever this element actually starts), same measure-don't-guess
-   approach as sizeDirectorySplit() elsewhere, so the color still fills
-   the whole section even when a panel's own content is short. */
+/* White background continues straight down from the heading. */
 .info-layout{
   padding: 0 6vw 60px;
-  background: var(--page-bg);
+  background: #fff;
   /* Establishes a new block-formatting context so a panel's own
      margin-top (see #infoPanelAbout etc. below) can't collapse through
      this element's zero top padding - without this, that margin-top
@@ -3373,10 +3363,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     line-height:1.2 !important;
   }
 
-  /* Secondary pages remain one continuous cream-white surface. */
+  /* Secondary pages remain one continuous white surface. */
   #view-info,
   .info-title-band,
-  .info-layout{ background:var(--page-bg) !important; }
+  .info-layout{ background:#fff !important; }
   .info-title-band-inner{
     width:100% !important;
     padding:24px 20px 0 !important;
@@ -3710,7 +3700,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-mobile-company-line-2";
+const BUILD_VERSION = "2026-10-22-info-pages-white-1";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
