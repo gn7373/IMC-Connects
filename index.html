@@ -3188,38 +3188,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .profile-info .alum-meta{
     display:none !important;
   }
-  .mobile-profile-location-inline{
-    display:flex !important;
-    align-items:flex-start !important;
-    gap:5px !important;
-    min-width:0 !important;
-    max-width:100% !important;
-    margin-top:5px !important;
-    font-family:'Inter', sans-serif !important;
-    font-size:10.5px !important;
-    line-height:1.25 !important;
-    color:var(--muted) !important;
-  }
-  .mobile-profile-location-inline .format-value{
-    display:flex !important;
-    align-items:flex-start !important;
-    gap:4px !important;
-    min-width:0 !important;
-    max-width:100% !important;
-    white-space:normal !important;
-  }
-  .mobile-profile-location-inline .format-icon{
-    flex:0 0 auto !important;
-    width:10px !important;
-    height:10px !important;
-    margin-top:1px !important;
-    opacity:.72 !important;
-  }
   .mobile-profile-meta-row{
     grid-area:meta !important;
     display:flex !important;
+    flex-wrap:wrap !important;
     align-items:center !important;
     justify-content:flex-start !important;
+    column-gap:12px !important;
+    row-gap:7px !important;
     width:100% !important;
     min-width:0 !important;
     margin-top:9px !important;
@@ -3228,8 +3204,31 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     line-height:1.2 !important;
     color:var(--muted) !important;
   }
+  .mobile-profile-meta-location{
+    display:flex !important;
+    flex:0 1 auto !important;
+    align-items:center !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    font-size:11.5px !important;
+    color:var(--muted) !important;
+  }
+  .mobile-profile-meta-location .format-value{
+    display:inline-flex !important;
+    align-items:center !important;
+    gap:4px !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    white-space:normal !important;
+  }
+  .mobile-profile-meta-location .format-icon{
+    flex:0 0 auto !important;
+    width:11px !important;
+    height:11px !important;
+    opacity:.72 !important;
+  }
   .mobile-profile-meta-linkedin{
-    justify-self:start !important;
+    flex:0 0 auto !important;
     align-self:center !important;
     white-space:nowrap !important;
     font-size:11.5px !important;
@@ -3666,7 +3665,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-mobile-profile-hierarchy-2";
+const BUILD_VERSION = "2026-10-22-mobile-contact-row-3";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4590,7 +4589,10 @@ function profileLocationDisplayValue(value){
 }
 
 function mobileProfileLocationHtml(a){
-  const values = (a.city || []).map(profileLocationDisplayValue).filter(Boolean);
+  // Mobile now has enough room to show the alum's full location as entered
+  // in the roster. Do not collapse San Francisco -> SF, New York -> NYC,
+  // smaller cities -> states, or strip country names here.
+  const values = (a.city || []).map(v => (v || "").trim()).filter(Boolean);
   return values.map(v => `<span class="format-value">${FORMAT_ICON_IN_PERSON}${v}</span>`).join('<span class="sep"></span>');
 }
 function isCanadaValue(value){
@@ -5707,9 +5709,9 @@ function renderProfilePanel(){
             <div class="profile-availability"></div>
             <div class="profile-identity-wrap"></div>
           </div>
-          <div class="mobile-profile-meta-row" aria-label="Profile contact and availability">
+          <div class="mobile-profile-meta-row" aria-label="Profile location and LinkedIn">
+            <div class="mobile-profile-meta-location"></div>
             <div class="mobile-profile-meta-linkedin"></div>
-            <div class="mobile-profile-meta-spots"></div>
           </div>
         </div>
       </div>
@@ -5794,12 +5796,13 @@ function updateProfileIdentity(a){
       <div class="profile-name">${a.name}</div>
       ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
       <div class="alum-company">${companyHtml(a.company)}</div>
-      ${mobileContactHtml ? `<div class="mobile-profile-location-inline">${mobileContactHtml}</div>` : ''}
     </div>
     ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
   `;
 
+  const mobileLocation = document.querySelector('.mobile-profile-meta-location');
   const mobileLinkedIn = document.querySelector('.mobile-profile-meta-linkedin');
+  if(mobileLocation) mobileLocation.innerHTML = mobileContactHtml;
   if(mobileLinkedIn) mobileLinkedIn.innerHTML = linkedinHtml;
 }
 
