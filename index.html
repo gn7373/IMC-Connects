@@ -76,18 +76,22 @@
   --lavender-muted: #8D83BC;
 }
 *{ box-sizing: border-box; }
-/* Do not reserve a permanent root scrollbar gutter. The previous
-   scrollbar-gutter:stable rule left a visible vertical strip at the far
-   right of otherwise short pages. Hide only the ROOT scrollbar instead:
-   wheel/trackpad/touch scrolling still works, but it occupies zero layout
-   width, so page-to-page masthead alignment stays stable without a gutter. */
+/* Reserves the scrollbar's own width whether or not one is actually
+   needed on a given page (2026-10-21, per request - "prevent horizontal
+   nav shifting between pages") - without this, a page tall enough to
+   scroll is very slightly narrower than one that isn't, which shifts
+   the masthead's own content by the scrollbar's width between pages. */
 html{
   scrollbar-gutter: auto;
   scrollbar-width: none;
+  background-color: #fff;
 }
+/* Do not reserve a permanent root scrollbar gutter: it creates a visible
+   vertical strip on short pages. Root scrolling still works normally via
+   wheel/trackpad/touch, but the root scrollbar itself takes no layout width. */
 html::-webkit-scrollbar{ width: 0; height: 0; }
-::-webkit-scrollbar{ width: 12px; }
-::-webkit-scrollbar-track{ background: transparent; }
+::-webkit-scrollbar{ width: 12px; background: #fff; }
+::-webkit-scrollbar-track{ background: #fff; }
 ::-webkit-scrollbar-thumb{
   background: rgba(78,42,132,.25);
   border-radius: 999px;
@@ -329,10 +333,10 @@ header.site{
   background: var(--muted);
 }
 .hero-logo .logo-connect{
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 700;
   font-size: 1em;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
 }
 /* The listing/info masthead's compact variant - just the logo (left)
    and nav tabs (right) in the same positions the landing header uses,
@@ -520,8 +524,6 @@ header.site{
    plain, modest gap below the heading. */
 #infoPanelAbout{
   max-width: 1000px;
-  /* Give the About copy a deliberate pause below the centered heading;
-     the previous 32px made the page read top-heavy on laptop screens. */
   margin: 64px auto 0;
 }
 #infoPanelFaq{
@@ -753,6 +755,7 @@ header.site{
      token, rather than a new hardcoded color. */
   background: var(--workspace-bg);
   border: 1px solid var(--line-strong);
+  border-radius: 10px;
   color: var(--ink);
   font-family: 'Inter', sans-serif;
   font-size: 16px;
@@ -846,7 +849,7 @@ header.site{
   /* Black, not grey (2026-10-21, per request), was var(--muted). */
   color: var(--ink);
   font-family: 'Inter', sans-serif;
-  font-size: 18.25px;
+  font-size: 16px;
   line-height: 1.6;
   max-height: 0;
   overflow: hidden;
@@ -1090,7 +1093,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    down to .directory-split itself. display is switched to 'flex' in JS
    (showListing()) rather than plain '' specifically because of this. */
 #view-listing{
-  background-color: var(--page-bg);
+  background-color: var(--workspace-bg);
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -1150,9 +1153,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    #view-listing's own column (natural height, doesn't stretch/shrink
    - .workspace is the flexible one, via its own flex:1 1 auto). */
 .directory-toolbar{
-  /* Desktop/laptop keeps the original framed composition: the same beige
-     page margin that surrounds .workspace also surrounds the toolbar.
-     Mobile explicitly overrides this back to edge-to-edge below. */
+  /* Keep the beige outer framing on laptop/desktop. Mobile overrides
+     this back to edge-to-edge below. */
   width: calc(100% - 64px);
   max-width: 1480px;
   margin-inline: auto;
@@ -1278,13 +1280,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   min-height: 0;
 }
 .directory-left{
-  /* Fixed 50/50 split (2026-10-21, per request - "remove free
-     dragging") - was an adjustable clamp()-based width the resizer
-     below used to drag. Zero flex-basis with an equal flex-grow (1) on
-     both this and .directory-right (see below) means the available
-     width splits exactly in half between them, rather than a % basis
-     racing against the other side's own basis. */
-  flex: 1 1 0%;
+  /* Desktop split: 60% directory / 40% profile. */
+  flex: 3 1 0%;
   min-width: 300px;
   display: flex;
   flex-direction: column;
@@ -1353,18 +1350,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .directory-resizer:hover .directory-resizer-collapse,
 .directory-resizer.dragging .directory-resizer-collapse{ border-color: var(--accent); color: var(--accent); }
 .directory-right{
-  /* Matches .directory-left's own zero-basis/equal-grow rule above, so
-     the two sides split the available width exactly 50/50. */
-  flex: 1 1 0%;
+  /* Complements .directory-left's 3-part grow value for a 60/40
+     desktop directory/profile split. */
+  flex: 2 1 0%;
   min-width: 480px;
-  /* Long profiles need a little overflow room. Keep the scrollbar itself
-     invisible, but allow a short internal scroll so the final topic pills
-     can clear the viewport instead of being clipped against the bottom. */
+  /* Allow longer profiles to clear the viewport instead of clipping the
+     final pill row. Keep the scrollbar itself invisible. */
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
-  /* 48px of bottom breathing room means the last pill row never rests
-     directly on the viewport edge when scrolled to the end. */
   padding: 12px 0 48px;
 }
 .directory-right::-webkit-scrollbar{ width: 0; height: 0; }
@@ -1730,7 +1724,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .search-clear-btn:hover{ color: var(--ink); background: var(--border); }
 .search-clear-btn:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
-.mobile-clear-btn{ display:none; }
 .clear-btn{
   background:none;
   border:none;
@@ -2064,11 +2057,17 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    2026-10-21: a <button> with no display rule here at all defaults to
    inline-block in every browser, so this was visible on desktop too
    until this explicit base rule was added). */
-.mobile-filters-toggle{ display: none; }
+.mobile-filters-toggle,
+.mobile-clear-filters{ display: none; }
 /* Mobile-only Browse pass (2026-10-21, per request - "do a mobile-only
    responsive pass... do not alter the desktop design"). Nothing here
    touches any rule above 767px. */
 @media (max-width: 767px){
+  .directory-toolbar{
+    width:100% !important;
+    max-width:none !important;
+    margin:0 !important;
+  }
   .mobile-filters-toggle{
     display: inline-flex;
     align-items: center;
@@ -2092,21 +2091,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      the Filters button opens them (not a flyout popover - there are 5
      of them, a stacked sheet reads better than one on top of another). */
   .toolbar-row2{ flex-wrap: wrap; }
-  .filter-dropdowns{ display: none; order: 4; width: 100%; }
-  .desktop-clear-btn{ display: none !important; }
-  .mobile-clear-btn{ display: none; order: 3; }
-  .toolbar-row2.mobile-filters-open .mobile-clear-btn{
-    display: inline-flex;
-    margin-top: 10px;
-    width: 100%;
-    justify-content: flex-start;
-  }
+  .filter-dropdowns{ display: none; order: 3; width: 100%; }
+  /* The desktop Clear all must stay hidden on mobile. Mobile has its own
+     dedicated Clear all directly beneath Show/Hide filters. */
+  .clear-btn{ display: none !important; order: 4; }
   .toolbar-row2.mobile-filters-open .filter-dropdowns{
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
-    margin-top: 8px;
+    margin-top: 12px;
   }
   .toolbar-row2.mobile-filters-open .filter-dropdown{ width: 100%; }
   .toolbar-row2.mobile-filters-open .filter-dropdown-toggle{
@@ -2142,14 +2136,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     grid-area: loc;
     justify-self: start;
     display: flex !important;
-    /* A long city name (e.g. "San Francisco Bay Area") would otherwise
-       push the spots-left badge in the next column off the row's edge -
-       truncate instead, same reasoning .topic-tag already uses. */
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
   }
-  .directory-entry-location-inline span{ overflow: hidden; text-overflow: ellipsis; }
+  .directory-entry-location-inline span{
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
   .directory-entry-right{
     grid-area: right;
     justify-self: end;
@@ -2243,7 +2239,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    approximately the same height/font size/padding as the filter
    controls"), was 13.5px/5px 10px - see .filter-dropdown-toggle for the
    reference values. Label text itself (e.g. "spots left") is unchanged. */
-.profile-availability .capacity-badge{ font-size: 12.5px; padding: 5px 12px; }
+.profile-availability .capacity-badge{ font-size: 13.5px; padding: 5px 12px; }
 .capacity-badge{
   display: inline-flex;
   align-items: center;
@@ -2367,20 +2363,30 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   margin-bottom: 6px;
   font-weight: 700;
 }
-/* Industry Expertise + Marketing Expertise side by side in one row
-   - Ask Me About is a separate full-width row below (plain spacing
-   only now - the only divider in the profile is .profile-header's own
-   border-bottom, directly below the photo/job-info section; the one
-   that used to sit above Ask Me About is removed). */
+/* Desktop profile expertise sections stack vertically.
+   Keep one exact 22px rhythm from the last pill in one section to the
+   next section heading, regardless of how many pills the alum has. */
 .alum-columns{
-  display: flex;
-  flex-direction: row;
-  gap: 24px;
-  margin-top: 12px;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:0;
+  margin-top:12px;
 }
-/* padding-top gives the column text its own breathing room below the
-   (flush) horizontal divider above it. */
-.alum-col{ flex: 1 1 140px; min-width: 0; padding-top: 14px; }
+.alum-col{
+  min-width:0;
+  padding-top:0;
+}
+.alum-columns .alum-col:first-child{
+  max-width:none;
+  padding-top:14px;
+}
+.alum-columns .alum-col + .alum-col{
+  margin-top:22px;
+}
+.alum-columns + .ask-me-about{
+  margin-top:22px;
+}
 .alum-labeled-line{ margin-top: 12px; }
 .topic-tags{
   display: flex;
@@ -2394,7 +2400,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    ~2-line min-height is just a default sizing target so a short list
    doesn't look cramped next to a taller column; it's a minimum, not a
    cap - more pills just wrap onto further lines beyond it. */
-.industry-tags{ min-height: 54px; align-content: flex-start; }
+.industry-tags{ min-height: 0; align-content: flex-start; }
 .marketing-tags{ align-content: flex-start; }
 /* Light lavender fill per the reference image (2026-10-15) - was an
    outlined/unfilled pill before. Reuses --accent-tint rather than a new
@@ -2455,7 +2461,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 /* Matches the filter controls' own size (2026-10-21, per request) -
    scoped to .profile-add-btn specifically, not the shared .add-btn base,
    was 13.5px/9px 16px. */
-.profile-add-btn{ font-size: 12.5px; padding: 5px 12px; }
+.profile-add-btn{ font-size: 13.5px; padding: 5px 12px; }
 
 /* Card select control - a round "+" that becomes a white check once the
    alum is selected, at which point the whole card turns purple (below). */
@@ -2795,7 +2801,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     overflow-x:hidden !important;
   }
   body.mobile-drawer-open{
-    height:100dvh !important;
+    position:fixed !important;
+    top:var(--mobile-scroll-lock-offset, 0px) !important;
+    left:0 !important;
+    right:0 !important;
+    width:100% !important;
+    height:auto !important;
     overflow:hidden !important;
   }
 
@@ -2807,25 +2818,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   #heroSub.compact .hero-logo{ font-size:11px !important; }
   #heroSub.compact .hero-logo .logo-cmi{ font-size:1.72em !important; }
 
-  /* Browse controls: mobile remains edge-to-edge at the page level;
-     the 20px content gutter lives inside the toolbar. */
-  .directory-toolbar{
-    width:100% !important;
-    max-width:none !important;
-    margin:0 !important;
-  }
+  /* Browse controls: match the reference gutters, not edge-to-edge. */
   .directory-toolbar .listing-container{
     width:100% !important;
     max-width:none !important;
     margin:0 !important;
-    padding:14px 20px 16px !important;
+    padding:16px 20px !important;
+    gap:16px !important;
   }
   .search-box{
     width:100% !important;
     min-width:0 !important;
-    height:58px !important;
-    min-height:58px !important;
-    flex:0 0 58px !important;
+    height:54px !important;
+    min-height:54px !important;
+    flex:0 0 54px !important;
     box-sizing:border-box !important;
     padding:0 17px !important;
     border-radius:14px !important;
@@ -2835,19 +2841,42 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     font-size:13.5px !important;
   }
   .toolbar-row2{
-    margin-top:13px !important;
-    gap:12px !important;
-    flex-wrap:wrap !important;
+    margin-top:0 !important;
+    display:grid !important;
+    grid-template-columns:auto 1fr auto !important;
+    align-items:center !important;
+    column-gap:12px !important;
+    row-gap:8px !important;
   }
   .mobile-filters-toggle{
+    grid-column:1 !important;
+    grid-row:1 !important;
     min-height:40px !important;
     padding:8px 18px !important;
     border-radius:20px !important;
     font-size:13px !important;
   }
+  .mobile-clear-filters{
+    grid-column:1 !important;
+    grid-row:2 !important;
+    justify-self:start !important;
+    padding:0 2px !important;
+    border:0 !important;
+    background:none !important;
+    color:var(--accent) !important;
+    font-family:'Inter', sans-serif !important;
+    font-size:12px !important;
+    font-weight:600 !important;
+    cursor:pointer;
+  }
+  .toolbar-row2.has-active-filters .mobile-clear-filters{
+    display:inline-flex !important;
+  }
   .pins-toggle-btn{
+    grid-column:3 !important;
+    grid-row:1 !important;
     min-height:40px !important;
-    margin-left:auto !important;
+    margin-left:0 !important;
     padding:8px 18px !important;
     font-size:13px !important;
   }
@@ -2877,15 +2906,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     padding:9px 20px !important;
   }
 
-  /* Directory cards: generic icon only, using the reference proportions. */
+  /* Mobile directory card:
+     row 1 = photo + full identity block;
+     row 2 = location from the card's left edge + availability/actions right.
+     This gives long role/company text room to wrap beside the photo and gives
+     legitimate multi-word locations (e.g. Cambridge, MA) substantially more
+     horizontal space without competing with the portrait. */
   .directory-entry{
     grid-template-columns:72px minmax(0,1fr) auto !important;
     grid-template-rows:auto auto !important;
     grid-template-areas:
       "photo info info"
-      "photo loc right" !important;
+      "loc loc right" !important;
     column-gap:12px !important;
-    row-gap:8px !important;
+    row-gap:10px !important;
     width:100% !important;
     padding:10px 12px !important;
     margin-bottom:10px !important;
@@ -2944,24 +2978,29 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-entry-location-inline{
     grid-area:loc !important;
     display:flex !important;
-    justify-self:stretch !important;
+    justify-self:start !important;
+    align-self:center !important;
     min-width:0 !important;
     max-width:100% !important;
-    overflow:hidden !important;
-    text-overflow:ellipsis !important;
-    white-space:nowrap !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    white-space:normal !important;
     font-size:12px !important;
+    line-height:1.2 !important;
   }
   .directory-entry-location-inline .format-value{
     min-width:0 !important;
-    overflow:hidden !important;
-    text-overflow:ellipsis !important;
-    white-space:nowrap !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    white-space:normal !important;
+    line-height:1.2 !important;
   }
   .directory-entry-right{
     grid-area:right !important;
     display:flex !important;
+    align-items:center !important;
     justify-self:end !important;
+    align-self:center !important;
     gap:6px !important;
     flex-shrink:0 !important;
   }
@@ -2972,7 +3011,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 
   /* Filter drawers stay vertical/downward on mobile. */
   .toolbar-row2.mobile-filters-open .filter-dropdowns{
-    margin-top:12px !important;
+    grid-column:1 / -1 !important;
+    grid-row:3 !important;
+    margin-top:4px !important;
   }
   .toolbar-row2.mobile-filters-open .filter-dropdown-toggle,
   .toolbar-row2.mobile-filters-open .filter-checkboxes,
@@ -3071,7 +3112,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .profile-back-btn{ display:none !important; }
   .profile-header{
     width:100% !important;
-    padding:42px 20px 18px !important;
+    padding:42px 20px 15px !important;
     border-bottom:1px solid var(--border-strong) !important;
     background:var(--workspace-bg) !important;
   }
@@ -3085,7 +3126,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
       "meta meta"
       "add add" !important;
     column-gap:14px !important;
-    row-gap:13px !important;
+    row-gap:0 !important;
     width:100% !important;
     height:auto !important;
     min-height:0 !important;
@@ -3094,8 +3135,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     align-items:start !important;
   }
   .profile-info,
-  .profile-identity-wrap,
-  .profile-availability{
+  .profile-identity-wrap{
     display:contents !important;
   }
   .profile-portrait,
@@ -3124,55 +3164,54 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
   .profile-info .alum-role{
     margin-top:6px !important;
-    font-size:13px !important;
+    font-size:13.5px !important;
     line-height:1.22 !important;
   }
   .profile-info .alum-company{
     margin-top:2px !important;
-    font-size:12.5px !important;
+    font-size:12px !important;
     line-height:1.22 !important;
     overflow-wrap:anywhere !important;
   }
+  .profile-info .alum-company-note{
+    display:inline-block !important;
+    max-width:100% !important;
+    white-space:normal !important;
+    margin-left:4px !important;
+  }
   .profile-identity-wrap{ margin-top:0 !important; }
 
-  /* Mobile metadata: left-anchored location, mathematically centered
-     LinkedIn, right-anchored spots. The two outer tracks are equal, so
-     LinkedIn stays centered between the row endpoints regardless of label
-     lengths. A long city may wrap to two lines; the other two stay
-     vertically centered against that taller row. */
-  .profile-info .alum-meta,
-  .profile-availability .capacity-badge-wrap{
+  /* Mobile profile metadata: readable contact row, then capacity + CTA. */
+  .profile-info .alum-meta{
     display:none !important;
   }
   .mobile-profile-meta-row{
     grid-area:meta !important;
     display:grid !important;
-    /* Left item hugs the left edge, right item hugs the right edge, and
-       LinkedIn sits centered in the actual remaining space BETWEEN them. */
-    grid-template-columns:minmax(0,max-content) minmax(42px,1fr) max-content !important;
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) !important;
     align-items:center !important;
-    width:100% !important;
     column-gap:8px !important;
+    width:100% !important;
     min-width:0 !important;
+    margin-top:8px !important;
     font-family:'Inter', sans-serif !important;
-    font-size:10px !important;
-    line-height:1.18 !important;
+    font-size:11.5px !important;
+    line-height:1.2 !important;
     color:var(--muted) !important;
   }
   .mobile-profile-meta-location{
-    justify-self:start !important;
     min-width:0 !important;
-    max-width:72px !important;
+    max-width:100% !important;
     white-space:normal !important;
-    overflow-wrap:normal !important;
   }
   .mobile-profile-meta-location .format-value{
     display:flex !important;
     align-items:baseline !important;
-    gap:4px !important;
+    gap:5px !important;
     min-width:0 !important;
     white-space:normal !important;
-    line-height:1.18 !important;
+    line-height:1.2 !important;
+    font-size:11.5px !important;
   }
   .mobile-profile-meta-location .format-value.two-line-location{
     align-items:center !important;
@@ -3180,44 +3219,58 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .mobile-profile-meta-location .format-icon{
     flex:0 0 auto !important;
     margin-top:0 !important;
-    width:10px !important;
-    height:10px !important;
+    width:11px !important;
+    height:11px !important;
   }
   .mobile-profile-meta-linkedin{
     justify-self:center !important;
     align-self:center !important;
     white-space:nowrap !important;
-    font-size:10px !important;
+    font-size:11.5px !important;
   }
   .mobile-profile-meta-linkedin .alum-linkedin{
     display:inline-flex !important;
     align-items:center !important;
-    gap:3px !important;
+    gap:4px !important;
     white-space:nowrap !important;
-    font-size:10px !important;
+    font-size:11.5px !important;
   }
   .mobile-profile-meta-linkedin svg{
-    width:10px !important;
-    height:10px !important;
+    width:11px !important;
+    height:11px !important;
   }
   .mobile-profile-meta-spots{
+    display:inline-flex !important;
     justify-self:end !important;
     align-self:center !important;
     white-space:nowrap !important;
-    min-width:0 !important;
   }
-  .mobile-profile-meta-spots .capacity-icon{
-    display:none !important;
-  }
-  .mobile-profile-meta-spots .capacity-badge{
-    font-size:10px !important;
-    line-height:1 !important;
-    padding:5px 6px !important;
+  .mobile-profile-meta-spots .capacity-badge-wrap{
+    display:inline-flex !important;
+    align-items:center !important;
     white-space:nowrap !important;
   }
-  .profile-add-btn{
+  .mobile-profile-meta-spots .capacity-badge{
+    font-size:11.5px !important;
+    line-height:1 !important;
+    padding:5px 7px !important;
+    white-space:nowrap !important;
+  }
+  .profile-availability{
     grid-area:add !important;
-    justify-self:start !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-start !important;
+    gap:0 !important;
+    min-width:0 !important;
+    margin-top:9px !important;
+  }
+  .profile-availability > .capacity-badge-wrap{
+    display:none !important;
+  }
+  .profile-add-btn{
+    grid-area:auto !important;
+    justify-self:auto !important;
     margin:0 !important;
     min-height:36px !important;
     padding:8px 14px !important;
@@ -3379,10 +3432,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   <div class="info-layout">
     <div class="info-content">
       <div class="info-panel" id="infoPanelAbout">
-        <p class="about-body">Hi everyone,</p>
-        <p class="about-body">Earlier this summer, CMI began piloting career-related events under the banner "CMI Connect" to help our cohort navigate career discernment as we headed into our last two quarters. Following a successful alumni networking pilot in late summer, CMI Connect has been folded into Medill Career Services under IMC Connects.</p>
-        <p class="about-body">Career Services will continue to host IMC Connects events on campus this fall. This portion of IMC Connects focuses on 1:1 coffee chats and will remain student-run.</p>
-        <p class="about-body">Our pilot in September served 37 students and 47 alumni. For phase II, we're excited to bring you 200+ Northwestern alumni from across the world who are eager to support you during your job search.</p>
+        <p class="about-body">Earlier this summer, CMI began piloting career-related events for our cohort under the banner "CMI Connect." Following a successful alumni networking pilot in late summer, CMI Connect was folded into Medill Career Services as part of their new fall programming, which is, by pure coincidence, called aptly IMC Connects.</p>
+        <p class="about-body">Career Services will continue to host events on campus this fall. This portion of IMC Connects focuses on 1:1 coffee chats and will remain student-run. On this website, you will find 200+ Northwestern alumni from across the world who are eager to support your growth. Please feel free to use this resource as you job search this quarter.</p>
         <p class="about-body">As with last time, IMC Connects programming is open to all members of the IMC cohort.</p>
         <p class="about-body">If you have any questions, please feel free to message me (Gaby) via WhatsApp or text.</p>
         <p class="about-body">Cheers,<br>Gaby</p>
@@ -3486,10 +3537,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <button type="button" class="search-clear-btn" id="searchClearBtn" aria-label="Clear search" style="display:none">×</button>
   </div>
   <div class="toolbar-row2" id="toolbarRow2">
-    <button type="button" class="mobile-filters-toggle" id="mobileFiltersToggle" aria-expanded="false" aria-controls="filterPanel">Filters</button>
+    <button type="button" class="mobile-filters-toggle" id="mobileFiltersToggle" aria-expanded="false" aria-controls="filterPanel">Show filters</button>
+    <button type="button" class="mobile-clear-filters" id="mobileClearFiltersBtn">Clear all</button>
     <div class="filter-dropdowns" id="filterPanel"></div>
-    <button class="clear-btn desktop-clear-btn" id="clearFiltersBtn">Clear all</button>
-    <button class="clear-btn mobile-clear-btn" id="mobileClearFiltersBtn">Clear all</button>
+    <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
     <button class="pins-toggle-btn" id="pinsToggleBtn">Review &amp; Submit</button>
   </div>
 </div>
@@ -3610,7 +3661,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-redesign-14";
+const BUILD_VERSION = "2026-10-21-main-mobile-restored-1";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4169,11 +4220,6 @@ function regionForSingleLocation(value){
   }
   return "North America";
 }
-
-// Alumni sometimes list more than one location in the free-text city field
-// (for example "Shanghai & Singapore"). Classify each location separately
-// so a compound answer can participate in the correct regional filter(s)
-// without changing the exact location text shown on the profile.
 function splitLocationParts(value){
   return (value || "")
     .split(/\s*(?:&|\/|;|\band\b)\s*/i)
@@ -4348,6 +4394,7 @@ mobileFiltersToggle.addEventListener('click', () => {
   const willOpen = !document.getElementById('toolbarRow2').classList.contains('mobile-filters-open');
   document.getElementById('toolbarRow2').classList.toggle('mobile-filters-open', willOpen);
   mobileFiltersToggle.setAttribute('aria-expanded', String(willOpen));
+  mobileFiltersToggle.textContent = willOpen ? 'Hide filters' : 'Show filters';
   if(!willOpen) closeAllFilterDropdowns();
 });
 document.addEventListener('click', (e) => {
@@ -4451,6 +4498,96 @@ const US_REGION_BY_CITY = {
 function usRegionForCity(value){
   return US_REGION_BY_CITY[(value || "").trim().toLowerCase()] || null;
 }
+
+/* Profile-only compact location labels.
+   Directory/search/filtering keep the normalized Sheet value unchanged.
+   Major cities stay as cities (abbreviated only where useful on mobile);
+   smaller U.S. cities collapse to the state name for a cleaner profile row. */
+const PROFILE_MAJOR_CITY_LABELS = {
+  "new york": "NYC",
+  "new york city": "NYC",
+  "nyc": "NYC",
+  "chicago": "Chicago",
+  "boston": "Boston",
+  "washington, d.c.": "DC",
+  "washington dc": "DC",
+  "los angeles": "LA",
+  "san francisco": "SF",
+  "san francisco bay area": "SF",
+  "bay area": "SF",
+  "atlanta": "Atlanta",
+  "miami": "Miami",
+  "houston": "Houston",
+  "denver": "Denver",
+  "minneapolis": "Minneapolis",
+  "phoenix": "Phoenix",
+  "pittsburgh": "Pittsburgh",
+  "san antonio": "San Antonio",
+  "salt lake city": "SLC",
+  "shanghai": "Shanghai",
+  "shanghai, china": "Shanghai",
+  "toronto": "Toronto",
+  "toronto, canada": "Toronto",
+  "london": "London",
+  "london, uk": "London",
+  "singapore": "Singapore",
+  "hong kong": "Hong Kong",
+  "tokyo": "Tokyo",
+  "seoul": "Seoul",
+  "mumbai": "Mumbai",
+  "delhi": "Delhi",
+  "bangalore": "Bangalore",
+  "beijing": "Beijing",
+  "dubai": "Dubai",
+  "mexico city": "Mexico City",
+  "paris": "Paris",
+  "berlin": "Berlin",
+  "madrid": "Madrid",
+  "rome": "Rome",
+  "amsterdam": "Amsterdam",
+  "dublin": "Dublin"
+};
+
+const PROFILE_SMALL_US_CITY_STATES = {
+  "cambridge": "Massachusetts",
+  "boca raton": "Florida",
+  "lancaster": "Pennsylvania",
+  "montville": "New Jersey",
+  "urbana": "Illinois",
+  "deerfield": "Illinois",
+  "columbus": "Ohio",
+  "park ridge": "Illinois",
+  "wilmette": "Illinois",
+  "palo alto": "California",
+  "vacaville": "California",
+  "vacaville, ca": "California",
+  "vacaville, california": "California",
+  "boise": "Idaho",
+  "reno": "Nevada",
+  "annapolis": "Maryland",
+  "hartford": "Connecticut"
+};
+
+function profileLocationDisplayValue(value){
+  const trimmed = (value || "").trim();
+  if(!trimmed) return "";
+  const key = trimmed.toLowerCase();
+  if(PROFILE_MAJOR_CITY_LABELS[key]) return PROFILE_MAJOR_CITY_LABELS[key];
+  if(PROFILE_SMALL_US_CITY_STATES[key]) return PROFILE_SMALL_US_CITY_STATES[key];
+
+  // For other international locations, keep just the city portion when a
+  // country follows it ("Shanghai, China" -> "Shanghai"). For unknown U.S.
+  // values, leave the normalized Sheet value intact rather than guessing.
+  if(regionForCity(trimmed) !== "North America"){
+    return trimmed.split(",")[0].trim();
+  }
+  return trimmed;
+}
+
+function mobileProfileLocationHtml(a){
+  const values = (a.city || []).map(profileLocationDisplayValue).filter(Boolean);
+  return values.map(v => `<span class="format-value">${FORMAT_ICON_IN_PERSON}${v}</span>`).join('<span class="sep"></span>');
+}
 function isCanadaValue(value){
   const lower = (value || "").trim().toLowerCase();
   return lower === "canada" || lower.endsWith(", canada");
@@ -4533,9 +4670,6 @@ function buildLocationRegionGroup(values, onAnyChange){
       if(region === "Asia" || region === "Latin America" || region === "Europe") matchedBuckets.add(region);
     });
 
-    // Preserve the raw location string as the actual filter value; it can
-    // belong to more than one regional bucket when an alum listed multiple
-    // locations in the same response.
     matchedBuckets.forEach(bucket => {
       if(US_REGIONS.includes(bucket)) usBuckets[bucket].push(v);
       else outsideUS[bucket].push(v);
@@ -5002,6 +5136,13 @@ function capacityBadgeHtml(capacity, assumed){
   return `<span class="capacity-badge-wrap">${icon}<span class="capacity-badge capacity-badge-${cls}">${label}</span></span>`;
 }
 
+function mobileProfileCapacityBadgeHtml(capacity){
+  const safeCapacity = Math.max(0, Number(capacity) || 0);
+  const cls = safeCapacity <= 0 ? 'full' : (safeCapacity === 1 ? 'low' : 'open');
+  const label = safeCapacity === 1 ? '1 spot' : `${safeCapacity} spots`;
+  return `<span class="capacity-badge-wrap"><span class="capacity-badge capacity-badge-${cls}">${label}</span></span>`;
+}
+
 // Split-view directory (2026-10-16 redesign): renderGrid() is the
 // orchestrator kept under its old name so every existing call site
 // (search input, filter clicks, clear-filters, category nav, etc. -
@@ -5086,7 +5227,7 @@ const PHOTO_FILE_BY_SLUG = {
   "maria_alejandra_alvarado_g": "maria_alejandra_alvarado_g.jfif",
   "mary_hager": "mary_hager.png",
   "meena_vetri_wehrs": "meena_vetri_wehrs.jfif",
-  "melanie_greben": "melanie_greben.jfif",
+  "melanie_greben": "melanie_greben.jfif?rev=20261021b",
   "morgan_ho": "morgan_ho.jfif",
   "nadine_mansour": "nadine_mansour.jfif",
   "nandini_balu": "nandini_balu.jfif",
@@ -5329,11 +5470,13 @@ let pendingShuffle = false;
 // button reads as clutter when there's nothing to clear. Search text
 // doesn't count; this tracks the filter pills specifically.
 function updateClearButtonVisibility(){
-  const desktopBtn = document.getElementById('clearFiltersBtn');
+  const btn = document.getElementById('clearFiltersBtn');
   const mobileBtn = document.getElementById('mobileClearFiltersBtn');
+  const toolbar = document.getElementById('toolbarRow2');
   const hasActiveFilter = FILTERABLE.some(key => filterState[key] && filterState[key].size > 0);
-  if(desktopBtn) desktopBtn.style.display = hasActiveFilter ? '' : 'none';
+  if(btn) btn.style.display = hasActiveFilter ? '' : 'none';
   if(mobileBtn) mobileBtn.style.display = hasActiveFilter ? '' : 'none';
+  if(toolbar) toolbar.classList.toggle('has-active-filters', hasActiveFilter);
 }
 
 function directoryPortraitHtml(a){
@@ -5467,18 +5610,27 @@ function selectAlum(id, opts){
 // toolbar away so --content-top (the drawer's own `top` offset) shrinks
 // to match the masthead-only height, not the masthead+toolbar height it
 // was measured against a moment ago.
+let mobileDirectoryScrollY = 0;
+
 function openMobileDetail(){
+  mobileDirectoryScrollY = window.scrollY || window.pageYOffset || 0;
+  document.body.style.setProperty('--mobile-scroll-lock-offset', `-${mobileDirectoryScrollY}px`);
   document.getElementById('directorySplit').classList.add('mobile-detail-open');
   document.getElementById('view-listing').classList.add('mobile-detail-open');
   document.body.classList.add('mobile-drawer-open');
   document.getElementById('directoryRight').scrollTop = 0;
   sizeDirectorySplit();
 }
+
 function closeMobileDetail(){
+  const restoreY = mobileDirectoryScrollY;
   document.getElementById('directorySplit').classList.remove('mobile-detail-open');
   document.getElementById('view-listing').classList.remove('mobile-detail-open');
   document.body.classList.remove('mobile-drawer-open');
+  document.body.style.removeProperty('--mobile-scroll-lock-offset');
   sizeDirectorySplit();
+  window.scrollTo(0, restoreY);
+  requestAnimationFrame(() => window.scrollTo(0, restoreY));
 }
 
 // Collapsing/expanding the profile panel (2026-10-17) - only toggles a
@@ -5603,7 +5755,7 @@ function updateProfileAvailability(a){
     </button>
   `;
   const mobileSpots = document.querySelector('.mobile-profile-meta-spots');
-  if(mobileSpots) mobileSpots.innerHTML = capacityBadgeHtml(a.capacity, a.capacityAssumed);
+  if(mobileSpots) mobileSpots.innerHTML = mobileProfileCapacityBadgeHtml(a.capacity);
 }
 
 // The lightweight path toggleCart() uses instead of a full
@@ -5631,6 +5783,7 @@ function updateProfileIdentity(a){
   const wrap = document.querySelector('.profile-identity-wrap');
   if(!wrap) return;
   const contactHtml = cardContactLineHtml(a);
+  const mobileContactHtml = mobileProfileLocationHtml(a);
   const linkedinHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
   wrap.innerHTML = `
     <div class="profile-info-identity">
@@ -5644,7 +5797,7 @@ function updateProfileIdentity(a){
   const mobileLocation = document.querySelector('.mobile-profile-meta-location');
   const mobileLinkedIn = document.querySelector('.mobile-profile-meta-linkedin');
   if(mobileLocation){
-    mobileLocation.innerHTML = contactHtml;
+    mobileLocation.innerHTML = mobileContactHtml;
     requestAnimationFrame(updateMobileLocationWrapAlignment);
   }
   if(mobileLinkedIn) mobileLinkedIn.innerHTML = linkedinHtml;
@@ -6254,9 +6407,6 @@ function clearAllFilters(){
   FILTERABLE.forEach(key => filterState[key] = new Set());
   document.getElementById('searchInput').value = '';
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-  // Clearing all filters also clears whichever industry/marketing-area
-  // category the student arrived through, so the masthead heading and the
-  // Back button both reflect "all alumni" rather than a stale category.
   lastCategoryKey = null;
   document.getElementById('subTitle').textContent = 'All available alumni';
   buildFilterPanel();
