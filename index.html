@@ -2950,6 +2950,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-entry{
     position:relative !important;
     grid-template-columns:72px minmax(0,1fr) !important;
+    -webkit-tap-highlight-color:transparent !important;
+    touch-action:manipulation !important;
     grid-template-rows:auto !important;
     grid-template-areas:
       "photo info" !important;
@@ -2960,6 +2962,22 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     margin-bottom:10px !important;
     border-radius:10px !important;
   }
+  /* Opening a profile on mobile should not visibly repaint the card
+     before the drawer arrives. Keep selection state in JS/ARIA, but
+     suppress the desktop purple "currently viewing" treatment here.
+     Added-to-list green remains untouched. */
+  .directory-entry.selected:not(.in-list){
+    background:var(--surface) !important;
+    border-left:1px solid var(--border) !important;
+  }
+  .directory-entry.selected:not(.in-list) .directory-entry-chevron{
+    color:var(--muted) !important;
+  }
+  .directory-entry:not(.in-list):hover,
+  .directory-entry:not(.in-list):active{
+    background:var(--surface) !important;
+  }
+
   .directory-entry-photo{
     grid-area:photo;
     display:flex !important;
@@ -3753,7 +3771,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-mobile-drawer-scroll-stability-1";
+const BUILD_VERSION = "2026-10-22-mobile-tap-linkedin-fix-1";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5903,20 +5921,26 @@ function updateProfileIdentity(a){
   if(!wrap) return;
   const contactHtml = cardContactLineHtml(a);
   const mobileContactHtml = mobileProfileLocationHtml(a);
-  const linkedinHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
+  const linkedinDesktopHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener noreferrer">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
+  // On mobile, avoid target="_blank": Android may create a transient
+  // browser tab/window before handing the URL to the LinkedIn app,
+  // which can leave a black/blank artifact when returning to the site.
+  // Same-tab navigation still hands linkedin.com URLs to the installed
+  // app, and Back returns to the preserved profile/directory state.
+  const linkedinMobileHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" rel="noreferrer">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
   wrap.innerHTML = `
     <div class="profile-info-identity">
       <div class="profile-name">${a.name}</div>
       ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
       <div class="alum-company">${companyHtml(a.company)}</div>
     </div>
-    ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
+    ${(contactHtml || linkedinDesktopHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinDesktopHtml ? '<span class="sep"></span>' : ''}${linkedinDesktopHtml}</div>` : ''}
   `;
 
   const mobileLocation = document.querySelector('.mobile-profile-meta-location');
   const mobileLinkedIn = document.querySelector('.mobile-profile-meta-linkedin');
   if(mobileLocation) mobileLocation.innerHTML = mobileContactHtml;
-  if(mobileLinkedIn) mobileLinkedIn.innerHTML = linkedinHtml;
+  if(mobileLinkedIn) mobileLinkedIn.innerHTML = linkedinMobileHtml;
 }
 
 // Industry/Marketing Expertise + Ask Me About - also image-free, cheap
