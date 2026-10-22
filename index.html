@@ -1095,7 +1095,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    down to .directory-split itself. display is switched to 'flex' in JS
    (showListing()) rather than plain '' specifically because of this. */
 #view-listing{
-  background-color: var(--page-bg);
+  background-color: var(--workspace-bg);
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -1283,13 +1283,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   min-height: 0;
 }
 .directory-left{
-  /* Fixed 50/50 split (2026-10-21, per request - "remove free
-     dragging") - was an adjustable clamp()-based width the resizer
-     below used to drag. Zero flex-basis with an equal flex-grow (1) on
-     both this and .directory-right (see below) means the available
-     width splits exactly in half between them, rather than a % basis
-     racing against the other side's own basis. */
-  flex: 1 1 0%;
+  /* Desktop split: 55% directory / 45% profile. Using proportional
+     flex-grow values preserves the ratio after accounting for the fixed
+     divider width. */
+  flex: 11 1 0%;
   min-width: 300px;
   display: flex;
   flex-direction: column;
@@ -1358,9 +1355,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .directory-resizer:hover .directory-resizer-collapse,
 .directory-resizer.dragging .directory-resizer-collapse{ border-color: var(--accent); color: var(--accent); }
 .directory-right{
-  /* Matches .directory-left's own zero-basis/equal-grow rule above, so
-     the two sides split the available width exactly 50/50 (2026-10-21). */
-  flex: 1 1 0%;
+  /* Complements .directory-left's 11-part grow value for a 55/45
+     desktop directory/profile split. */
+  flex: 9 1 0%;
   min-width: 480px;
   /* No scrolling at all now (per request - "get rid of the scroll
      function in profile view completely"), was overflow-y:auto. The
@@ -2383,14 +2380,17 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    border-bottom, directly below the photo/job-info section; the one
    that used to sit above Ask Me About is removed). */
 .alum-columns{
-  display: flex;
-  flex-direction: row;
-  gap: 24px;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 36px;
+  align-items: start;
   margin-top: 12px;
 }
-/* padding-top gives the column text its own breathing room below the
-   (flush) horizontal divider above it. */
-.alum-col{ flex: 1 1 140px; min-width: 0; padding-top: 14px; }
+/* Industry takes only the width it needs; Marketing uses the remaining
+   width so the two expertise groups no longer read like two oversized
+   equal boxes. */
+.alum-col{ min-width: 0; padding-top: 14px; }
+.alum-columns .alum-col:first-child{ max-width: 220px; }
 .alum-labeled-line{ margin-top: 12px; }
 .topic-tags{
   display: flex;
@@ -3667,7 +3667,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-profile-19";
+const BUILD_VERSION = "2026-10-21-desktop-balance-20";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
