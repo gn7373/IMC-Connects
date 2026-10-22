@@ -262,11 +262,13 @@ header.site{
    to bleed past the viewport edge to do it. */
 @media (max-width: 767px){
   .hero-illustration{
-    position: static;
-    width: 100%;
-    max-width: none;
-    margin: 16px 0 0;
-    justify-content: center;
+    position:static;
+    flex:0 0 auto;
+    width:100%;
+    max-width:none;
+    margin:auto 0 0;
+    padding-top:18px;
+    justify-content:center;
   }
 }
 .hero-options{
@@ -922,8 +924,23 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .hero-copy{ transform: none; }
 }
 @media (max-width: 767px){
-  .hero-top{ height: auto; min-height: auto; overflow: visible; padding-bottom: 0; }
-  .hero-nav{ position: static; padding-top: 20px; padding-bottom: 16px; }
+  /* Mobile landing composition follows the supplied reference's spacing:
+     compact nav, a deliberate text block near the top, then the Arch
+     acting as the lower visual anchor. Typography/copy stay unchanged. */
+  .hero-top{
+    height:auto;
+    min-height:100svh;
+    overflow:hidden;
+    padding-bottom:0;
+    display:flex;
+    flex-direction:column;
+  }
+  .hero-nav{
+    position:static;
+    flex:0 0 auto;
+    padding-top:16px;
+    padding-bottom:12px;
+  }
   .hero-hamburger{ display: block; }
   /* Smaller on mobile (2026-10-21, per request - "it is currently too
      visually dominant") - shared by both the landing logo and the
@@ -931,7 +948,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      15px/2em. */
   .hero-logo{ font-size: 12px; }
   .hero-logo .logo-cmi{ font-size: 1.8em; }
-  .hero-nav-inner{ position: relative; }
+  .hero-nav-inner{
+    position:relative;
+    width:100%;
+    padding-left:20px;
+    padding-right:20px;
+  }
   .top-tabs{
     display: none;
     position: absolute;
@@ -953,21 +975,27 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      itself static on mobile, see above), so its own entrance keyframe
      is a plain vertical-only slide (no -50% baseline to preserve). */
   .hero-copy{
-    position: static;
-    margin: 20px 0 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    animation-name: heroCopyInMobile;
+    position:static;
+    flex:0 0 auto;
+    margin:14px 0 0;
+    padding:0 20px;
+    animation-name:heroCopyInMobile;
   }
   @keyframes heroCopyInMobile{
     from{ opacity: 0; transform: translateY(14px); }
     to{ opacity: 1; transform: translateY(0); }
   }
-  .hero-copy > *{ max-width: none; }
-  header.site h1{ font-size: clamp(38px, 11vw, 54px); }
-  .hero-lede{ font-size: 16px; max-width: none; }
-  /* Noticeably narrower (2026-10-21, per request), was width:100%. */
-  .landing-option{ width: auto; min-width: 180px; padding: 14px 28px; }
+  .hero-copy > *{ max-width:none; }
+  header.site h1{ font-size:clamp(38px, 11vw, 54px); margin-bottom:18px; }
+  .hero-lede{ font-size:16px; max-width:none; margin-bottom:16px; }
+  /* Keep the existing label and type treatment; only tighten its footprint
+     to match the reference's compact CTA placement. */
+  .landing-option{
+    width:auto;
+    min-width:0;
+    padding:0 18px;
+    height:42px;
+  }
 }
 
 .back-btn{
@@ -3376,7 +3404,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   #infoPanelFaq,
   #infoPanelFeedback{ margin-top:18px !important; }
 
-  /* Landing: narrower CTA and artwork pulled into the hero composition. */
+  /* Mobile landing spacing/layout only: preserve the existing copy and
+     typography while matching the supplied reference's proportions. */
   .hero-copy{
     margin-top:14px !important;
     padding-left:20px !important;
@@ -3384,13 +3413,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
   .landing-option{
     min-width:0 !important;
-    width:148px !important;
-    padding:12px 18px !important;
+    width:auto !important;
+    height:42px !important;
+    padding:0 18px !important;
   }
   .hero-illustration{
     width:100% !important;
-    margin:0 !important;
-    padding:0 0 0 26px !important;
+    margin:auto 0 0 !important;
+    padding:18px 0 0 18px !important;
     justify-content:flex-end !important;
   }
   .hero-illustration img{
@@ -3700,7 +3730,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-info-pages-white-1";
+const BUILD_VERSION = "2026-10-22-mobile-landing-spacing-1";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
