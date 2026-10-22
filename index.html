@@ -2826,6 +2826,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    6-mobile page.png is the spacing/layout reference.
    Directory uses generic person icons; profile keeps real photo.
    ============================================================ */
+.mobile-profile-shell{ display:contents; }
 .mobile-profile-retract,
 .mobile-profile-backdrop,
 .mobile-profile-meta-row,
@@ -3152,10 +3153,32 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     pointer-events:none !important;
   }
 
-  /* Drawer deliberately occupies only the right portion of the phone. */
-  .directory-right{
+  /* Profile tray + retract chevron are one physical sliding shell.
+     The shell owns the transform; neither child has a separate entrance,
+     so the chevron can never pop in before the tray. */
+  .mobile-profile-shell{
     display:block !important;
     position:fixed !important;
+    top:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+    width:calc(clamp(250px, 68vw, 390px) + 32px) !important;
+    z-index:1000 !important;
+    transform:translateX(calc(100% + 24px)) !important;
+    transition:transform 280ms cubic-bezier(.22,.8,.32,1) !important;
+    pointer-events:none !important;
+  }
+  .directory-split.mobile-detail-open .mobile-profile-shell{
+    transform:translateX(0) !important;
+    pointer-events:auto !important;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .mobile-profile-shell{ transition:none !important; }
+  }
+
+  .directory-right{
+    display:block !important;
+    position:absolute !important;
     top:0 !important;
     left:auto !important;
     right:0 !important;
@@ -3165,29 +3188,25 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     max-width:none !important;
     padding:0 0 28px !important;
     overflow-y:auto !important;
-    overflow-x:visible !important;
+    overflow-x:hidden !important;
     background:var(--workspace-bg) !important;
     border-left:1px solid var(--border-strong) !important;
     border-radius:18px 0 0 18px !important;
     box-shadow:-12px 0 30px rgba(24,23,34,.24) !important;
-    z-index:1000 !important;
-    transform:translateX(calc(100% + 24px)) !important;
-    transition:transform 280ms cubic-bezier(.22,.8,.32,1) !important;
-  }
-  .directory-split.mobile-detail-open .directory-right{
-    transform:translateX(0) !important;
-  }
-  @media (prefers-reduced-motion: reduce){
-    .directory-right{ transition:none !important; }
+    z-index:1 !important;
+    transform:none !important;
+    transition:none !important;
   }
 
-  /* No hamburger/menu inside profile view. */
+  /* The chevron is now a child of the shell, physically attached to the
+     tray's left edge and carried by the exact same transform. */
   .mobile-profile-retract{
-    display:none !important;
+    display:flex !important;
     align-items:center;
     justify-content:center;
-    position:fixed !important;
-    right:clamp(250px, 68vw, 390px) !important;
+    position:absolute !important;
+    left:0 !important;
+    right:auto !important;
     top:50% !important;
     width:32px !important;
     height:58px !important;
@@ -3198,12 +3217,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     border-radius:12px 0 0 12px !important;
     background:var(--workspace-bg) !important;
     color:var(--accent) !important;
-    z-index:1101 !important;
+    z-index:2 !important;
     box-shadow:-5px 2px 12px rgba(53,32,95,.14) !important;
     cursor:pointer;
-  }
-  #view-listing.mobile-detail-open .mobile-profile-retract{
-    display:flex !important;
   }
 
   /* Mobile profile hierarchy: portrait + availability/actions first,
@@ -3657,9 +3673,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 </div><!-- /directory-toolbar -->
 
 <button type="button" class="mobile-profile-backdrop" id="mobileProfileBackdrop" aria-label="Close profile"></button>
-<button type="button" class="mobile-profile-retract" id="mobileProfileRetract" aria-label="Retract profile">
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
-</button>
 
 <!-- Unified workspace card (2026-10-20 editorial-palette pass) - the
      directory/profile split lives inside this centered, square-cornered
@@ -3705,7 +3718,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
     </button>
   </div>
-  <div class="directory-right" id="directoryRight"></div>
+  <div class="mobile-profile-shell" id="mobileProfileShell">
+    <button type="button" class="mobile-profile-retract" id="mobileProfileRetract" aria-label="Retract profile">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+    </button>
+    <div class="directory-right" id="directoryRight"></div>
+  </div>
 </div>
 
 </div><!-- /listing-container -->
@@ -3771,7 +3789,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-mobile-tap-linkedin-fix-1";
+const BUILD_VERSION = "2026-10-22-mobile-tray-shell-1";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
