@@ -3464,7 +3464,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <div class="info-content">
       <div class="info-panel" id="infoPanelAbout">
         <p class="about-body">Earlier this summer, CMI began piloting career-related events for our cohort under the banner "CMI Connect." Following a successful alumni networking pilot in late summer, CMI Connect was folded into Medill Career Services as part of their new fall programming, which is, by pure coincidence, called aptly IMC Connects.</p>
-        <p class="about-body">Career Services will continue to host events on campus this fall. This portion of IMC Connects focuses on 1:1 coffee chats and will remain student-run. On this website, you will find 200+ Northwestern alumni from across the world who are eager to support your growth. Please feel free to use this resource as you job search this quarter.</p>
+        <p class="about-body">Career Services will continue to host events on campus this fall. This portion of IMC Connects focuses on 1:1 coffee chats and will remain student-run. On this website, you will find 100+ Northwestern alumni from across the world who are eager to support your growth. You can submit up to 3 alumni for coffee-chat introductions. Please feel free to use this resource as you job search this quarter.</p>
         <p class="about-body">As with last time, IMC Connects programming is open to all members of the IMC cohort.</p>
         <p class="about-body">If you have any questions, please feel free to message me (Gaby) via WhatsApp or text.</p>
         <p class="about-body">Cheers,<br>Gaby</p>
@@ -3473,17 +3473,17 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
         <div class="faq-item">
           <div class="faq-q">How does this work?</div>
           <div class="faq-a">
-            <p>Browse the directory, add alumni to your list, submit your top 5 and wait for an email introduction to each of them. Once you're connected, it's up to you to lead the conversation.</p>
+            <p>Browse the directory, add alumni to your list, submit up to 3 and wait for an email introduction to each of them. Once you're connected, it's up to you to lead the conversation.</p>
             <p><strong>Note:</strong> Since alumni have indicated their availability, the site runs on a first-come, first-serve basis. If an alum's slots fill up before you've submitted, you will not be able to request them.</p>
           </div>
         </div>
         <div class="faq-item">
           <div class="faq-q">Are matches guaranteed?</div>
-          <div class="faq-a">For your top 5, yes. For your wish list, it depends on whether the alums are still available after the deadline.</div>
+          <div class="faq-a">For the up to 3 alumni you submit, yes, as long as they still have an open spot when you submit. For your wish list, it depends on whether the alums are still available after the deadline.</div>
         </div>
         <div class="faq-item">
-          <div class="faq-q">Can I pick less than 5?</div>
-          <div class="faq-a">Absolutely. 5 is just the ceiling.</div>
+          <div class="faq-q">Can I pick fewer than 3?</div>
+          <div class="faq-a">Absolutely. 3 is the maximum, not a requirement.</div>
         </div>
         <div class="faq-item">
           <div class="faq-q">Can I just pick randomly?</div>
@@ -3541,7 +3541,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      never navigating the parent window away. -->
 <div id="view-claim-form" style="display:none">
   <div class="claim-form-intro">
-    <p>Fill out the form below to submit your picks - you'll see a confirmation message right here once it's been recorded.</p>
+    <p>You can submit up to 3 alumni. Your selected alumni will be prefilled below; complete the remaining form fields and submit when you're ready.</p>
   </div>
   <div class="claim-form-frame-wrap">
     <iframe id="claimFormFrame" class="claim-form-frame" title="Alumni coffee chat sign-up form" src="" loading="lazy">Loading…</iframe>
@@ -3572,7 +3572,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <button type="button" class="mobile-clear-filters" id="mobileClearFiltersBtn">Clear all</button>
     <div class="filter-dropdowns" id="filterPanel"></div>
     <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
-    <button class="pins-toggle-btn" id="pinsToggleBtn">Review &amp; Submit</button>
+    <button class="pins-toggle-btn" id="pinsToggleBtn">Review &amp; Submit · 3 max</button>
   </div>
 </div>
 </div><!-- /directory-toolbar -->
@@ -3637,7 +3637,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 <div class="pins-drawer-backdrop" id="pinsDrawerBackdrop"></div>
 <aside class="pins-drawer" id="pinsDrawer" role="dialog" aria-modal="true" aria-labelledby="pinsDrawerTitle" aria-hidden="true">
   <div class="pins-drawer-header">
-    <h2 id="pinsDrawerTitle">Check up to 5 alums to submit. The rest go to your wish list.</h2>
+    <h2 id="pinsDrawerTitle">Select up to 3 alums to submit. The rest stay on your wish list.</h2>
     <button class="pins-drawer-close" id="pinsDrawerClose" aria-label="Close">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
     </button>
@@ -3645,7 +3645,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 
   <div class="pins-drawer-body" id="pinsDrawerListPane">
     <div class="review-empty" id="pinsDrawerEmpty" style="display:none">No alumni added yet. Browse the directory to find people you'd like to meet.</div>
-    <div class="shortlist-cap-message" id="shortlistCapMessage" style="display:none">Deselect 1 alum to proceed</div>
+    <div class="shortlist-cap-message" id="shortlistCapMessage" style="display:none">You've reached the 3-alum submission limit. Deselect 1 to choose someone else.</div>
     <div id="pinsDrawerList" class="review-list"></div>
   </div>
   <div class="pins-drawer-footer" id="pinsDrawerListFooter">
@@ -3654,7 +3654,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   </div>
 
   <div class="pins-drawer-body" id="pinsDrawerReviewPane" style="display:none">
-    <p class="review-intro">These are the alumni you'd like to meet for a coffee chat.</p>
+    <p class="review-intro">These are the alumni you're submitting for coffee-chat introductions. You can submit up to 3.</p>
     <div id="reviewList" class="review-list"></div>
   </div>
   <div class="pins-drawer-footer" id="pinsDrawerReviewFooter" style="display:none">
@@ -3692,7 +3692,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-mobile-directory-card-7";
+const BUILD_VERSION = "2026-10-22-three-pick-submission-1";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -3901,24 +3901,22 @@ const ROUND_LABEL = "Round opens now — claims close in one week";
 //    sample text for each pinned-alum question > Get Link > copy the
 //    generated URL > read off the entry.NNNNNNN IDs from it.
 //    2026-10-20: replaced with the real (non-pilot) Form - this one has
-//    its own leading "your name" field plus a trailing "wishlist" field,
-//    neither of which we prefill (the student fills their own name
-//    in-form; wishlist isn't tied to a pinned alum), only pick1-pick5.
+//    its own leading "your name" field plus a trailing "wishlist" field.
+//    The site now submits a maximum of 3 alumni, so only pick1-pick3 are
+//    prefilled. The student fills their own name in-form; wishlist remains
+//    separate from the submitted picks.
 const CLAIM_FORM = {
   baseUrl: "https://docs.google.com/forms/d/e/1FAIpQLSezBURcA-GQPf3Eaiij5PR8Sn09wICJa9MI54-0dX-4dnYGNw/viewform",
   entryIds: {
     pick1: "entry.1852338204",
     pick2: "entry.489928546",
-    pick3: "entry.887053928",
-    pick4: "entry.637410748",
-    pick5: "entry.154473741"
+    pick3: "entry.887053928"
   }
 };
 
-// Caps the SHORTLIST only (2026-10-17) - "my list" (cart, below) itself
-// is unlimited now; this only gates how many of those can be marked for
-// the final Review & Submit step.
-const MAX_PICKS = 5;
+// Caps the SHORTLIST only - "my list" (cart, below) itself remains
+// unlimited; this gates how many alumni can be submitted for introductions.
+const MAX_PICKS = 3;
 
 // ------------------------------------------------------------
 // SAMPLE DATA — used automatically for previewing/design purposes
@@ -6107,8 +6105,8 @@ function toggleCart(id){
   renderPinsDrawer();
 }
 
-// Shortlisting (2026-10-17) - a separate, capped-at-5 subset of "my
-// list" that the student narrows down to within the Review & Submit
+// Shortlisting - a separate, capped-at-3 subset of "my list" that the
+// student narrows down to within the Review & Submit
 // drawer; only the shortlist (not the full list) is ever sent to the
 // form.
 function toggleShortlist(id){
@@ -6129,7 +6127,7 @@ function toggleShortlist(id){
   renderPinsDrawer();
 }
 
-// Inline feedback for trying to shortlist a 6th alum (2026-10-21, per
+// Inline feedback for trying to shortlist a 4th alum (2026-10-22, per
 // request - "do not use a browser alert or pop-up"): a brief shake on
 // every grayed-out card plus a message inside the Review & Submit
 // section itself, not a toast/alert. navigator.vibrate() is a nice-to-
@@ -6164,7 +6162,7 @@ function renderPinCardsInto(containerId, ids, opts){
     const a = alumni.find(alum => alum.id === id);
     if(!a) return '';
     const isShortlisted = shortlist.includes(id);
-    // Once 5 are shortlisted, every OTHER card in this list is grayed
+    // Once 3 are shortlisted, every OTHER card in this list is grayed
     // out and non-selectable (2026-10-21, per request) - clicking one
     // doesn't toggle it; see the delegated click handler below for the
     // shake+message feedback instead.
@@ -6268,7 +6266,7 @@ function renderPinsDrawer(){
     });
   }
 
-  // Removed automatically once fewer than 5 are selected (per request),
+  // Removed automatically once fewer than 3 are selected,
   // not just after its own timeout - e.g. deselecting one right away.
   if(shortlist.length < MAX_PICKS){
     const message = document.getElementById('shortlistCapMessage');
@@ -6292,7 +6290,7 @@ function setPinsDrawerMode(mode){
   document.getElementById('pinsDrawerListFooter').style.display = isReview ? 'none' : '';
   document.getElementById('pinsDrawerReviewPane').style.display = isReview ? '' : 'none';
   document.getElementById('pinsDrawerReviewFooter').style.display = isReview ? '' : 'none';
-  document.getElementById('pinsDrawerTitle').firstChild.textContent = isReview ? 'Your shortlist' : 'Check up to 5 alums to submit. The rest go to your wish list.';
+  document.getElementById('pinsDrawerTitle').firstChild.textContent = isReview ? 'Your 3-pick submission' : 'Select up to 3 alums to submit. The rest stay on your wish list.';
   renderPinsDrawer();
 }
 
@@ -6349,7 +6347,7 @@ function alumReferenceLabel(alum){
 function buildPrefillUrl(){
   const params = new URLSearchParams();
   params.set('usp', 'pp_url');
-  const entryKeys = ['pick1', 'pick2', 'pick3', 'pick4', 'pick5'];
+  const entryKeys = ['pick1', 'pick2', 'pick3'];
   shortlist.forEach((id, i) => {
     const alum = alumni.find(a => a.id === id);
     const entryId = CLAIM_FORM.entryIds[entryKeys[i]];
