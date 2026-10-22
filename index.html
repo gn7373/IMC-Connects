@@ -1283,10 +1283,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   min-height: 0;
 }
 .directory-left{
-  /* Desktop split: 55% directory / 45% profile. Using proportional
-     flex-grow values preserves the ratio after accounting for the fixed
-     divider width. */
-  flex: 11 1 0%;
+  /* Desktop split: 60% directory / 40% profile. */
+  flex: 3 1 0%;
   min-width: 300px;
   display: flex;
   flex-direction: column;
@@ -1355,9 +1353,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .directory-resizer:hover .directory-resizer-collapse,
 .directory-resizer.dragging .directory-resizer-collapse{ border-color: var(--accent); color: var(--accent); }
 .directory-right{
-  /* Complements .directory-left's 11-part grow value for a 55/45
+  /* Complements .directory-left's 3-part grow value for a 60/40
      desktop directory/profile split. */
-  flex: 9 1 0%;
+  flex: 2 1 0%;
   min-width: 480px;
   /* No scrolling at all now (per request - "get rid of the scroll
      function in profile view completely"), was overflow-y:auto. The
@@ -2250,7 +2248,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    approximately the same height/font size/padding as the filter
    controls"), was 13.5px/5px 10px - see .filter-dropdown-toggle for the
    reference values. Label text itself (e.g. "spots left") is unchanged. */
-.profile-availability .capacity-badge{ font-size: 12.5px; padding: 5px 12px; }
+.profile-availability .capacity-badge{ font-size: 13.5px; padding: 5px 12px; }
 .capacity-badge{
   display: inline-flex;
   align-items: center;
@@ -2375,20 +2373,28 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   font-weight: 700;
 }
 /* Desktop profile expertise sections stack vertically.
-   Ask Me About remains the separate full-width section below. */
+   Keep one exact 22px rhythm from the last pill in one section to the
+   next section heading, regardless of how many pills the alum has. */
 .alum-columns{
   display:flex;
   flex-direction:column;
   align-items:stretch;
-  gap:22px;
+  gap:0;
   margin-top:12px;
 }
 .alum-col{
   min-width:0;
-  padding-top:14px;
+  padding-top:0;
 }
 .alum-columns .alum-col:first-child{
   max-width:none;
+  padding-top:14px;
+}
+.alum-columns .alum-col + .alum-col{
+  margin-top:22px;
+}
+.alum-columns + .ask-me-about{
+  margin-top:22px;
 }
 .alum-labeled-line{ margin-top: 12px; }
 .topic-tags{
@@ -2464,7 +2470,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 /* Matches the filter controls' own size (2026-10-21, per request) -
    scoped to .profile-add-btn specifically, not the shared .add-btn base,
    was 13.5px/9px 16px. */
-.profile-add-btn{ font-size: 12.5px; padding: 5px 12px; }
+.profile-add-btn{ font-size: 13.5px; padding: 5px 12px; }
 
 /* Card select control - a round "+" that becomes a white check once the
    alum is selected, at which point the whole card turns purple (below). */
@@ -3666,7 +3672,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-desktop-stack-21";
+const BUILD_VERSION = "2026-10-21-desktop-profile-22";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
