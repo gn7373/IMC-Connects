@@ -3192,7 +3192,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .mobile-profile-meta-row{
     grid-area:meta !important;
     display:grid !important;
-    grid-template-columns:minmax(0,1fr) auto auto !important;
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) !important;
     align-items:center !important;
     column-gap:8px !important;
     width:100% !important;
@@ -3227,7 +3227,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     height:11px !important;
   }
   .mobile-profile-meta-linkedin{
-    justify-self:start !important;
+    justify-self:center !important;
     align-self:center !important;
     white-space:nowrap !important;
     font-size:11.5px !important;
@@ -3667,7 +3667,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-21-mobile-profile-18";
+const BUILD_VERSION = "2026-10-21-mobile-profile-19";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4488,6 +4488,96 @@ const US_REGION_BY_CITY = {
 };
 function usRegionForCity(value){
   return US_REGION_BY_CITY[(value || "").trim().toLowerCase()] || null;
+}
+
+/* Profile-only compact location labels.
+   Directory/search/filtering keep the normalized Sheet value unchanged.
+   Major cities stay as cities (abbreviated only where useful on mobile);
+   smaller U.S. cities collapse to the state name for a cleaner profile row. */
+const PROFILE_MAJOR_CITY_LABELS = {
+  "new york": "NYC",
+  "new york city": "NYC",
+  "nyc": "NYC",
+  "chicago": "Chicago",
+  "boston": "Boston",
+  "washington, d.c.": "DC",
+  "washington dc": "DC",
+  "los angeles": "LA",
+  "san francisco": "SF",
+  "san francisco bay area": "SF",
+  "bay area": "SF",
+  "atlanta": "Atlanta",
+  "miami": "Miami",
+  "houston": "Houston",
+  "denver": "Denver",
+  "minneapolis": "Minneapolis",
+  "phoenix": "Phoenix",
+  "pittsburgh": "Pittsburgh",
+  "san antonio": "San Antonio",
+  "salt lake city": "SLC",
+  "shanghai": "Shanghai",
+  "shanghai, china": "Shanghai",
+  "toronto": "Toronto",
+  "toronto, canada": "Toronto",
+  "london": "London",
+  "london, uk": "London",
+  "singapore": "Singapore",
+  "hong kong": "Hong Kong",
+  "tokyo": "Tokyo",
+  "seoul": "Seoul",
+  "mumbai": "Mumbai",
+  "delhi": "Delhi",
+  "bangalore": "Bangalore",
+  "beijing": "Beijing",
+  "dubai": "Dubai",
+  "mexico city": "Mexico City",
+  "paris": "Paris",
+  "berlin": "Berlin",
+  "madrid": "Madrid",
+  "rome": "Rome",
+  "amsterdam": "Amsterdam",
+  "dublin": "Dublin"
+};
+
+const PROFILE_SMALL_US_CITY_STATES = {
+  "cambridge": "Massachusetts",
+  "boca raton": "Florida",
+  "lancaster": "Pennsylvania",
+  "montville": "New Jersey",
+  "urbana": "Illinois",
+  "deerfield": "Illinois",
+  "columbus": "Ohio",
+  "park ridge": "Illinois",
+  "wilmette": "Illinois",
+  "palo alto": "California",
+  "vacaville": "California",
+  "vacaville, ca": "California",
+  "vacaville, california": "California",
+  "boise": "Idaho",
+  "reno": "Nevada",
+  "annapolis": "Maryland",
+  "hartford": "Connecticut"
+};
+
+function profileLocationDisplayValue(value){
+  const trimmed = (value || "").trim();
+  if(!trimmed) return "";
+  const key = trimmed.toLowerCase();
+  if(PROFILE_MAJOR_CITY_LABELS[key]) return PROFILE_MAJOR_CITY_LABELS[key];
+  if(PROFILE_SMALL_US_CITY_STATES[key]) return PROFILE_SMALL_US_CITY_STATES[key];
+
+  // For other international locations, keep just the city portion when a
+  // country follows it ("Shanghai, China" -> "Shanghai"). For unknown U.S.
+  // values, leave the normalized Sheet value intact rather than guessing.
+  if(regionForCity(trimmed) !== "North America"){
+    return trimmed.split(",")[0].trim();
+  }
+  return trimmed;
+}
+
+function mobileProfileLocationHtml(a){
+  const values = (a.city || []).map(profileLocationDisplayValue).filter(Boolean);
+  return values.map(v => `<span class="format-value">${FORMAT_ICON_IN_PERSON}${v}</span>`).join('<span class="sep"></span>');
 }
 function isCanadaValue(value){
   const lower = (value || "").trim().toLowerCase();
@@ -5665,6 +5755,7 @@ function updateProfileIdentity(a){
   const wrap = document.querySelector('.profile-identity-wrap');
   if(!wrap) return;
   const contactHtml = cardContactLineHtml(a);
+  const mobileContactHtml = mobileProfileLocationHtml(a);
   const linkedinHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
   wrap.innerHTML = `
     <div class="profile-info-identity">
@@ -5678,7 +5769,7 @@ function updateProfileIdentity(a){
   const mobileLocation = document.querySelector('.mobile-profile-meta-location');
   const mobileLinkedIn = document.querySelector('.mobile-profile-meta-linkedin');
   if(mobileLocation){
-    mobileLocation.innerHTML = contactHtml;
+    mobileLocation.innerHTML = mobileContactHtml;
     requestAnimationFrame(updateMobileLocationWrapAlignment);
   }
   if(mobileLinkedIn) mobileLinkedIn.innerHTML = linkedinHtml;
