@@ -3108,7 +3108,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     display:flex !important;
   }
 
-  /* Profile: photo + identity; metadata/spots; add button; divider. */
+  /* Mobile profile hierarchy: portrait + availability/actions first,
+     identity stack beneath, then LinkedIn. Desktop is unchanged. */
   .profile-toolbar,
   .profile-back-btn{ display:none !important; }
   .profile-header{
@@ -3123,9 +3124,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     grid-template-columns:88px minmax(0,1fr) !important;
     grid-template-rows:auto auto auto !important;
     grid-template-areas:
-      "portrait identity"
-      "meta meta"
-      "add add" !important;
+      "portrait actions"
+      "identity identity"
+      "meta meta" !important;
     column-gap:14px !important;
     row-gap:0 !important;
     width:100% !important;
@@ -3143,13 +3144,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-right.narrow .profile-portrait{
     grid-area:portrait !important;
     width:88px !important;
-    height:auto !important;
+    height:112px !important;
     min-height:112px !important;
     min-width:88px !important;
     margin:0 !important;
     border-radius:9px !important;
     overflow:hidden !important;
-    align-self:stretch !important;
+    align-self:start !important;
   }
   .profile-info-identity{
     grid-area:identity !important;
@@ -3157,6 +3158,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     max-height:none !important;
     overflow:visible !important;
     align-self:start !important;
+    margin-top:14px !important;
   }
   .profile-name{
     margin:0 !important;
@@ -3215,13 +3217,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
   .mobile-profile-meta-row{
     grid-area:meta !important;
-    display:grid !important;
-    grid-template-columns:minmax(0,1fr) auto !important;
+    display:flex !important;
     align-items:center !important;
-    column-gap:12px !important;
+    justify-content:flex-start !important;
     width:100% !important;
     min-width:0 !important;
-    margin-top:8px !important;
+    margin-top:9px !important;
     font-family:'Inter', sans-serif !important;
     font-size:11.5px !important;
     line-height:1.2 !important;
@@ -3244,42 +3245,41 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     width:11px !important;
     height:11px !important;
   }
-  .mobile-profile-meta-spots{
-    display:inline-flex !important;
-    justify-self:end !important;
-    align-self:center !important;
-    white-space:nowrap !important;
-  }
-  .mobile-profile-meta-spots .capacity-badge-wrap{
-    display:inline-flex !important;
-    align-items:center !important;
-    white-space:nowrap !important;
-  }
-  .mobile-profile-meta-spots .capacity-badge{
-    font-size:11.5px !important;
-    line-height:1 !important;
-    padding:5px 7px !important;
-    white-space:nowrap !important;
-  }
+  .mobile-profile-meta-spots{ display:none !important; }
   .profile-availability{
-    grid-area:add !important;
+    grid-area:actions !important;
     display:flex !important;
-    align-items:center !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
     justify-content:flex-start !important;
-    gap:0 !important;
+    gap:8px !important;
     min-width:0 !important;
-    margin-top:9px !important;
+    margin:0 !important;
+    align-self:start !important;
   }
   .profile-availability > .capacity-badge-wrap{
-    display:none !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    white-space:nowrap !important;
+  }
+  .profile-availability .capacity-badge{
+    font-size:11.5px !important;
+    line-height:1 !important;
+    padding:5px 8px !important;
+    white-space:nowrap !important;
   }
   .profile-add-btn{
     grid-area:auto !important;
     justify-self:auto !important;
     margin:0 !important;
-    min-height:36px !important;
-    padding:8px 14px !important;
-    font-size:12.5px !important;
+    min-height:34px !important;
+    padding:7px 9px !important;
+    font-size:11.5px !important;
+    white-space:nowrap !important;
+  }
+  .profile-add-btn svg{
+    width:15px !important;
+    height:15px !important;
   }
 
   /* Equal three-section rhythm. Industry and Marketing each end with a
@@ -3666,7 +3666,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-mobile-profile-meta-1";
+const BUILD_VERSION = "2026-10-22-mobile-profile-hierarchy-2";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5841,9 +5841,8 @@ document.getElementById('directoryRight').addEventListener('click', (e) => {
 });
 document.getElementById('mobileProfileBackdrop').addEventListener('click', closeMobileDetail);
 document.getElementById('mobileProfileRetract').addEventListener('click', closeMobileDetail);
-window.addEventListener('resize', () => {
-  if(document.body.classList.contains('mobile-drawer-open')) updateMobileLocationWrapAlignment();
-});
+// Mobile profile location now participates in normal document flow, so
+// there is no resize-time alignment measurement to maintain.
 // The divider's own chevron is the collapse control (2026-10-17, was a
 // separate X button on the profile panel) - stopPropagation on
 // pointerdown keeps a click here from also being read as a drag-start by
