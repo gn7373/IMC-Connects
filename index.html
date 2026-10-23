@@ -576,36 +576,42 @@ header.site{
 .claim-native-wrap{
   max-width:760px;
   margin:0 auto;
-  padding:32px 24px 72px;
+  padding:22px 24px 30px;
+  font-family:'Inter',sans-serif;
 }
 .claim-native-card{
   background:var(--workspace-bg);
   border:1px solid var(--border);
   border-radius:14px;
-  padding:28px;
+  padding:24px 28px;
 }
 .claim-native-heading h2,
 .claim-success-panel h2{
   margin:0;
-  font-family:'Baskerville','Libre Baskerville',serif;
+  font-family:'Baskerville','Baskerville Old Face',serif;
   font-size:26px;
   font-weight:700;
   color:var(--ink);
 }
-.claim-native-heading h2{ text-align:center; }
+.claim-native-heading h2,
+.claim-success-panel h2{ text-align:center; }
 .claim-native-heading p,
 .claim-success-panel > p{
-  margin:10px 0 0;
-  color:var(--muted);
-  font-size:14px;
-  line-height:1.55;
-}
-.claim-summary-section{ margin-top:26px; }
-.claim-summary-label{
-  margin-bottom:12px;
-  font-size:26px;
+  margin:8px 0 0;
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  font-size:15px;
   font-weight:600;
-  line-height:1.15;
+  line-height:1.45;
+}
+.claim-success-panel > p{ text-align:center; }
+.claim-summary-section{ margin-top:22px; }
+.claim-summary-label{
+  margin-bottom:10px;
+  font-family:'Inter',sans-serif;
+  font-size:20px;
+  font-weight:600;
+  line-height:1.2;
   letter-spacing:0;
   text-transform:none;
   color:var(--ink);
@@ -620,14 +626,14 @@ header.site{
   align-items:flex-start;
   justify-content:space-between;
   gap:16px;
-  padding:11px 13px;
+  padding:9px 13px;
   border:1px solid var(--border);
   border-radius:10px;
   background:#fff;
 }
 .claim-summary-item-name{
-  font-family:'Baskerville','Libre Baskerville',serif;
-  font-size:14px;
+  font-family:'Baskerville','Baskerville Old Face',serif;
+  font-size:15px;
   color:var(--ink);
 }
 .claim-summary-item-company{
@@ -650,16 +656,18 @@ header.site{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:14px;
-  margin-top:28px;
-  padding-top:24px;
+  margin-top:22px;
+  padding-top:20px;
   border-top:1px solid var(--border);
 }
 .claim-field{
   display:flex;
   flex-direction:column;
   gap:7px;
-  font-size:13px;
-  font-weight:500;
+  font-family:'Inter',sans-serif;
+  font-size:15px;
+  font-weight:600;
+  line-height:1.45;
   color:var(--ink);
 }
 .claim-field input{
@@ -710,83 +718,84 @@ header.site{
   padding:9px 20px;
   border:0;
   border-radius:22px;
-  background:var(--accent);
+  background:#4E2A84;
   color:#fff;
   font:500 13px 'Inter', sans-serif;
   cursor:pointer;
 }
+.claim-final-submit:hover,
+.claim-feedback-submit:hover{ background:#3F216D; }
 .claim-final-submit:disabled,
-.claim-feedback-submit:disabled{ opacity:.5; cursor:not-allowed; }
-.claim-success-panel{ text-align:left; }
+.claim-feedback-submit:disabled{
+  background:#4E2A84;
+  opacity:.48;
+  cursor:not-allowed;
+}
+.claim-success-panel{
+  text-align:left;
+  padding-top:22px;
+  padding-bottom:20px;
+}
 .claim-success-panel[style*="display: none"]{ opacity:0; }
 .claim-success-panel:not([style*="display: none"]){
-  animation:claimSuccessIn 260ms cubic-bezier(.22,.8,.32,1) both;
+  animation:claimSuccessIn 180ms ease-out both;
 }
 @keyframes claimSuccessIn{
-  from{ opacity:0; transform:translateY(8px); }
-  to{ opacity:1; transform:translateY(0); }
+  from{ opacity:.72; }
+  to{ opacity:1; }
 }
-.claim-success-icon{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  width:42px;
-  height:42px;
-  margin-bottom:16px;
-  border-radius:50%;
-  background:var(--soft-green);
-  color:var(--list-added);
-  font-size:23px;
-  font-weight:700;
-}
-.claim-success-matches{ margin-top:22px; }
+.claim-success-matches{ margin-top:14px; }
 .claim-submission-id{
-  margin-top:14px;
+  margin-top:10px;
+  font-family:'Inter',sans-serif;
   font-size:11px;
   color:var(--muted);
 }
 .claim-feedback-block{
-  margin-top:30px;
-  padding-top:24px;
+  margin-top:16px;
+  padding-top:14px;
   border-top:1px solid var(--border);
 }
 .claim-feedback-block h3{
-  margin:0 0 12px;
+  margin:0 0 8px;
   font:500 15px 'Inter', sans-serif;
+  color:var(--ink);
 }
 .claim-rating{
   display:flex;
-  gap:8px;
-  margin-bottom:12px;
+  gap:5px;
+  margin-bottom:8px;
 }
 .claim-rating button{
-  width:36px;
-  height:36px;
-  border:1px solid var(--border-strong);
-  border-radius:50%;
-  background:#fff;
-  color:var(--ink);
+  width:34px;
+  height:34px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#C9C1D5;
+  font:30px/1 'Inter',sans-serif;
   cursor:pointer;
+  transition:color 140ms ease, transform 140ms ease;
 }
-.claim-rating button.active{
-  border-color:var(--accent);
-  background:var(--accent);
-  color:#fff;
-}
+.claim-rating button:hover,
+.claim-rating button:focus-visible{ color:#C7952D; }
+.claim-rating button.active{ color:#D4A017; }
+.claim-rating button:active{ transform:scale(.94); }
 #claimFeedbackText{
   width:100%;
-  min-height:92px;
-  padding:11px 12px;
+  min-height:60px;
+  max-height:78px;
+  padding:9px 11px;
   resize:vertical;
   border:1px solid var(--border-strong);
   border-radius:9px;
   background:#fff;
   color:var(--ink);
-  font:14px/1.45 'Inter', sans-serif;
+  font:14px/1.4 'Inter', sans-serif;
 }
 .claim-feedback-submit{
   display:block;
-  margin:12px 0 0 auto;
+  margin:8px 0 0 auto;
 }
 .claim-feedback-thanks{
   margin-top:12px;
@@ -871,6 +880,21 @@ body.submission-processing{ overflow:hidden; }
   .claim-final-submit{ flex:1 1 0; }
   .claim-feedback-submit{ width:100%; }
 }
+@media (min-width:701px) and (max-height:850px){
+  .claim-native-wrap{ padding-top:14px; padding-bottom:18px; }
+  .claim-success-panel{ padding:18px 24px 16px; }
+  .claim-success-panel h2{ font-size:24px; }
+  .claim-success-panel > p{ margin-top:5px; }
+  .claim-success-matches{ margin-top:10px; gap:6px; }
+  .claim-success-panel .claim-summary-item{ padding:7px 11px; }
+  .claim-submission-id{ margin-top:7px; }
+  .claim-feedback-block{ margin-top:11px; padding-top:10px; }
+  .claim-feedback-block h3{ margin-bottom:5px; }
+  .claim-rating{ margin-bottom:5px; }
+  .claim-rating button{ width:30px; height:30px; font-size:27px; }
+  #claimFeedbackText{ min-height:48px; max-height:56px; }
+  .claim-feedback-submit{ min-height:38px; margin-top:6px; padding:7px 18px; }
+}
 
 /* ---------- REVIEW YOUR PINNED ALUMNI ---------- */
 .review-intro{
@@ -894,11 +918,11 @@ body.submission-processing{ overflow:hidden; }
   pointer-events:none;
 }
 @keyframes claimStepIn{
-  from{ opacity:0; transform:translateY(10px); }
-  to{ opacity:1; transform:translateY(0); }
+  from{ opacity:.7; }
+  to{ opacity:1; }
 }
 #claimNativeWrap .claim-native-card{
-  animation:claimStepIn 260ms cubic-bezier(.22,.8,.32,1) both;
+  animation:claimStepIn 180ms ease-out both;
 }
 @media (prefers-reduced-motion:reduce){
   #claimNativeWrap .claim-native-card{ animation:none; }
@@ -930,7 +954,7 @@ body.submission-processing{ overflow:hidden; }
   flex: 1 1 auto;
 }
 .review-card-name{
-  font-family: 'Libre Baskerville', serif;
+  font-family:'Baskerville','Baskerville Old Face',serif;
   font-weight: 500;
   font-size: 15px;
   white-space: nowrap;
@@ -4150,20 +4174,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     </section>
 
     <section id="claimSuccessPanel" class="claim-native-card claim-success-panel" style="display:none">
-      <div class="claim-success-icon" aria-hidden="true">✓</div>
-      <h2>You're all set.</h2>
-      <p id="claimSuccessMessage">Your selections have been reserved.</p>
+      <h2>Submission Successful.</h2>
+      <p id="claimSuccessMessage">A confirmation receipt will be sent to your email.</p>
       <div id="claimSuccessMatches" class="claim-summary-list claim-success-matches"></div>
       <div class="claim-submission-id" id="claimSubmissionId"></div>
 
       <div class="claim-feedback-block">
-        <h3>How was the experience?</h3>
-        <div class="claim-rating" id="claimRating" role="group" aria-label="Rate the submission experience">
-          <button type="button" data-rating="1">1</button>
-          <button type="button" data-rating="2">2</button>
-          <button type="button" data-rating="3">3</button>
-          <button type="button" data-rating="4">4</button>
-          <button type="button" data-rating="5">5</button>
+        <h3>How was your experience?</h3>
+        <div class="claim-rating" id="claimRating" role="group" aria-label="Rate your submission experience">
+          <button type="button" data-rating="1" aria-label="1 star" aria-pressed="false">★</button>
+          <button type="button" data-rating="2" aria-label="2 stars" aria-pressed="false">★</button>
+          <button type="button" data-rating="3" aria-label="3 stars" aria-pressed="false">★</button>
+          <button type="button" data-rating="4" aria-label="4 stars" aria-pressed="false">★</button>
+          <button type="button" data-rating="5" aria-label="5 stars" aria-pressed="false">★</button>
         </div>
         <textarea id="claimFeedbackText" placeholder="Optional feedback"></textarea>
         <div class="claim-submit-error" id="claimFeedbackError" role="alert" style="display:none"></div>
@@ -4362,7 +4385,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-post-healthcheck-22";
+const BUILD_VERSION = "2026-10-23-submission-ui-polish-22";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -7213,7 +7236,10 @@ function prepareNativeClaimForm(){
   document.getElementById('claimFeedbackError').style.display = 'none';
   document.getElementById('claimFeedbackThanks').style.display = 'none';
   document.getElementById('claimFeedbackSubmit').disabled = true;
-  document.querySelectorAll('#claimRating button').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('#claimRating button').forEach(btn => {
+    btn.classList.remove('active');
+    btn.setAttribute('aria-pressed', 'false');
+  });
   renderNativeClaimSummary();
 }
 
@@ -7229,8 +7255,8 @@ function showNativeSubmissionSuccess(result, guaranteedSnapshot, wishlistSnapsho
   document.getElementById('claimSuccessPanel').style.display = '';
   document.getElementById('claimSuccessMessage').textContent =
     result.receiptEmailSent === false
-      ? 'Your spots are reserved. The confirmation email could not be verified, so keep the submission ID below for your records.'
-      : 'Your spots are reserved. A confirmation receipt will be sent to your email.';
+      ? 'Your submission is confirmed. The confirmation email could not be verified, so keep the submission ID below for your records.'
+      : 'A confirmation receipt will be sent to your email.';
 
   document.getElementById('claimSuccessMatches').innerHTML = guaranteedSnapshot.map(a => `
     <div class="claim-summary-item">
@@ -7756,7 +7782,9 @@ document.querySelectorAll('#claimRating button').forEach(btn => {
   btn.addEventListener('click', () => {
     selectedClaimRating = Number(btn.dataset.rating);
     document.querySelectorAll('#claimRating button').forEach(b => {
-      b.classList.toggle('active', b === btn);
+      const active = Number(b.dataset.rating) <= selectedClaimRating;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-pressed', String(active));
     });
     document.getElementById('claimFeedbackSubmit').disabled = false;
   });
