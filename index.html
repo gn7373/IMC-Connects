@@ -926,23 +926,16 @@ body.submission-processing{ overflow:hidden; }
 .review-list{ display:flex; flex-direction:column; gap:10px; }
 #pinsDrawerReviewPane,
 #pinsDrawerReviewFooter{
-  transition:opacity 180ms ease, transform 180ms ease;
+  transition:none;
 }
 #pinsDrawer.review-advancing #pinsDrawerReviewPane,
 #pinsDrawer.review-advancing #pinsDrawerReviewFooter{
-  opacity:.38;
-  transform:translateX(-8px);
   pointer-events:none;
 }
-@keyframes claimStepIn{
-  from{ opacity:.7; }
-  to{ opacity:1; }
-}
 #claimNativeWrap .claim-native-card{
-  animation:claimStepIn 180ms ease-out both;
+  animation:none;
 }
 @media (prefers-reduced-motion:reduce){
-  #claimNativeWrap .claim-native-card{ animation:none; }
   #pinsDrawerReviewPane,
   #pinsDrawerReviewFooter{ transition:none; }
 }
@@ -4410,7 +4403,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-nonblocking-post-healthcheck-25";
+const BUILD_VERSION = "2026-10-23-instant-confirm-handoff-26";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -7278,6 +7271,7 @@ function prepareNativeClaimForm(){
   document.getElementById('claimSuccessPanel').style.display = 'none';
   document.getElementById('claimSubmitError').style.display = 'none';
   document.getElementById('claimSubmitError').textContent = '';
+  document.getElementById('claimFinalSubmit').disabled = false;
   document.getElementById('claimSubmissionForm').reset();
   document.getElementById('claimFeedbackText').value = '';
   document.getElementById('claimFeedbackError').style.display = 'none';
@@ -7686,31 +7680,31 @@ function buildPrefillUrl(){
 async function goSubmitNewPicks(){
   if(submissionBackendReady){
     const before = shortlist.join(',');
-    showSubmissionProcessing('Confirming availability');
 
-    try{
-      await refreshLiveCapacityForReview();
-    }catch(err){
-      // Browsing already refreshes capacity continuously. A slow/cold
-      // Apps Script read should not trap the student here for 20+ seconds;
-      // the final Submit transaction performs the authoritative locked
-      // capacity check before reserving anything.
-      console.warn('Review-stage capacity refresh timed out; using latest browsing snapshot.', err);
-    }
-
-    // If the quick live check actually changed a guaranteed pick, keep the
-    // student in Review. A timeout alone does not block progress.
-    if(shortlist.length === 0 || before !== shortlist.join(',')){
-      hideSubmissionProcessing();
-      setPinsDrawerMode('review');
-      showToast('Availability changed. Review your top picks before continuing.');
-      return false;
-    }
-
-    updateSubmissionProcessing('Opening confirmation');
+    // Navigation is immediate. Browsing already keeps availability fresh,
+    // and the final Submit transaction remains the authoritative locked
+    // capacity check that prevents double-booking.
     if(pinsDrawerOpen) closePinsDrawerForNavigation();
     showClaimForm(null);
-    requestAnimationFrame(() => requestAnimationFrame(hideSubmissionProcessing));
+
+    // Run one short convenience check AFTER the confirmation page is visible
+    // so students never wait on Apps Script just to open the form. If it
+    // detects a real change, update the summary and block final submission
+    // until the student reviews their picks. A timeout does not block them.
+    refreshLiveCapacityForReview()
+      .then(() => {
+        if(shortlist.length === 0 || before !== shortlist.join(',')){
+          const errorEl = document.getElementById('claimSubmitError');
+          errorEl.textContent = 'Availability changed. Please go back and review your top picks.';
+          errorEl.style.display = '';
+          document.getElementById('claimFinalSubmit').disabled = true;
+          renderNativeClaimSummary();
+        }
+      })
+      .catch(err => {
+        console.warn('Background confirmation availability check timed out; final locked check will still run on submit.', err);
+      });
+
     return true;
   }
 
@@ -8269,6 +8263,25 @@ function showClaimForm(formUrl, fromHistory){
   if(currentView !== 'claimForm'){
     subTitleBeforeClaimForm = document.getElementById('subTitle').textContent;
   }
+
+  const useNative = submissionBackendReady && !formUrl;
+  const claimView = document.getElementById('view-claim-form');
+  const nativeWrap = document.getElementById('claimNativeWrap');
+  const legacyWrap = document.getElementById('claimLegacyWrap');
+
+  // Build the destination while it is still hidden so the browser never
+  // paints an empty/partial confirmation card and then visibly reflows it.
+  claimView.style.display = 'none';
+  nativeWrap.style.display = useNative ? '' : 'none';
+  legacyWrap.style.display = useNative ? 'none' : '';
+
+  if(useNative){
+    prepareNativeClaimForm();
+  } else if(formUrl){
+    const separator = formUrl.includes('?') ? '&' : '?';
+    document.getElementById('claimFormFrame').src = `${formUrl}${separator}embedded=true`;
+  }
+
   currentView = 'claimForm';
   document.getElementById('heroLanding').style.display = 'none';
   document.getElementById('heroSub').style.display = '';
@@ -8278,19 +8291,10 @@ function showClaimForm(formUrl, fromHistory){
   document.getElementById('view-category').style.display = 'none';
   document.getElementById('view-listing').style.display = 'none';
   document.getElementById('view-info').style.display = 'none';
-  document.getElementById('view-claim-form').style.display = '';
   document.body.classList.remove('listing-active');
 
-  const useNative = submissionBackendReady && !formUrl;
-  document.getElementById('claimNativeWrap').style.display = useNative ? '' : 'none';
-  document.getElementById('claimLegacyWrap').style.display = useNative ? 'none' : '';
-
-  if(useNative){
-    prepareNativeClaimForm();
-  } else if(formUrl){
-    const separator = formUrl.includes('?') ? '&' : '?';
-    document.getElementById('claimFormFrame').src = `${formUrl}${separator}embedded=true`;
-  }
+  // One finished-frame swap.
+  claimView.style.display = '';
 
   if(!fromHistory) pushHistory({view:'claimForm', formUrl:formUrl || '', subTitleBeforeClaimForm});
 }
