@@ -586,7 +586,7 @@ header.site{
 .claim-native-heading h2,
 .claim-success-panel h2{
   margin:0;
-  font-family:'Libre Baskerville', serif;
+  font-family:'Baskerville','Libre Baskerville',serif;
   font-size:26px;
   font-weight:400;
   color:var(--ink);
@@ -601,10 +601,10 @@ header.site{
 .claim-summary-section{ margin-top:26px; }
 .claim-summary-label{
   margin-bottom:9px;
-  font-size:12px;
+  font-size:13px;
   font-weight:600;
-  letter-spacing:.04em;
-  text-transform:uppercase;
+  letter-spacing:0;
+  text-transform:none;
   color:var(--muted);
 }
 .claim-summary-list{
@@ -623,7 +623,7 @@ header.site{
   background:#fff;
 }
 .claim-summary-item-name{
-  font-family:'Libre Baskerville', serif;
+  font-family:'Baskerville','Libre Baskerville',serif;
   font-size:14px;
   color:var(--ink);
 }
@@ -683,10 +683,26 @@ header.site{
   font-size:13px;
   line-height:1.45;
 }
+.claim-form-actions{
+  grid-column:1 / -1;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+.claim-form-back{
+  min-height:42px;
+  padding:9px 18px;
+  border:1px solid var(--border-strong);
+  border-radius:22px;
+  background:transparent;
+  color:var(--ink);
+  font:500 13px 'Inter', sans-serif;
+  cursor:pointer;
+}
+.claim-form-back:hover{ border-color:var(--accent); color:var(--accent); }
 .claim-final-submit,
 .claim-feedback-submit{
-  grid-column:1 / -1;
-  justify-self:end;
   min-height:42px;
   padding:9px 20px;
   border:0;
@@ -757,7 +773,10 @@ header.site{
   color:var(--ink);
   font:14px/1.45 'Inter', sans-serif;
 }
-.claim-feedback-submit{ margin-top:12px; }
+.claim-feedback-submit{
+  display:block;
+  margin:12px 0 0 auto;
+}
 .claim-feedback-thanks{
   margin-top:12px;
   color:var(--list-added);
@@ -768,8 +787,10 @@ header.site{
   .claim-native-wrap{ padding:24px 20px 56px; }
   .claim-native-card{ padding:20px; border-radius:12px; }
   .claim-native-form{ grid-template-columns:1fr; }
-  .claim-final-submit,
-  .claim-feedback-submit{ width:100%; justify-self:stretch; }
+  .claim-form-actions{ gap:10px; }
+  .claim-form-back,
+  .claim-final-submit{ flex:1 1 0; }
+  .claim-feedback-submit{ width:100%; }
 }
 
 /* ---------- REVIEW YOUR PINNED ALUMNI ---------- */
@@ -3976,7 +3997,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <section id="claimSubmitPanel" class="claim-native-card">
       <div class="claim-native-heading">
         <h2>Confirm your selections</h2>
-        <p>Your guaranteed picks reserve capacity only when this final submission succeeds. Everyone else in My List stays on your wishlist.</p>
       </div>
 
       <div class="claim-summary-section">
@@ -4000,7 +4020,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
           <input id="claimStudentEmail" type="email" autocomplete="email" required>
         </label>
         <div class="claim-submit-error" id="claimSubmitError" role="alert" style="display:none"></div>
-        <button class="claim-final-submit" id="claimFinalSubmit" type="submit">Submit selections</button>
+        <div class="claim-form-actions">
+          <button class="claim-form-back" id="claimFormBack" type="button">← Back</button>
+          <button class="claim-final-submit" id="claimFinalSubmit" type="submit">Submit selections</button>
+        </div>
       </form>
     </section>
 
@@ -4208,7 +4231,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-live-capacity-backend-7";
+const BUILD_VERSION = "2026-10-22-native-submission-confirmation-8";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6809,12 +6832,13 @@ window.addEventListener('message', (event) => {
   const pending = pendingBackendPost;
   pendingBackendPost = null;
   clearTimeout(pending.timer);
+  if(pending.poller) clearInterval(pending.poller);
   pending.resolve(msg.data);
 });
 
-function verifySubmittedToken(clientToken){
+function verifySubmittedToken(clientToken, email){
   return backendJsonp(
-    {action:'submissionStatus', token:clientToken},
+    {action:'submissionStatus', token:clientToken, email:email || ''},
     {timeoutMs:7000, retries:2}
   );
 }
@@ -6832,31 +6856,56 @@ function postToSubmissionBackend(payload, responseToken){
     document.getElementById('submissionResponseToken').value = token;
     document.getElementById('submissionPayload').value = JSON.stringify(payload);
 
-    const timer = setTimeout(async () => {
+    let statusCheckInFlight = false;
+    const finish = (result, isError) => {
       if(!pendingBackendPost || pendingBackendPost.token !== token) return;
       const pending = pendingBackendPost;
       pendingBackendPost = null;
+      clearTimeout(pending.timer);
+      if(pending.poller) clearInterval(pending.poller);
+      if(isError) pending.reject(result);
+      else pending.resolve(result);
+    };
 
-      if(payload.action === 'submit' && payload.clientToken){
-        try{
-          const status = await verifySubmittedToken(payload.clientToken);
-          if(status && status.ok && status.found && status.status === 'ACTIVE'){
-            pending.resolve({
-              ok:true,
-              submissionId:status.submissionId,
-              receiptEmailSent:String(status.receiptEmailStatus || '').toUpperCase() === 'SENT',
-              verifiedAfterResponseDelay:true
-            });
-            return;
-          }
-        }catch(err){}
+    const verify = async () => {
+      if(payload.action !== 'submit' || !payload.clientToken || statusCheckInFlight) return;
+      statusCheckInFlight = true;
+      try{
+        const status = await verifySubmittedToken(payload.clientToken, payload.email);
+        if(status && status.ok && status.found && status.status === 'ACTIVE'){
+          finish({
+            ok:true,
+            submissionId:status.submissionId,
+            receiptEmailSent:String(status.receiptEmailStatus || '').toUpperCase() === 'SENT',
+            verifiedAfterResponseDelay:true
+          }, false);
+        }
+      }catch(err){
+        // Keep waiting: the iframe response may still arrive, and another
+        // verification pass will run shortly.
+      }finally{
+        statusCheckInFlight = false;
       }
+    };
 
-      pending.reject(new Error('The backend did not confirm the request. Please check your connection and try again.'));
-    }, 25000);
+    const timer = setTimeout(async () => {
+      if(!pendingBackendPost || pendingBackendPost.token !== token) return;
+      await verify();
+      if(!pendingBackendPost || pendingBackendPost.token !== token) return;
+      finish(
+        new Error('Your submission may already have gone through. Check your confirmation email before trying again.'),
+        true
+      );
+    }, 22000);
 
-    pendingBackendPost = {token, resolve, reject, timer};
+    const poller = payload.action === 'submit'
+      ? setInterval(verify, 2500)
+      : null;
+
+    pendingBackendPost = {token, resolve, reject, timer, poller};
     form.submit();
+
+    if(payload.action === 'submit') setTimeout(verify, 1400);
   });
 }
 
@@ -7299,6 +7348,11 @@ document.getElementById('reviewSubmitBtn').addEventListener('click', () => {
   goSubmitNewPicks();
 });
 
+document.getElementById('claimFormBack').addEventListener('click', () => {
+  showListing(subTitleBeforeClaimForm);
+  requestAnimationFrame(() => openPinsDrawer('review', document.getElementById('pinsToggleBtn')));
+});
+
 document.getElementById('claimSubmissionForm').addEventListener('submit', async (event) => {
   event.preventDefault();
   if(!submissionBackendReady) return;
@@ -7395,7 +7449,7 @@ document.getElementById('claimSubmissionForm').addEventListener('submit', async 
     errorEl.textContent = (result && result.message) || 'Submission failed. No spots were reserved. Please try again.';
     errorEl.style.display = '';
   }catch(err){
-    errorEl.textContent = err.message || 'Submission could not be confirmed. Please try again.';
+    errorEl.textContent = err.message || 'Your submission could not be confirmed on this page. Check your confirmation email before trying again.';
     errorEl.style.display = '';
   }finally{
     submitBtn.disabled = false;
