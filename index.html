@@ -13,7 +13,7 @@
      browser's cache by the time .hero-illustration's own <img> asks for
      it, instead of only starting that fetch once the DOM parse reaches
      it further down the page. -->
-<link rel="preload" as="image" href="The%20Arch%20No%20background.png">
+<link rel="preload" as="image" href="The%20Arch%20No%20background.png" fetchpriority="high">
 <style>
 /* ============================================================
    CONFIG IS IN THE <script> BLOCK AT THE BOTTOM OF THIS FILE.
@@ -3647,7 +3647,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
       </div>
 
       <div class="hero-illustration" aria-hidden="true">
-        <img src="The%20Arch%20No%20background.png" alt="" width="1672" height="941" decoding="async" fetchpriority="high">
+        <img src="The%20Arch%20No%20background.png" alt="" width="1672" height="941" decoding="sync" fetchpriority="high" loading="eager">
       </div>
     </div>
   </div>
@@ -3904,11 +3904,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 if('scrollRestoration' in history) history.scrollRestoration = 'manual';
 window.scrollTo(0, 0);
 
-// Smooth first paint: wait until the browser has laid out the hero text
-// (and fonts where supported), then reveal that whole block once. The
-// illustration gets its own ready flag only after the actual image has
-// loaded/decoded, preventing a late image load from flashing into an
-// already-finished CSS animation.
+// Smooth first paint for the animated TEXT only. The Arch is deliberately
+// excluded from this readiness sequence: it is preloaded in <head>, eager,
+// synchronously decoded, and painted in its final state from frame one.
 (function prepareLandingEntrance(){
   const hero = document.getElementById('heroLanding');
   if(!hero) return;
@@ -3921,23 +3919,6 @@ window.scrollTo(0, 0);
   } else {
     revealText();
   }
-
-  const img = hero.querySelector('.hero-illustration img');
-  const revealArt = () => requestAnimationFrame(() =>
-    hero.classList.add('hero-art-ready')
-  );
-  if(!img){ revealArt(); return; }
-
-  if(img.complete){
-    if(typeof img.decode === 'function'){
-      img.decode().then(revealArt, revealArt);
-    } else {
-      revealArt();
-    }
-  } else {
-    img.addEventListener('load', revealArt, {once:true});
-    img.addEventListener('error', revealArt, {once:true});
-  }
 })();
 
 // Bump this string on every deploy (any distinct value works - a
@@ -3947,7 +3928,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-static-arch-full-divider-3";
+const BUILD_VERSION = "2026-10-22-static-arch-no-blink-4";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
