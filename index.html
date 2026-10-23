@@ -579,6 +579,12 @@ header.site{
   padding:22px 24px 30px;
   font-family:'Inter',sans-serif;
 }
+#view-claim-form,
+#view-claim-form button,
+#view-claim-form input,
+#view-claim-form textarea{
+  font-family:'Inter',sans-serif;
+}
 .claim-native-card{
   background:var(--workspace-bg);
   border:1px solid var(--border);
@@ -588,7 +594,7 @@ header.site{
 .claim-native-heading h2,
 .claim-success-panel h2{
   margin:0;
-  font-family:'Baskerville','Baskerville Old Face',serif;
+  font-family:'Libre Baskerville',serif;
   font-size:26px;
   font-weight:700;
   color:var(--ink);
@@ -632,23 +638,26 @@ header.site{
   background:#fff;
 }
 .claim-summary-item-name{
-  font-family:'Baskerville','Baskerville Old Face',serif;
+  font-family:'Libre Baskerville',serif;
   font-size:15px;
   color:var(--ink);
 }
 .claim-summary-item-company{
   margin-top:2px;
+  font-family:'Inter',sans-serif;
   font-size:12px;
   color:var(--accent);
 }
 .claim-summary-item-spots{
   flex-shrink:0;
+  font-family:'Inter',sans-serif;
   font-size:12px;
   color:var(--muted);
 }
 .claim-summary-list-muted .claim-summary-item{ background:var(--surface); }
 .claim-summary-note{
   margin:7px 2px 0;
+  font-family:'Inter',sans-serif;
   font-size:12px;
   color:var(--muted);
 }
@@ -673,6 +682,7 @@ header.site{
 .claim-field input{
   width:100%;
   height:44px;
+  font-family:'Inter',sans-serif;
   padding:0 12px;
   border:1px solid var(--border-strong);
   border-radius:9px;
@@ -897,6 +907,13 @@ body.submission-processing{ overflow:hidden; }
 }
 
 /* ---------- REVIEW YOUR PINNED ALUMNI ---------- */
+#pinsDrawer{
+  font-family:'Inter',sans-serif;
+}
+#pinsDrawer button,
+#pinsDrawer input{
+  font-family:'Inter',sans-serif;
+}
 .review-intro{
   color:var(--ink);
   font-family:'Inter', sans-serif;
@@ -954,7 +971,7 @@ body.submission-processing{ overflow:hidden; }
   flex: 1 1 auto;
 }
 .review-card-name{
-  font-family:'Baskerville','Baskerville Old Face',serif;
+  font-family:'Libre Baskerville',serif;
   font-weight: 500;
   font-size: 15px;
   white-space: nowrap;
@@ -962,6 +979,7 @@ body.submission-processing{ overflow:hidden; }
   text-overflow: ellipsis;
 }
 .review-card-role{
+  font-family:'Inter',sans-serif;
   font-size: 12.5px;
   color: var(--ink);
   margin-top: 2px;
@@ -973,6 +991,7 @@ body.submission-processing{ overflow:hidden; }
    remaining purple"), matching how company reads everywhere else on
    the site. */
 .review-card-company{
+  font-family:'Inter',sans-serif;
   font-size: 12px;
   color: var(--accent);
   margin-top: 1px;
@@ -4385,7 +4404,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-submission-ui-polish-22";
+const BUILD_VERSION = "2026-10-23-font-lock-libre-baskerville-inter-23";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
