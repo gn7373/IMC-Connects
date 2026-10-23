@@ -63,6 +63,7 @@
      (which capacity badges use) - "added to my list" cards should read
      as clearly different from the pale capacity-badge green. */
   --list-added-tint: #DCE8D3;
+  --error-red: #A85C67;
   --line: var(--border);
   --line-strong: var(--border-strong);
   --muted: var(--muted-text);
@@ -2265,9 +2266,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    Opening the drawer by itself no longer changes the button's color. */
 .pins-toggle-btn.has-items,
 .pins-toggle-btn.has-items:hover{
-  background: var(--list-added);
+  background: var(--list-added-tint);
   border-color: var(--list-added);
-  color: #fff;
+  color: var(--list-added);
 }
 .pins-toggle-btn.active{ box-shadow:0 0 0 2px rgba(78,42,132,.12); }
 .pins-toggle-btn.has-items.active{ box-shadow:0 0 0 2px rgba(64,117,82,.14); }
@@ -3246,7 +3247,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--warn);
+  background: var(--error-red);
   color: #fff;
   padding: 14px 26px;
   font-size: 16px;
@@ -4361,7 +4362,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-review-submit-green-18";
+const BUILD_VERSION = "2026-10-23-list-limit-red-green-match-19";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -7243,7 +7244,7 @@ function toggleCart(id){
       return;
     }
     if(cart.length >= MAX_MY_LIST){
-      showToast(`My List can hold up to ${MAX_MY_LIST} alumni. Remove someone before adding another.`);
+      showToast(`Your alumni list holds up to ${MAX_MY_LIST} alumni. Remove someone to add another.`);
       return;
     }
     cart.push(id);
