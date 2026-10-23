@@ -4243,7 +4243,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-auto-shortlist-10";
+const BUILD_VERSION = "2026-10-22-submission-handshake-11";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6833,12 +6833,12 @@ document.addEventListener('visibilitychange', () => {
 
 function makeClientToken(){
   if(window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
-  return 'cmi-' + Date.now() + '-' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+  return 'imc-' + Date.now() + '-' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
 }
 
 window.addEventListener('message', (event) => {
   const msg = event.data;
-  if(!msg || msg.source !== 'cmi-connects-backend' || !pendingBackendPost) return;
+  if(!msg || !['imc-connects-backend','cmi-connects-backend'].includes(msg.source) || !pendingBackendPost) return;
   if(msg.token !== pendingBackendPost.token) return;
 
   const pending = pendingBackendPost;
@@ -6851,7 +6851,7 @@ window.addEventListener('message', (event) => {
 function verifySubmittedToken(clientToken, email){
   return backendJsonp(
     {action:'submissionStatus', token:clientToken, email:email || ''},
-    {timeoutMs:7000, retries:2}
+    {timeoutMs:3000, retries:0}
   );
 }
 
@@ -6882,8 +6882,20 @@ function postToSubmissionBackend(payload, responseToken){
     const verify = async () => {
       if(payload.action !== 'submit' || !payload.clientToken || statusCheckInFlight) return;
       statusCheckInFlight = true;
+
       try{
         const status = await verifySubmittedToken(payload.clientToken, payload.email);
+
+        // v4 backend: return the exact terminal result from the POST,
+        // including duplicate-email/capacity errors, instead of making
+        // every rejection look like a timeout.
+        if(status && status.ok && status.requestComplete && status.result){
+          finish(status.result, false);
+          return;
+        }
+
+        // Success fallback: the ACTIVE row is visible as soon as the
+        // reservation transaction commits, even if the email is still sending.
         if(status && status.ok && status.found && status.status === 'ACTIVE'){
           finish({
             ok:true,
@@ -6893,8 +6905,8 @@ function postToSubmissionBackend(payload, responseToken){
           }, false);
         }
       }catch(err){
-        // Keep waiting: the iframe response may still arrive, and another
-        // verification pass will run shortly.
+        // A later poll can still succeed; do not surface a transient
+        // Apps Script read failure as a submission failure.
       }finally{
         statusCheckInFlight = false;
       }
@@ -6905,19 +6917,19 @@ function postToSubmissionBackend(payload, responseToken){
       await verify();
       if(!pendingBackendPost || pendingBackendPost.token !== token) return;
       finish(
-        new Error('Your submission may already have gone through. Check your confirmation email before trying again.'),
+        new Error('We could not confirm the submission. Please wait for a confirmation email before trying again.'),
         true
       );
-    }, 22000);
+    }, 10000);
 
     const poller = payload.action === 'submit'
-      ? setInterval(verify, 2500)
+      ? setInterval(verify, 900)
       : null;
 
     pendingBackendPost = {token, resolve, reject, timer, poller};
     form.submit();
 
-    if(payload.action === 'submit') setTimeout(verify, 1400);
+    if(payload.action === 'submit') setTimeout(verify, 500);
   });
 }
 
