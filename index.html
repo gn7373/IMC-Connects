@@ -4279,7 +4279,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-direct-submission-post-13";
+const BUILD_VERSION = "2026-10-22-fast-submission-flow-14";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4659,6 +4659,7 @@ let pinsDrawerReturnFocusEl = null;  // element to restore focus to when the dra
 let submissionBackendReady = false;
 let capacityPollTimer = null;
 let capacityRequestInFlight = null;
+let lastCapacityRefreshAt = 0;
 let claimClientToken = '';
 let lastSuccessfulSubmission = null;
 let selectedClaimRating = 0;
@@ -6834,6 +6835,7 @@ function refreshLiveCapacity(options){
         throw new Error('Unexpected capacity response.');
       }
       if(options && options.probe) submissionBackendReady = true;
+      lastCapacityRefreshAt = Date.now();
       return applyLiveCapacityPayload(payload, options);
     })
     .finally(() => { capacityRequestInFlight = null; });
@@ -7420,41 +7422,34 @@ function buildPrefillUrl(){
 
 async function goSubmitNewPicks(){
   if(submissionBackendReady){
-    const before = shortlist.join(',');
-    try{
-      await refreshLiveCapacity({pruneShortlist:true, notify:true});
-    }catch(err){
-      showToast('Could not refresh live availability. Please try again.');
-      return;
-    }
-    if(shortlist.length === 0){
-      setPinsDrawerMode('list');
-      return;
-    }
-    if(before !== shortlist.join(',')){
-      setPinsDrawerMode('review');
-      return;
-    }
+    // Do not block this page transition on a capacity round-trip. The site
+    // already polls capacity continuously, and the backend performs the
+    // authoritative locked recheck at final submission.
     if(pinsDrawerOpen) closePinsDrawer();
     showClaimForm(null);
+
+    // Refresh in the background so the confirmation screen still converges
+    // on the freshest availability without making the user wait to see it.
+    refreshLiveCapacity({pruneShortlist:true, notify:true})
+      .then(() => renderNativeClaimSummary())
+      .catch(() => {});
     return;
   }
 
-  // Temporary fallback until the browser-safe backend deployment is live.
   const url = buildPrefillUrl();
   if(pinsDrawerOpen) closePinsDrawer();
   showClaimForm(url);
 }
 
-document.getElementById('pinsDrawerContinueBtn').addEventListener('click', async () => {
+document.getElementById('pinsDrawerContinueBtn').addEventListener('click', () => {
   if(shortlist.length === 0) return;
-  if(submissionBackendReady){
-    try{ await refreshLiveCapacity({pruneShortlist:true, notify:true}); }
-    catch(err){ showToast('Could not refresh live availability. Please try again.'); return; }
-    if(shortlist.length === 0) return;
-  }
   setPinsDrawerMode('review');
   document.getElementById('pinsDrawerClose').focus();
+
+  // Keep availability fresh in the background; never hold up this step.
+  if(submissionBackendReady){
+    refreshLiveCapacity({pruneShortlist:true, notify:true}).catch(() => {});
+  }
 });
 document.getElementById('pinsDrawerEditBtn').addEventListener('click', () => {
   setPinsDrawerMode('list');
@@ -7509,29 +7504,13 @@ document.getElementById('claimSubmissionForm').addEventListener('submit', async 
     return;
   }
 
-  const before = shortlist.join(',');
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Checking availability…';
+  submitBtn.textContent = 'Submitting…';
 
-  try{
-    await refreshLiveCapacity({pruneShortlist:true, notify:true});
-  }catch(err){
-    errorEl.textContent = 'Could not verify live availability. Nothing was submitted. Please try again.';
-    errorEl.style.display = '';
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Submit selections';
-    return;
-  }
-
-  if(shortlist.length === 0 || before !== shortlist.join(',')){
-    renderNativeClaimSummary();
-    errorEl.textContent = 'Availability changed before submission. Your guaranteed list was updated; review it and submit again when ready.';
-    errorEl.style.display = '';
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Submit selections';
-    return;
-  }
-
+  // No separate browser-side capacity preflight here. submitRequest_ on
+  // Apps Script acquires the lock and rechecks every guaranteed alum before
+  // writing any reservation, which is the only check that can actually
+  // prevent a race condition.
   const guaranteedSnapshot = shortlist.map(id => alumni.find(a => a.id === id)).filter(Boolean);
   const wishlistSnapshot = cart
     .filter(id => !shortlist.includes(id))
@@ -7546,8 +7525,6 @@ document.getElementById('claimSubmissionForm').addEventListener('submit', async 
     guaranteed:guaranteedSnapshot.map(backendAlumPayload),
     wishlist:wishlistSnapshot.map(backendAlumPayload)
   };
-
-  submitBtn.textContent = 'Submitting…';
 
   try{
     const result = await postToSubmissionBackend(payload, claimClientToken);
