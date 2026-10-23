@@ -717,6 +717,14 @@ header.site{
 .claim-final-submit:disabled,
 .claim-feedback-submit:disabled{ opacity:.5; cursor:not-allowed; }
 .claim-success-panel{ text-align:left; }
+.claim-success-panel[style*="display: none"]{ opacity:0; }
+.claim-success-panel:not([style*="display: none"]){
+  animation:claimSuccessIn 260ms cubic-bezier(.22,.8,.32,1) both;
+}
+@keyframes claimSuccessIn{
+  from{ opacity:0; transform:translateY(8px); }
+  to{ opacity:1; transform:translateY(0); }
+}
 .claim-success-icon{
   display:flex;
   align-items:center;
@@ -784,6 +792,74 @@ header.site{
   color:var(--list-added);
   font-size:13px;
   font-weight:600;
+}
+
+/* Full-site processing veil for availability checks and final submission.
+   Keeps slow Apps Script/network work visible and prevents accidental
+   double-clicks while a reservation is being confirmed. */
+.submission-processing-overlay{
+  position:fixed;
+  inset:0;
+  z-index:200;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(51,49,55,.46);
+  backdrop-filter:blur(1.5px);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity 180ms ease, visibility 0s linear 180ms;
+}
+.submission-processing-overlay.show{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transition:opacity 180ms ease;
+}
+.submission-processing-card{
+  min-width:min(360px,calc(100vw - 48px));
+  max-width:460px;
+  padding:24px 28px;
+  border:1px solid rgba(78,42,132,.14);
+  border-radius:14px;
+  background:var(--workspace-bg);
+  box-shadow:0 18px 46px rgba(28,24,34,.18);
+  text-align:center;
+}
+.submission-processing-label{
+  display:inline-flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:2px;
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  font-size:16px;
+  font-weight:600;
+  line-height:1.4;
+}
+.submission-processing-dots{
+  display:inline-flex;
+  align-items:flex-end;
+  width:26px;
+  gap:2px;
+}
+.submission-processing-dots span{
+  display:inline-block;
+  opacity:.2;
+  animation:submissionDotPulse 1.05s infinite ease-in-out;
+}
+.submission-processing-dots span:nth-child(2){ animation-delay:.15s; }
+.submission-processing-dots span:nth-child(3){ animation-delay:.3s; }
+@keyframes submissionDotPulse{
+  0%,60%,100%{ opacity:.2; transform:translateY(0); }
+  30%{ opacity:1; transform:translateY(-2px); }
+}
+body.submission-processing{ overflow:hidden; }
+@media (prefers-reduced-motion:reduce){
+  .submission-processing-overlay{ transition:none; }
+  .submission-processing-dots span{ animation:none; opacity:1; }
 }
 @media (max-width:700px){
   .claim-native-wrap{ padding:24px 20px 56px; }
@@ -4108,6 +4184,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     </div>
   </div>
 
+  <div class="submission-processing-overlay" id="submissionProcessingOverlay" aria-hidden="true">
+    <div class="submission-processing-card" role="status" aria-live="polite" aria-atomic="true">
+      <div class="submission-processing-label">
+        <span id="submissionProcessingText">Confirming availability</span>
+        <span class="submission-processing-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>
+      </div>
+    </div>
+  </div>
+
   <iframe id="submissionTransportFrame" name="submissionTransportFrame" title="" style="display:none"></iframe>
   <form id="submissionTransportForm" method="POST" target="submissionTransportFrame" style="display:none">
     <input type="hidden" name="transport" value="iframe">
@@ -4279,7 +4364,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-fast-submission-flow-14";
+const BUILD_VERSION = "2026-10-22-submission-progress-overlay-15";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6870,6 +6955,32 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+let submissionProcessingStageTimer = null;
+
+function showSubmissionProcessing(message){
+  clearTimeout(submissionProcessingStageTimer);
+  const overlay = document.getElementById('submissionProcessingOverlay');
+  const text = document.getElementById('submissionProcessingText');
+  text.textContent = message || 'Working';
+  overlay.classList.add('show');
+  overlay.setAttribute('aria-hidden','false');
+  document.body.classList.add('submission-processing');
+}
+
+function updateSubmissionProcessing(message){
+  const text = document.getElementById('submissionProcessingText');
+  if(text) text.textContent = message || 'Working';
+}
+
+function hideSubmissionProcessing(){
+  clearTimeout(submissionProcessingStageTimer);
+  submissionProcessingStageTimer = null;
+  const overlay = document.getElementById('submissionProcessingOverlay');
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden','true');
+  document.body.classList.remove('submission-processing');
+}
+
 function makeClientToken(){
   if(window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
   return 'imc-' + Date.now() + '-' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
@@ -7422,23 +7533,37 @@ function buildPrefillUrl(){
 
 async function goSubmitNewPicks(){
   if(submissionBackendReady){
-    // Do not block this page transition on a capacity round-trip. The site
-    // already polls capacity continuously, and the backend performs the
-    // authoritative locked recheck at final submission.
+    const before = shortlist.join(',');
+    showSubmissionProcessing('Confirming availability');
+
+    try{
+      await refreshLiveCapacity({pruneShortlist:true, notify:true});
+    }catch(err){
+      hideSubmissionProcessing();
+      showToast('Could not refresh live availability. Please try again.');
+      return false;
+    }
+
+    // If the live check removed or changed a guaranteed pick, keep the user
+    // in Review so they can adjust immediately instead of filling the form.
+    if(shortlist.length === 0 || before !== shortlist.join(',')){
+      hideSubmissionProcessing();
+      setPinsDrawerMode('review');
+      showToast('Availability changed. Review your top picks before continuing.');
+      return false;
+    }
+
+    updateSubmissionProcessing('Opening confirmation');
     if(pinsDrawerOpen) closePinsDrawer();
     showClaimForm(null);
-
-    // Refresh in the background so the confirmation screen still converges
-    // on the freshest availability without making the user wait to see it.
-    refreshLiveCapacity({pruneShortlist:true, notify:true})
-      .then(() => renderNativeClaimSummary())
-      .catch(() => {});
-    return;
+    requestAnimationFrame(() => requestAnimationFrame(hideSubmissionProcessing));
+    return true;
   }
 
   const url = buildPrefillUrl();
   if(pinsDrawerOpen) closePinsDrawer();
   showClaimForm(url);
+  return true;
 }
 
 document.getElementById('pinsDrawerContinueBtn').addEventListener('click', () => {
@@ -7458,19 +7583,11 @@ document.getElementById('pinsDrawerEditBtn').addEventListener('click', () => {
 document.getElementById('reviewSubmitBtn').addEventListener('click', async (event) => {
   if(shortlist.length === 0) return;
   const btn = event.currentTarget;
-  const drawer = document.getElementById('pinsDrawer');
-  const originalText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = 'Checking…';
-  drawer.classList.add('review-advancing');
   try{
     await goSubmitNewPicks();
   }finally{
-    if(document.contains(btn)){
-      btn.disabled = shortlist.length === 0;
-      btn.textContent = originalText;
-    }
-    drawer.classList.remove('review-advancing');
+    if(document.contains(btn)) btn.disabled = shortlist.length === 0;
   }
 });
 
@@ -7505,9 +7622,12 @@ document.getElementById('claimSubmissionForm').addEventListener('submit', async 
   }
 
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Submitting…';
+  showSubmissionProcessing('Confirming availability');
+  submissionProcessingStageTimer = setTimeout(() => {
+    updateSubmissionProcessing('Submitting selections');
+  }, 700);
 
-  // No separate browser-side capacity preflight here. submitRequest_ on
+  // submitRequest_ on
   // Apps Script acquires the lock and rechecks every guaranteed alum before
   // writing any reservation, which is the only check that can actually
   // prevent a race condition.
@@ -7530,7 +7650,9 @@ document.getElementById('claimSubmissionForm').addEventListener('submit', async 
     const result = await postToSubmissionBackend(payload, claimClientToken);
 
     if(result && result.ok){
+      updateSubmissionProcessing('Submission successful');
       showNativeSubmissionSuccess(result, guaranteedSnapshot, wishlistSnapshot, studentEmail);
+      hideSubmissionProcessing();
       refreshLiveCapacity({pruneShortlist:true, notify:false}).catch(() => {});
       return;
     }
@@ -7554,12 +7676,15 @@ document.getElementById('claimSubmissionForm').addEventListener('submit', async 
       renderNativeClaimSummary();
     }
 
+    hideSubmissionProcessing();
     errorEl.textContent = (result && result.message) || 'Submission failed. No spots were reserved. Please try again.';
     errorEl.style.display = '';
   }catch(err){
+    hideSubmissionProcessing();
     errorEl.textContent = err.message || 'Your submission could not be confirmed on this page. Check your confirmation email before trying again.';
     errorEl.style.display = '';
   }finally{
+    hideSubmissionProcessing();
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit selections';
   }
