@@ -4410,7 +4410,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-review-speed-transition-fonts-24";
+const BUILD_VERSION = "2026-10-23-nonblocking-post-healthcheck-25";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -7032,13 +7032,21 @@ function probeSubmissionBackend(){
   submissionBackendReady = false;
   submissionPostTransportReady = false;
 
-  // First verify read access, then verify the exact POST path used by real
-  // submissions. Students are only enabled after both succeed.
+  // A successful capacity read is enough to enable the student flow.
+  // The POST health check is useful diagnostics, but it must not make a
+  // healthy backend look unavailable while Apps Script is cold-starting.
   refreshLiveCapacity({probe:true, pruneShortlist:true, notify:false})
-    .then(() => probeSubmissionPostTransport())
     .then(() => {
       submissionBackendReady = true;
       startCapacityPolling();
+
+      // Verify the write transport in the background. Real final submission
+      // remains authoritative and will surface a definitive backend error if
+      // POST itself is ever unavailable.
+      probeSubmissionPostTransport().catch(err => {
+        submissionPostTransportReady = false;
+        console.warn('Submission POST health check did not complete.', err);
+      });
     })
     .catch(err => {
       submissionBackendReady = false;
@@ -7676,7 +7684,7 @@ function buildPrefillUrl(){
 }
 
 async function goSubmitNewPicks(){
-  if(submissionBackendReady && submissionPostTransportReady){
+  if(submissionBackendReady){
     const before = shortlist.join(',');
     showSubmissionProcessing('Confirming availability');
 
@@ -7706,7 +7714,7 @@ async function goSubmitNewPicks(){
     return true;
   }
 
-  showToast('Submission service is temporarily unavailable. Please try again in a moment.');
+  showToast('Could not reach the submission service. Please try again.');
   probeSubmissionBackend();
   return false;
 }
