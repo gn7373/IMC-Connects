@@ -3920,7 +3920,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   <div class="info-layout">
     <div class="info-content">
       <div class="info-panel" id="infoPanelAbout">
-        <p class="about-body">Earlier this summer, CMI began piloting career-related events for our cohort under the banner "CMI Connect." Following a successful alumni networking pilot in late summer, CMI Connect was folded into Medill Career Services as part of their new fall programming, which is, by pure coincidence, called aptly IMC Connects.</p>
+        <p class="about-body">Earlier this summer, CMI began piloting career-related events for our cohort. Following a successful alumni networking pilot in late summer, the initiative was folded into Medill Career Services as part of their new fall programming, IMC Connects.</p>
         <p class="about-body">Career Services will continue to host events on campus this fall. This portion of IMC Connects focuses on 1:1 coffee chats and will remain student-run. On this website, you will find 100+ Northwestern alumni from across the world who are eager to support your growth. You can submit up to 3 alumni for coffee-chat introductions. Please feel free to use this resource as you job search this quarter.</p>
         <p class="about-body">As with last time, IMC Connects programming is open to all members of the IMC cohort.</p>
         <p class="about-body">If you have any questions, please feel free to message me (Gaby) via WhatsApp or text.</p>
@@ -4231,7 +4231,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-native-submission-confirmation-8";
+const BUILD_VERSION = "2026-10-22-imc-rebrand-9";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4340,12 +4340,12 @@ function buildConversationTopicQA(list){
       }
     });
   });
-  window.CMI_CONNECTS_DATA_QA = Object.freeze({
+  window.IMC_CONNECTS_DATA_QA = Object.freeze({
     unexpectedConversationTopics: unexpected
   });
   if(unexpected.length){
     console.warn(
-      "[CMI Connects QA] Non-standard conversation topics hidden from profiles:",
+      "[IMC Connects QA] Non-standard conversation topics hidden from profiles:",
       unexpected
     );
   }
