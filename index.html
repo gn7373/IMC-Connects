@@ -916,9 +916,9 @@ body.submission-processing{ overflow:hidden; }
 }
 .review-intro{
   color:var(--ink);
-  font-family:'Inter', sans-serif;
+  font-family:'Inter',Arial,sans-serif;
   font-size:15px;
-  font-weight:600;
+  font-weight:500;
   line-height:1.45;
   margin:10px 0 24px;
   text-wrap:pretty;
@@ -972,14 +972,15 @@ body.submission-processing{ overflow:hidden; }
 }
 .review-card-name{
   font-family:'Libre Baskerville',serif;
-  font-weight: 500;
+  font-weight:700;
   font-size: 15px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .review-card-role{
-  font-family:'Inter',sans-serif;
+  font-family:'Inter',Arial,sans-serif;
+  font-weight:400;
   font-size: 12.5px;
   color: var(--ink);
   margin-top: 2px;
@@ -991,7 +992,8 @@ body.submission-processing{ overflow:hidden; }
    remaining purple"), matching how company reads everywhere else on
    the site. */
 .review-card-company{
-  font-family:'Inter',sans-serif;
+  font-family:'Inter',Arial,sans-serif;
+  font-weight:400;
   font-size: 12px;
   color: var(--accent);
   margin-top: 1px;
@@ -3140,6 +3142,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   transition: transform 300ms cubic-bezier(.25,.8,.4,1);
 }
 .pins-drawer.open{ transform: translateX(0); }
+.pins-drawer.navigation-dismiss,
+.pins-drawer-backdrop.navigation-dismiss{
+  transition:none !important;
+}
 .pins-drawer-header{
   display: flex;
   align-items: center;
@@ -4404,7 +4410,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-font-lock-libre-baskerville-inter-23";
+const BUILD_VERSION = "2026-10-23-review-speed-transition-fonts-24";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6974,6 +6980,20 @@ function refreshLiveCapacity(options){
   return capacityRequestInFlight;
 }
 
+function refreshLiveCapacityForReview(){
+  return backendJsonp(
+    {action:'capacity'},
+    {timeoutMs:3500, retries:0}
+  ).then(payload => {
+    if(!payload || !payload.ok || !Array.isArray(payload.alumni)){
+      throw new Error('Unexpected capacity response.');
+    }
+    if(payload.backendVersion) submissionBackendVersion = Number(payload.backendVersion) || 0;
+    lastCapacityRefreshAt = Date.now();
+    return applyLiveCapacityPayload(payload, {pruneShortlist:true, notify:true});
+  });
+}
+
 function startCapacityPolling(){
   if(capacityPollTimer) clearTimeout(capacityPollTimer);
 
@@ -7616,6 +7636,25 @@ function closePinsDrawer(){
   }
 }
 
+function closePinsDrawerForNavigation(){
+  const drawer = document.getElementById('pinsDrawer');
+  const backdrop = document.getElementById('pinsDrawerBackdrop');
+  drawer.classList.add('navigation-dismiss');
+  backdrop.classList.add('navigation-dismiss');
+  pinsDrawerOpen = false;
+  drawer.classList.remove('open');
+  backdrop.classList.remove('open');
+  drawer.setAttribute('aria-hidden','true');
+  document.getElementById('pinsToggleBtn').classList.remove('active');
+  const listingView = document.getElementById('view-listing');
+  if('inert' in listingView) listingView.inert = false;
+  document.removeEventListener('keydown', onPinsDrawerKeydown);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    drawer.classList.remove('navigation-dismiss');
+    backdrop.classList.remove('navigation-dismiss');
+  }));
+}
+
 // Name plus role/company, so a name alone doesn't require the organizer to
 // go look the person up again when reviewing Form responses.
 function alumReferenceLabel(alum){
@@ -7642,15 +7681,17 @@ async function goSubmitNewPicks(){
     showSubmissionProcessing('Confirming availability');
 
     try{
-      await refreshLiveCapacity({pruneShortlist:true, notify:true});
+      await refreshLiveCapacityForReview();
     }catch(err){
-      hideSubmissionProcessing();
-      showToast('Could not refresh live availability. Please try again.');
-      return false;
+      // Browsing already refreshes capacity continuously. A slow/cold
+      // Apps Script read should not trap the student here for 20+ seconds;
+      // the final Submit transaction performs the authoritative locked
+      // capacity check before reserving anything.
+      console.warn('Review-stage capacity refresh timed out; using latest browsing snapshot.', err);
     }
 
-    // If the live check removed or changed a guaranteed pick, keep the user
-    // in Review so they can adjust immediately instead of filling the form.
+    // If the quick live check actually changed a guaranteed pick, keep the
+    // student in Review. A timeout alone does not block progress.
     if(shortlist.length === 0 || before !== shortlist.join(',')){
       hideSubmissionProcessing();
       setPinsDrawerMode('review');
@@ -7659,7 +7700,7 @@ async function goSubmitNewPicks(){
     }
 
     updateSubmissionProcessing('Opening confirmation');
-    if(pinsDrawerOpen) closePinsDrawer();
+    if(pinsDrawerOpen) closePinsDrawerForNavigation();
     showClaimForm(null);
     requestAnimationFrame(() => requestAnimationFrame(hideSubmissionProcessing));
     return true;
@@ -7675,10 +7716,8 @@ document.getElementById('pinsDrawerContinueBtn').addEventListener('click', () =>
   setPinsDrawerMode('review');
   document.getElementById('pinsDrawerClose').focus();
 
-  // Keep availability fresh in the background; never hold up this step.
-  if(submissionBackendReady){
-    refreshLiveCapacity({pruneShortlist:true, notify:true}).catch(() => {});
-  }
+  // Browsing already keeps capacity fresh. The next Continue click performs
+  // its own short live check, so do not launch a long retrying request here.
 });
 document.getElementById('pinsDrawerEditBtn').addEventListener('click', () => {
   setPinsDrawerMode('list');
