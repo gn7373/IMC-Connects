@@ -1344,28 +1344,42 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   font-size: 12.5px;
   color: var(--muted);
 }
-/* The count/Sort row lives inside a listing-container with 24px side
-   padding. At single-column laptop/mobile widths the profile is hidden,
-   so that inherited padding was visibly stopping the divider short on
-   BOTH sides. Bleed only the divider-bearing wrapper through it while
-   keeping the controls at their existing x positions. */
+/* Full-bleed count/Sort divider.
+   The split itself sits inside 24px workspace padding. On desktop, the
+   left directory section ends at the center of the 16px separator, so
+   the header bleeds 24px left + 8px right. The inner padding compensates
+   so the count and Sort controls do not move at all. */
+@media (min-width: 1024px){
+  .directory-list-header{
+    width:calc(100% + 32px);
+    margin-left:-24px;
+  }
+  .directory-list-header-inner{
+    padding-left:48px;
+    padding-right:32px;
+  }
+
+  /* Once the profile is collapsed there is no center separator, so the
+     directory becomes the whole workspace and the divider bleeds the
+     full 24px on both sides. */
+  .directory-split.profile-collapsed .directory-list-header{
+    width:calc(100% + 48px);
+    margin-left:-24px;
+  }
+  .directory-split.profile-collapsed .directory-list-header-inner{
+    padding-left:48px;
+    padding-right:48px;
+  }
+}
+
+/* Single-column laptop/mobile: the directory is the whole workspace,
+   so run the divider all the way to both outer section edges. */
 @media (max-width: 1023px){
   .directory-list-header{
     width:calc(100% + 48px);
     margin-left:-24px;
   }
   .directory-list-header-inner{
-    padding-left:48px;
-    padding-right:48px;
-  }
-}
-@media (min-width: 1024px){
-  /* Same treatment when the desktop profile is explicitly collapsed. */
-  .directory-split.profile-collapsed .directory-list-header{
-    width:calc(100% + 48px);
-    margin-left:-24px;
-  }
-  .directory-split.profile-collapsed .directory-list-header-inner{
     padding-left:48px;
     padding-right:48px;
   }
@@ -1421,7 +1435,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .directory-split{
   display: flex;
   align-items: stretch;
-  overflow: hidden;
+  /* Do not clip the count/Sort divider when it bleeds through the
+     workspace's 24px inset to the true section boundaries. The list
+     and profile panels already own their own scrolling/overflow rules. */
+  overflow: visible;
   position: relative;
   /* Fills the rest of #view-listing's own height (set via pure CSS flex
      now, not a JS-measured inline height - see body's comment). */
@@ -3928,7 +3945,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-static-arch-no-blink-4";
+const BUILD_VERSION = "2026-10-22-full-sort-divider-5";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
