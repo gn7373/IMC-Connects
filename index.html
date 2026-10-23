@@ -4422,7 +4422,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-fast-submit-open-success-27";
+const BUILD_VERSION = "2026-10-23-launch-safe-status-polling-28";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -7218,11 +7218,22 @@ function postToSubmissionBackend(payload, responseToken){
         );
       }, confirmationTimeoutMs);
 
-      const poller = setInterval(verify, isHealthcheck ? 500 : 400);
+      // Keep status checks lightweight during launch bursts. The fast v10+
+      // endpoint is cache-only, so polling more often than about once per
+      // second adds Apps Script executions without improving reservation
+      // safety. Jitter prevents many students who click at the same moment
+      // from synchronizing their status checks.
+      const pollIntervalMs = isHealthcheck
+        ? 800
+        : 1000 + Math.floor(Math.random() * 600);
+      const firstVerifyDelayMs = isHealthcheck
+        ? 450
+        : 450 + Math.floor(Math.random() * 550);
+      const poller = setInterval(verify, pollIntervalMs);
       pendingBackendPost = {token, resolve, reject, timer, poller};
 
       form.submit();
-      setTimeout(verify, isHealthcheck ? 350 : 250);
+      setTimeout(verify, firstVerifyDelayMs);
     });
   }
 
