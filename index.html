@@ -877,6 +877,31 @@ header.site h1{
   margin: 0 0 26px;
 }
 header.site h1 em{ font-style: italic; color: var(--accent); }
+
+/* Headline typewriter: each line already occupies its final layout slot,
+   so the reveal never shifts the paragraph/button below it. The stepped
+   clip creates a typed-on rhythm without swapping DOM text character by
+   character (which could reflow as web fonts finish loading). */
+.hero-type-line{
+  display:block;
+  width:max-content;
+  max-width:100%;
+  clip-path:inset(0 100% 0 0);
+  will-change:clip-path;
+}
+#heroLanding.hero-text-ready .hero-type-line-1{
+  animation:heroTypeLine1 420ms steps(9,end) 80ms both;
+}
+#heroLanding.hero-text-ready .hero-type-line-2{
+  animation:heroTypeLine2 610ms steps(12,end) 500ms both;
+}
+#heroLanding.hero-text-ready .hero-type-line-3{
+  animation:heroTypeLine3 460ms steps(8,end) 1110ms both;
+}
+@keyframes heroTypeLine1{ to{ clip-path:inset(0 0 0 0); } }
+@keyframes heroTypeLine2{ to{ clip-path:inset(0 0 0 0); } }
+@keyframes heroTypeLine3{ to{ clip-path:inset(0 0 0 0); } }
+
 .hero-lede{
   font-family: 'Inter', sans-serif;
   font-size: 19px;
@@ -903,6 +928,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   align-items: center;
   justify-content: center;
   gap: 10px;
+  overflow:hidden;
+}
+.landing-option-label{
+  display:block;
+  transform:translateY(145%);
+  opacity:0;
+  will-change:transform,opacity;
+}
+#heroLanding.hero-text-ready .landing-option-label{
+  animation:landingLabelRise 430ms cubic-bezier(.22,.8,.32,1) 1500ms both;
+}
+@keyframes landingLabelRise{
+  from{ transform:translateY(145%); opacity:0; }
+  to{ transform:translateY(0); opacity:1; }
 }
 .landing-option:hover{ filter: brightness(1.18); }
 .landing-option .arrow{ font-size: 16px; }
@@ -922,6 +961,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 @media (prefers-reduced-motion: reduce){
   .hero-copy{ transition:none; opacity:1; transform:translateY(-50%); }
   .hero-illustration{ transition:none; opacity:1; transform:translateX(0); }
+  .hero-type-line{ clip-path:none !important; animation:none !important; }
+  .landing-option-label{ transform:none !important; opacity:1 !important; animation:none !important; }
 }
 @media (max-width: 767px) and (prefers-reduced-motion: reduce){
   .hero-copy{ transform: none; }
@@ -3512,11 +3553,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
       </div>
 
       <div class="hero-copy">
-        <h1>Build your<br>Northwestern<br><em>network.</em></h1>
+        <h1 aria-label="Build your Northwestern network.">
+          <span class="hero-type-line hero-type-line-1" aria-hidden="true">Build your</span>
+          <span class="hero-type-line hero-type-line-2" aria-hidden="true">Northwestern</span>
+          <span class="hero-type-line hero-type-line-3" aria-hidden="true"><em>network.</em></span>
+        </h1>
         <p class="hero-lede">Explore alumni across industries, career paths and cities. Tell us who you'd like to grab coffee with along the way.</p>
         <div class="hero-options" id="heroOptions">
           <div class="landing-options" id="landingOptions">
-            <button class="landing-option" data-action="all">Find alumni</button>
+            <button class="landing-option" data-action="all"><span class="landing-option-label">Find alumni</span></button>
           </div>
           <span class="round-note" id="roundNote">Loading round info…</span>
         </div>
@@ -3823,7 +3868,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-mobile-landing-transition-4";
+const BUILD_VERSION = "2026-10-22-landing-typewriter-1";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
