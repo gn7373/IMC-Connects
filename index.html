@@ -571,6 +571,207 @@ header.site{
   .claim-form-frame{ height: 1400px; }
 }
 
+/* Native Apps Script submission UI. */
+.claim-native-wrap{
+  max-width:760px;
+  margin:0 auto;
+  padding:32px 24px 72px;
+}
+.claim-native-card{
+  background:var(--workspace-bg);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:28px;
+}
+.claim-native-heading h2,
+.claim-success-panel h2{
+  margin:0;
+  font-family:'Libre Baskerville', serif;
+  font-size:26px;
+  font-weight:400;
+  color:var(--ink);
+}
+.claim-native-heading p,
+.claim-success-panel > p{
+  margin:10px 0 0;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.55;
+}
+.claim-summary-section{ margin-top:26px; }
+.claim-summary-label{
+  margin-bottom:9px;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.claim-summary-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.claim-summary-item{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  padding:11px 13px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#fff;
+}
+.claim-summary-item-name{
+  font-family:'Libre Baskerville', serif;
+  font-size:14px;
+  color:var(--ink);
+}
+.claim-summary-item-company{
+  margin-top:2px;
+  font-size:12px;
+  color:var(--accent);
+}
+.claim-summary-item-spots{
+  flex-shrink:0;
+  font-size:12px;
+  color:var(--muted);
+}
+.claim-summary-list-muted .claim-summary-item{ background:var(--surface); }
+.claim-summary-note{
+  margin:7px 2px 0;
+  font-size:12px;
+  color:var(--muted);
+}
+.claim-native-form{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-top:28px;
+  padding-top:24px;
+  border-top:1px solid var(--border);
+}
+.claim-field{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  font-size:13px;
+  font-weight:500;
+  color:var(--ink);
+}
+.claim-field input{
+  width:100%;
+  height:44px;
+  padding:0 12px;
+  border:1px solid var(--border-strong);
+  border-radius:9px;
+  background:#fff;
+  color:var(--ink);
+  font:14px 'Inter', sans-serif;
+}
+.claim-field input:focus{
+  outline:2px solid rgba(78,42,132,.18);
+  border-color:var(--accent);
+}
+.claim-submit-error{
+  grid-column:1 / -1;
+  padding:10px 12px;
+  border:1px solid var(--warn);
+  border-radius:9px;
+  background:#FDF1E7;
+  color:#9A4A0A;
+  font-size:13px;
+  line-height:1.45;
+}
+.claim-final-submit,
+.claim-feedback-submit{
+  grid-column:1 / -1;
+  justify-self:end;
+  min-height:42px;
+  padding:9px 20px;
+  border:0;
+  border-radius:22px;
+  background:var(--accent);
+  color:#fff;
+  font:500 13px 'Inter', sans-serif;
+  cursor:pointer;
+}
+.claim-final-submit:disabled,
+.claim-feedback-submit:disabled{ opacity:.5; cursor:not-allowed; }
+.claim-success-panel{ text-align:left; }
+.claim-success-icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:42px;
+  height:42px;
+  margin-bottom:16px;
+  border-radius:50%;
+  background:var(--soft-green);
+  color:var(--list-added);
+  font-size:23px;
+  font-weight:700;
+}
+.claim-success-matches{ margin-top:22px; }
+.claim-submission-id{
+  margin-top:14px;
+  font-size:11px;
+  color:var(--muted);
+}
+.claim-feedback-block{
+  margin-top:30px;
+  padding-top:24px;
+  border-top:1px solid var(--border);
+}
+.claim-feedback-block h3{
+  margin:0 0 12px;
+  font:500 15px 'Inter', sans-serif;
+}
+.claim-rating{
+  display:flex;
+  gap:8px;
+  margin-bottom:12px;
+}
+.claim-rating button{
+  width:36px;
+  height:36px;
+  border:1px solid var(--border-strong);
+  border-radius:50%;
+  background:#fff;
+  color:var(--ink);
+  cursor:pointer;
+}
+.claim-rating button.active{
+  border-color:var(--accent);
+  background:var(--accent);
+  color:#fff;
+}
+#claimFeedbackText{
+  width:100%;
+  min-height:92px;
+  padding:11px 12px;
+  resize:vertical;
+  border:1px solid var(--border-strong);
+  border-radius:9px;
+  background:#fff;
+  color:var(--ink);
+  font:14px/1.45 'Inter', sans-serif;
+}
+.claim-feedback-submit{ margin-top:12px; }
+.claim-feedback-thanks{
+  margin-top:12px;
+  color:var(--list-added);
+  font-size:13px;
+  font-weight:600;
+}
+@media (max-width:700px){
+  .claim-native-wrap{ padding:24px 20px 56px; }
+  .claim-native-card{ padding:20px; border-radius:12px; }
+  .claim-native-form{ grid-template-columns:1fr; }
+  .claim-final-submit,
+  .claim-feedback-submit{ width:100%; justify-self:stretch; }
+}
+
 /* ---------- REVIEW YOUR PINNED ALUMNI ---------- */
 .review-intro{
   color: var(--muted);
@@ -3750,7 +3951,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
         </div>
         <div class="faq-item">
           <div class="faq-q">I already submitted. How do I change my pins?</div>
-          <div class="faq-a">Use the "Edit your response" link from the confirmation email you got when you first submitted. This site only accepts 1 response so if you try resubmitting here, your submission will get blocked as a duplicate.</div>
+          <div class="faq-a">Please contact Gaby if you need to change your selections after submitting. The site accepts one submission per email, so a second submission will be blocked as a duplicate.</div>
         </div>
         <div class="faq-item">
           <div class="faq-q">I have another question.</div>
@@ -3766,21 +3967,82 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   </div>
 </div>
 
-<!-- Embeds the Google Form in-site (2026-10-19, per request) - submitting
-     used to open the form in a new tab, meaning students left the site
-     entirely to finish signing up. The form's own "embedded=true" mode
-     (same prefill query params as before, just with that one added) is
-     built for exactly this: it renders inside this iframe, including
-     Google's own post-submission confirmation screen once they submit,
-     so the whole flow - and the "thanks" message - stays on this page,
-     never navigating the parent window away. -->
+<!-- Submission view. The native panel is enabled automatically once the
+     Apps Script backend proves it supports the browser-safe JSONP/iframe
+     transport. Until then, the existing embedded Google Form remains an
+     intact fallback so a backend deployment can never break the live site. -->
 <div id="view-claim-form" style="display:none">
-  <div class="claim-form-intro">
-    <p>You can submit up to 3 alumni. Your selected alumni will be prefilled below; complete the remaining form fields and submit when you're ready.</p>
+  <div id="claimNativeWrap" class="claim-native-wrap" style="display:none">
+    <section id="claimSubmitPanel" class="claim-native-card">
+      <div class="claim-native-heading">
+        <h2>Confirm your selections</h2>
+        <p>Your guaranteed picks reserve capacity only when this final submission succeeds. Everyone else in My List stays on your wishlist.</p>
+      </div>
+
+      <div class="claim-summary-section">
+        <div class="claim-summary-label">Guaranteed introductions</div>
+        <div id="claimGuaranteedList" class="claim-summary-list"></div>
+      </div>
+
+      <div class="claim-summary-section" id="claimWishlistSection" style="display:none">
+        <div class="claim-summary-label">Wishlist</div>
+        <div id="claimWishlistList" class="claim-summary-list claim-summary-list-muted"></div>
+        <p class="claim-summary-note">Wishlist alumni do not reserve capacity.</p>
+      </div>
+
+      <form id="claimSubmissionForm" class="claim-native-form" novalidate>
+        <label class="claim-field">
+          <span>Your name</span>
+          <input id="claimStudentName" type="text" autocomplete="name" required>
+        </label>
+        <label class="claim-field">
+          <span>Email</span>
+          <input id="claimStudentEmail" type="email" autocomplete="email" required>
+        </label>
+        <div class="claim-submit-error" id="claimSubmitError" role="alert" style="display:none"></div>
+        <button class="claim-final-submit" id="claimFinalSubmit" type="submit">Submit selections</button>
+      </form>
+    </section>
+
+    <section id="claimSuccessPanel" class="claim-native-card claim-success-panel" style="display:none">
+      <div class="claim-success-icon" aria-hidden="true">✓</div>
+      <h2>You're all set.</h2>
+      <p id="claimSuccessMessage">Your selections have been reserved.</p>
+      <div id="claimSuccessMatches" class="claim-summary-list claim-success-matches"></div>
+      <div class="claim-submission-id" id="claimSubmissionId"></div>
+
+      <div class="claim-feedback-block">
+        <h3>How was the experience?</h3>
+        <div class="claim-rating" id="claimRating" role="group" aria-label="Rate the submission experience">
+          <button type="button" data-rating="1">1</button>
+          <button type="button" data-rating="2">2</button>
+          <button type="button" data-rating="3">3</button>
+          <button type="button" data-rating="4">4</button>
+          <button type="button" data-rating="5">5</button>
+        </div>
+        <textarea id="claimFeedbackText" placeholder="Optional feedback"></textarea>
+        <div class="claim-submit-error" id="claimFeedbackError" role="alert" style="display:none"></div>
+        <button type="button" class="claim-feedback-submit" id="claimFeedbackSubmit" disabled>Send feedback</button>
+        <div class="claim-feedback-thanks" id="claimFeedbackThanks" style="display:none">Thank you!</div>
+      </div>
+    </section>
   </div>
-  <div class="claim-form-frame-wrap">
-    <iframe id="claimFormFrame" class="claim-form-frame" title="Alumni coffee chat sign-up form" src="" loading="lazy">Loading…</iframe>
+
+  <div id="claimLegacyWrap">
+    <div class="claim-form-intro">
+      <p>You can submit up to 3 alumni. Your selected alumni will be prefilled below; complete the remaining form fields and submit when you're ready.</p>
+    </div>
+    <div class="claim-form-frame-wrap">
+      <iframe id="claimFormFrame" class="claim-form-frame" title="Alumni coffee chat sign-up form" src="" loading="lazy">Loading…</iframe>
+    </div>
   </div>
+
+  <iframe id="submissionTransportFrame" name="submissionTransportFrame" title="" style="display:none"></iframe>
+  <form id="submissionTransportForm" method="POST" target="submissionTransportFrame" style="display:none">
+    <input type="hidden" name="transport" value="iframe">
+    <input type="hidden" name="responseToken" id="submissionResponseToken">
+    <input type="hidden" name="payload" id="submissionPayload">
+  </form>
 </div>
 
 <div id="view-listing" style="display:none">
@@ -3896,7 +4158,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   </div>
   <div class="pins-drawer-footer" id="pinsDrawerReviewFooter" style="display:none">
     <button class="review-back-btn" id="pinsDrawerEditBtn">← Edit my list</button>
-    <button class="submit-btn" id="reviewSubmitBtn">Continue to form →</button>
+    <button class="submit-btn" id="reviewSubmitBtn">Continue →</button>
   </div>
 </aside>
 
@@ -3946,7 +4208,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-mobile-sort-alignment-6";
+const BUILD_VERSION = "2026-10-22-live-capacity-backend-7";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4169,6 +4431,11 @@ const CLAIM_FORM = {
   }
 };
 
+const SUBMISSION_BACKEND = {
+  webAppUrl: "https://script.google.com/macros/s/AKfycbw1yvUUH3KoCamjcDVPzTwhWRhkpQJCNrLIKXcCUTq9Is2y5tq1Vat4ZTvDPUWFc4frjg/exec",
+  capacityPollMs: 12000
+};
+
 // Caps the SHORTLIST only - "my list" (cart, below) itself remains
 // unlimited; this gates how many alumni can be submitted for introductions.
 const MAX_PICKS = 3;
@@ -4313,6 +4580,17 @@ let shortlist = [];    // subset of cart's ids marked for the final Review & Sub
 let pinsDrawerOpen = false;
 let pinsDrawerMode = 'list';         // 'list' | 'review' - two states of the same drawer, not separate pages
 let pinsDrawerReturnFocusEl = null;  // element to restore focus to when the drawer closes
+
+// Live submission backend state. It starts disabled and is enabled only
+// after a JSONP capacity probe succeeds, so the existing Google Form remains
+// a safe fallback until the browser-safe Apps Script version is deployed.
+let submissionBackendReady = false;
+let capacityPollTimer = null;
+let capacityRequestInFlight = null;
+let claimClientToken = '';
+let lastSuccessfulSubmission = null;
+let selectedClaimRating = 0;
+let pendingBackendPost = null;
 
 // Standard location-pin glyph (same shape as the card's own location
 // icon, FORMAT_ICON_IN_PERSON) per request - replaces the old thumbtack
@@ -6341,6 +6619,340 @@ function watchProfilePanelWidth(){
 }
 watchProfilePanelWidth();
 
+
+function normalizeBackendIdentity(value){
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function alumniCapacityLookupKey(timestamp, name, company){
+  return [
+    normalizeBackendIdentity(timestamp),
+    normalizeBackendIdentity(name),
+    normalizeBackendIdentity(company)
+  ].join('|');
+}
+
+function backendJsonp(params, options){
+  options = options || {};
+  const timeoutMs = options.timeoutMs || 8000;
+  const retries = options.retries == null ? 1 : options.retries;
+
+  return new Promise((resolve, reject) => {
+    let attempt = 0;
+
+    const run = () => {
+      attempt += 1;
+      const callbackName = '__cmiJsonp_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      const script = document.createElement('script');
+      const query = new URLSearchParams({...params, callback: callbackName, _: Date.now()});
+      let settled = false;
+
+      const cleanup = () => {
+        clearTimeout(timer);
+        delete window[callbackName];
+        script.remove();
+      };
+      const fail = (err) => {
+        if(settled) return;
+        settled = true;
+        cleanup();
+        if(attempt <= retries){
+          setTimeout(run, 700 * attempt);
+        } else {
+          reject(err);
+        }
+      };
+
+      window[callbackName] = (data) => {
+        if(settled) return;
+        settled = true;
+        cleanup();
+        resolve(data);
+      };
+
+      const timer = setTimeout(() => fail(new Error('Backend request timed out.')), timeoutMs);
+      script.onerror = () => fail(new Error('Backend request failed.'));
+      script.src = SUBMISSION_BACKEND.webAppUrl + '?' + query.toString();
+      document.head.appendChild(script);
+    };
+
+    run();
+  });
+}
+
+function applyLiveCapacityPayload(payload, options){
+  options = options || {};
+  if(!payload || !payload.ok || !Array.isArray(payload.alumni)) return [];
+
+  const exact = new Map();
+  const fallback = new Map();
+  payload.alumni.forEach(remote => {
+    exact.set(
+      alumniCapacityLookupKey(remote.timestamp, remote.name, remote.company),
+      remote
+    );
+    fallback.set(
+      alumniCapacityLookupKey('', remote.name, remote.company),
+      remote
+    );
+  });
+
+  alumni.forEach(a => {
+    const remote =
+      exact.get(alumniCapacityLookupKey(a.timestamp, a.name, a.company)) ||
+      fallback.get(alumniCapacityLookupKey('', a.name, a.company));
+    if(!remote) return;
+    a.backendKey = remote.alumniKey || '';
+    a.capacity = Math.max(0, Number(remote.spotsRemaining) || 0);
+    a.capacityAssumed = false;
+  });
+
+  const removed = [];
+  if(options.pruneShortlist !== false){
+    shortlist = shortlist.filter(id => {
+      const a = alumni.find(x => x.id === id);
+      if(a && a.capacity <= 0){
+        removed.push(a);
+        return false;
+      }
+      return true;
+    });
+  }
+
+  if(sortMode === 'capacity' || sortMode === 'capacity_asc'){
+    renderGrid();
+  } else {
+    document.querySelectorAll('.directory-entry').forEach(entry => {
+      const a = alumni.find(x => x.id === Number(entry.dataset.id));
+      if(!a) return;
+      entry.querySelectorAll('.directory-entry-spots').forEach(el => {
+        el.innerHTML = capacityBadgeHtml(a.capacity, a.capacityAssumed);
+      });
+    });
+    const selected = alumni.find(x => x.id === selectedAlumId);
+    if(selected) updateProfileAvailability(selected);
+  }
+
+  if(removed.length){
+    renderPinsDrawer();
+    if(currentView === 'claimForm') renderNativeClaimSummary();
+    if(options.notify !== false){
+      const names = removed.map(a => a.name).join(', ');
+      showToast(
+        removed.length === 1
+          ? names + ' just filled up and was moved to your wishlist.'
+          : names + ' just filled up and were moved to your wishlist.'
+      );
+    }
+  }
+
+  return removed;
+}
+
+function refreshLiveCapacity(options){
+  if(!submissionBackendReady && !(options && options.probe)) return Promise.resolve([]);
+  if(capacityRequestInFlight) return capacityRequestInFlight;
+
+  capacityRequestInFlight = backendJsonp(
+    {action:'capacity'},
+    {timeoutMs:7000, retries:2}
+  )
+    .then(payload => {
+      if(!payload || !payload.ok || !Array.isArray(payload.alumni)){
+        throw new Error('Unexpected capacity response.');
+      }
+      if(options && options.probe) submissionBackendReady = true;
+      return applyLiveCapacityPayload(payload, options);
+    })
+    .finally(() => { capacityRequestInFlight = null; });
+
+  return capacityRequestInFlight;
+}
+
+function startCapacityPolling(){
+  if(capacityPollTimer) clearInterval(capacityPollTimer);
+  capacityPollTimer = setInterval(() => {
+    if(document.visibilityState === 'visible'){
+      refreshLiveCapacity({pruneShortlist:true, notify:true}).catch(() => {});
+    }
+  }, SUBMISSION_BACKEND.capacityPollMs);
+}
+
+function probeSubmissionBackend(){
+  refreshLiveCapacity({probe:true, pruneShortlist:true, notify:false})
+    .then(() => startCapacityPolling())
+    .catch(() => {
+      submissionBackendReady = false;
+      if(capacityPollTimer){
+        clearInterval(capacityPollTimer);
+        capacityPollTimer = null;
+      }
+    });
+}
+
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && submissionBackendReady){
+    refreshLiveCapacity({pruneShortlist:true, notify:true}).catch(() => {});
+  }
+});
+
+function makeClientToken(){
+  if(window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  return 'cmi-' + Date.now() + '-' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+}
+
+window.addEventListener('message', (event) => {
+  const msg = event.data;
+  if(!msg || msg.source !== 'cmi-connects-backend' || !pendingBackendPost) return;
+  if(msg.token !== pendingBackendPost.token) return;
+
+  const pending = pendingBackendPost;
+  pendingBackendPost = null;
+  clearTimeout(pending.timer);
+  pending.resolve(msg.data);
+});
+
+function verifySubmittedToken(clientToken){
+  return backendJsonp(
+    {action:'submissionStatus', token:clientToken},
+    {timeoutMs:7000, retries:2}
+  );
+}
+
+function postToSubmissionBackend(payload, responseToken){
+  return new Promise((resolve, reject) => {
+    if(pendingBackendPost){
+      reject(new Error('Another submission request is still in progress.'));
+      return;
+    }
+
+    const token = responseToken || makeClientToken();
+    const form = document.getElementById('submissionTransportForm');
+    form.action = SUBMISSION_BACKEND.webAppUrl;
+    document.getElementById('submissionResponseToken').value = token;
+    document.getElementById('submissionPayload').value = JSON.stringify(payload);
+
+    const timer = setTimeout(async () => {
+      if(!pendingBackendPost || pendingBackendPost.token !== token) return;
+      const pending = pendingBackendPost;
+      pendingBackendPost = null;
+
+      if(payload.action === 'submit' && payload.clientToken){
+        try{
+          const status = await verifySubmittedToken(payload.clientToken);
+          if(status && status.ok && status.found && status.status === 'ACTIVE'){
+            pending.resolve({
+              ok:true,
+              submissionId:status.submissionId,
+              receiptEmailSent:String(status.receiptEmailStatus || '').toUpperCase() === 'SENT',
+              verifiedAfterResponseDelay:true
+            });
+            return;
+          }
+        }catch(err){}
+      }
+
+      pending.reject(new Error('The backend did not confirm the request. Please check your connection and try again.'));
+    }, 25000);
+
+    pendingBackendPost = {token, resolve, reject, timer};
+    form.submit();
+  });
+}
+
+function backendAlumPayload(a){
+  return {
+    alumniKey:a.backendKey || '',
+    name:a.name || '',
+    company:a.company || '',
+    timestamp:a.timestamp || ''
+  };
+}
+
+function renderNativeClaimSummary(){
+  const guaranteedList = document.getElementById('claimGuaranteedList');
+  if(!guaranteedList) return;
+
+  const guaranteed = shortlist
+    .map(id => alumni.find(a => a.id === id))
+    .filter(Boolean);
+  const wishlist = cart
+    .filter(id => !shortlist.includes(id))
+    .map(id => alumni.find(a => a.id === id))
+    .filter(Boolean);
+
+  guaranteedList.innerHTML = guaranteed.map(a => \`
+    <div class="claim-summary-item">
+      <div>
+        <div class="claim-summary-item-name">\${a.name}</div>
+        \${a.company ? \`<div class="claim-summary-item-company">\${a.company}</div>\` : ''}
+      </div>
+      <div class="claim-summary-item-spots">\${a.capacity === 1 ? '1 spot left' : \`\${Math.max(0,a.capacity)} spots left\`}</div>
+    </div>
+  \`).join('');
+
+  const wishlistSection = document.getElementById('claimWishlistSection');
+  const wishlistList = document.getElementById('claimWishlistList');
+  wishlistSection.style.display = wishlist.length ? '' : 'none';
+  wishlistList.innerHTML = wishlist.map(a => \`
+    <div class="claim-summary-item">
+      <div>
+        <div class="claim-summary-item-name">\${a.name}</div>
+        \${a.company ? \`<div class="claim-summary-item-company">\${a.company}</div>\` : ''}
+      </div>
+    </div>
+  \`).join('');
+}
+
+function prepareNativeClaimForm(){
+  claimClientToken = makeClientToken();
+  selectedClaimRating = 0;
+  lastSuccessfulSubmission = null;
+  document.getElementById('claimSubmitPanel').style.display = '';
+  document.getElementById('claimSuccessPanel').style.display = 'none';
+  document.getElementById('claimSubmitError').style.display = 'none';
+  document.getElementById('claimSubmitError').textContent = '';
+  document.getElementById('claimSubmissionForm').reset();
+  document.getElementById('claimFeedbackText').value = '';
+  document.getElementById('claimFeedbackError').style.display = 'none';
+  document.getElementById('claimFeedbackThanks').style.display = 'none';
+  document.getElementById('claimFeedbackSubmit').disabled = true;
+  document.querySelectorAll('#claimRating button').forEach(btn => btn.classList.remove('active'));
+  renderNativeClaimSummary();
+}
+
+function showNativeSubmissionSuccess(result, guaranteedSnapshot, wishlistSnapshot, studentEmail){
+  lastSuccessfulSubmission = {
+    submissionId:result.submissionId || '',
+    email:studentEmail,
+    guaranteed:guaranteedSnapshot,
+    wishlist:wishlistSnapshot
+  };
+
+  document.getElementById('claimSubmitPanel').style.display = 'none';
+  document.getElementById('claimSuccessPanel').style.display = '';
+  document.getElementById('claimSuccessMessage').textContent =
+    result.receiptEmailSent === false
+      ? 'Your spots are reserved. The confirmation email could not be verified, so keep the submission ID below for your records.'
+      : 'Your spots are reserved. A confirmation receipt will be sent to your email.';
+
+  document.getElementById('claimSuccessMatches').innerHTML = guaranteedSnapshot.map(a => \`
+    <div class="claim-summary-item">
+      <div>
+        <div class="claim-summary-item-name">\${a.name}</div>
+        \${a.company ? \`<div class="claim-summary-item-company">\${a.company}</div>\` : ''}
+      </div>
+    </div>
+  \`).join('');
+  document.getElementById('claimSubmissionId').textContent =
+    result.submissionId ? 'Submission ID: ' + result.submissionId : '';
+
+  cart = [];
+  shortlist = [];
+  renderPinsDrawer();
+  window.scrollTo(0,0);
+}
+
 function showToast(msg, type, alignEl){
   const toast = document.getElementById('toast');
   toast.textContent = msg;
@@ -6599,6 +7211,9 @@ function openPinsDrawer(mode, opener){
   if('inert' in listingView) listingView.inert = true;
   document.getElementById('pinsDrawerClose').focus();
   document.addEventListener('keydown', onPinsDrawerKeydown);
+  if(submissionBackendReady){
+    refreshLiveCapacity({pruneShortlist:true, notify:true}).catch(() => {});
+  }
 }
 
 function closePinsDrawer(){
@@ -6637,14 +7252,41 @@ function buildPrefillUrl(){
   return `${CLAIM_FORM.baseUrl}?${params.toString()}`;
 }
 
-function goSubmitNewPicks(){
+async function goSubmitNewPicks(){
+  if(submissionBackendReady){
+    const before = shortlist.join(',');
+    try{
+      await refreshLiveCapacity({pruneShortlist:true, notify:true});
+    }catch(err){
+      showToast('Could not refresh live availability. Please try again.');
+      return;
+    }
+    if(shortlist.length === 0){
+      setPinsDrawerMode('list');
+      return;
+    }
+    if(before !== shortlist.join(',')){
+      setPinsDrawerMode('review');
+      return;
+    }
+    if(pinsDrawerOpen) closePinsDrawer();
+    showClaimForm(null);
+    return;
+  }
+
+  // Temporary fallback until the browser-safe backend deployment is live.
   const url = buildPrefillUrl();
   if(pinsDrawerOpen) closePinsDrawer();
   showClaimForm(url);
 }
 
-document.getElementById('pinsDrawerContinueBtn').addEventListener('click', () => {
+document.getElementById('pinsDrawerContinueBtn').addEventListener('click', async () => {
   if(shortlist.length === 0) return;
+  if(submissionBackendReady){
+    try{ await refreshLiveCapacity({pruneShortlist:true, notify:true}); }
+    catch(err){ showToast('Could not refresh live availability. Please try again.'); return; }
+    if(shortlist.length === 0) return;
+  }
   setPinsDrawerMode('review');
   document.getElementById('pinsDrawerClose').focus();
 });
@@ -6655,6 +7297,148 @@ document.getElementById('pinsDrawerEditBtn').addEventListener('click', () => {
 document.getElementById('reviewSubmitBtn').addEventListener('click', () => {
   if(shortlist.length === 0) return;
   goSubmitNewPicks();
+});
+
+document.getElementById('claimSubmissionForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if(!submissionBackendReady) return;
+
+  const nameInput = document.getElementById('claimStudentName');
+  const emailInput = document.getElementById('claimStudentEmail');
+  const errorEl = document.getElementById('claimSubmitError');
+  const submitBtn = document.getElementById('claimFinalSubmit');
+  const studentName = nameInput.value.trim();
+  const studentEmail = emailInput.value.trim();
+
+  errorEl.style.display = 'none';
+  if(!studentName){
+    errorEl.textContent = 'Please enter your name.';
+    errorEl.style.display = '';
+    nameInput.focus();
+    return;
+  }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(studentEmail)){
+    errorEl.textContent = 'Please enter a valid email address.';
+    errorEl.style.display = '';
+    emailInput.focus();
+    return;
+  }
+
+  const before = shortlist.join(',');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Checking availability…';
+
+  try{
+    await refreshLiveCapacity({pruneShortlist:true, notify:true});
+  }catch(err){
+    errorEl.textContent = 'Could not verify live availability. Nothing was submitted. Please try again.';
+    errorEl.style.display = '';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit selections';
+    return;
+  }
+
+  if(shortlist.length === 0 || before !== shortlist.join(',')){
+    renderNativeClaimSummary();
+    errorEl.textContent = 'Availability changed before submission. Your guaranteed list was updated; review it and submit again when ready.';
+    errorEl.style.display = '';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit selections';
+    return;
+  }
+
+  const guaranteedSnapshot = shortlist.map(id => alumni.find(a => a.id === id)).filter(Boolean);
+  const wishlistSnapshot = cart
+    .filter(id => !shortlist.includes(id))
+    .map(id => alumni.find(a => a.id === id))
+    .filter(Boolean);
+
+  const payload = {
+    action:'submit',
+    clientToken:claimClientToken,
+    name:studentName,
+    email:studentEmail,
+    guaranteed:guaranteedSnapshot.map(backendAlumPayload),
+    wishlist:wishlistSnapshot.map(backendAlumPayload)
+  };
+
+  submitBtn.textContent = 'Submitting…';
+
+  try{
+    const result = await postToSubmissionBackend(payload, claimClientToken);
+
+    if(result && result.ok){
+      showNativeSubmissionSuccess(result, guaranteedSnapshot, wishlistSnapshot, studentEmail);
+      refreshLiveCapacity({pruneShortlist:true, notify:false}).catch(() => {});
+      return;
+    }
+
+    if(result && result.error === 'CAPACITY_CHANGED'){
+      (result.unavailable || []).forEach(item => {
+        const local = alumni.find(a =>
+          (item.alumniKey && a.backendKey === item.alumniKey) ||
+          (normalizeBackendIdentity(a.name) === normalizeBackendIdentity(item.name) &&
+           normalizeBackendIdentity(a.company) === normalizeBackendIdentity(item.company))
+        );
+        if(local) local.capacity = 0;
+      });
+      applyLiveCapacityPayload({ok:true, alumni:alumni.map(a => ({
+        alumniKey:a.backendKey || '',
+        name:a.name,
+        company:a.company,
+        timestamp:a.timestamp,
+        spotsRemaining:a.capacity
+      }))}, {pruneShortlist:true, notify:true});
+      renderNativeClaimSummary();
+    }
+
+    errorEl.textContent = (result && result.message) || 'Submission failed. No spots were reserved. Please try again.';
+    errorEl.style.display = '';
+  }catch(err){
+    errorEl.textContent = err.message || 'Submission could not be confirmed. Please try again.';
+    errorEl.style.display = '';
+  }finally{
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit selections';
+  }
+});
+
+document.querySelectorAll('#claimRating button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    selectedClaimRating = Number(btn.dataset.rating);
+    document.querySelectorAll('#claimRating button').forEach(b => {
+      b.classList.toggle('active', b === btn);
+    });
+    document.getElementById('claimFeedbackSubmit').disabled = false;
+  });
+});
+
+document.getElementById('claimFeedbackSubmit').addEventListener('click', async () => {
+  if(!lastSuccessfulSubmission || !selectedClaimRating) return;
+  const btn = document.getElementById('claimFeedbackSubmit');
+  const errorEl = document.getElementById('claimFeedbackError');
+  errorEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  try{
+    const result = await postToSubmissionBackend({
+      action:'feedback',
+      submissionId:lastSuccessfulSubmission.submissionId,
+      email:lastSuccessfulSubmission.email,
+      rating:selectedClaimRating,
+      feedback:document.getElementById('claimFeedbackText').value.trim()
+    }, makeClientToken());
+
+    if(!result || !result.ok) throw new Error((result && result.message) || 'Could not save feedback.');
+    document.getElementById('claimFeedbackThanks').style.display = '';
+    btn.style.display = 'none';
+  }catch(err){
+    errorEl.textContent = err.message || 'Could not save feedback.';
+    errorEl.style.display = '';
+    btn.disabled = false;
+    btn.textContent = 'Send feedback';
+  }
 });
 
 // Clear (x) button toggles with the field's own contents - shown
@@ -6768,6 +7552,7 @@ function loadData(){
     buildFilterPanel();
     renderGrid();
     renderPinsDrawer();
+    probeSubmissionBackend();
     return;
   }
 
@@ -6785,6 +7570,7 @@ function loadData(){
     buildFilterPanel();
     renderGrid();
     renderPinsDrawer();
+    probeSubmissionBackend();
   }
 
   // Google Form question wording sometimes picks up stray double spaces
@@ -7021,6 +7807,9 @@ function showListing(contextLabel, fromHistory, categoryKey, categoryValue){
   renderGrid();
   renderPinsDrawer();
   sizeDirectorySplit();
+  if(submissionBackendReady){
+    refreshLiveCapacity({pruneShortlist:true, notify:true}).catch(() => {});
+  }
   if(!fromHistory) pushHistory({view:'listing', contextLabel, categoryKey, categoryValue});
 }
 
@@ -7048,9 +7837,19 @@ function showClaimForm(formUrl, fromHistory){
   document.getElementById('view-info').style.display = 'none';
   document.getElementById('view-claim-form').style.display = '';
   document.body.classList.remove('listing-active');
-  const separator = formUrl.includes('?') ? '&' : '?';
-  document.getElementById('claimFormFrame').src = `${formUrl}${separator}embedded=true`;
-  if(!fromHistory) pushHistory({view:'claimForm', formUrl, subTitleBeforeClaimForm});
+
+  const useNative = submissionBackendReady && !formUrl;
+  document.getElementById('claimNativeWrap').style.display = useNative ? '' : 'none';
+  document.getElementById('claimLegacyWrap').style.display = useNative ? 'none' : '';
+
+  if(useNative){
+    prepareNativeClaimForm();
+  } else if(formUrl){
+    const separator = formUrl.includes('?') ? '&' : '?';
+    document.getElementById('claimFormFrame').src = `${formUrl}${separator}embedded=true`;
+  }
+
+  if(!fromHistory) pushHistory({view:'claimForm', formUrl:formUrl || '', subTitleBeforeClaimForm});
 }
 
 function goToAllAlumni(){
