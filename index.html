@@ -881,11 +881,23 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 /* Word-based headline reveal. Each word is already in its final layout
    position, so there is no reflow and no clipping box that can truncate
    a long word like "Northwestern" on laptop widths. */
-.hero-copy h1{ max-width:none; }
+.hero-copy h1{
+  max-width:none;
+  overflow:visible;
+}
 .hero-word-line{
   display:block;
-  width:max-content;
+  width:auto;
+  max-width:none;
+  overflow:visible;
   white-space:nowrap;
+}
+@media (min-width:768px){
+  .hero-copy h1{
+    width:max-content;
+    max-width:none;
+    overflow:visible;
+  }
 }
 .hero-word{
   display:inline-block;
@@ -929,7 +941,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   to{ opacity:1; transform:translateX(0); }
 }
 .round-note{ display: none; }
-.landing-options{ display: flex; }
+.landing-options{
+  display:flex;
+  visibility:hidden;
+  opacity:0;
+  transform:translateY(8px);
+  will-change:transform,opacity;
+}
+#heroLanding.hero-text-ready .landing-options{
+  animation:landingOptionsIn 360ms cubic-bezier(.22,.8,.32,1) 360ms both;
+}
+@keyframes landingOptionsIn{
+  from{ visibility:visible; opacity:0; transform:translateY(8px); }
+  to{ visibility:visible; opacity:1; transform:translateY(0); }
+}
 .landing-option{
   background: var(--accent);
   color: #fff;
@@ -947,16 +972,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   justify-content: center;
   gap: 10px;
   overflow:hidden;
-  opacity:0;
-  transform:translateY(8px);
-  will-change:transform,opacity;
-}
-#heroLanding.hero-text-ready .landing-option{
-  animation:landingButtonIn 360ms cubic-bezier(.22,.8,.32,1) 360ms both;
-}
-@keyframes landingButtonIn{
-  from{ opacity:0; transform:translateY(8px); }
-  to{ opacity:1; transform:translateY(0); }
 }
 .landing-option-label{
   display:block;
@@ -991,7 +1006,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .hero-illustration{ transition:none; opacity:1; transform:translateX(0); }
   .hero-word{ transform:none !important; opacity:1 !important; animation:none !important; }
   .hero-lede{ transform:none !important; opacity:1 !important; animation:none !important; }
-  .landing-option{ transform:none !important; opacity:1 !important; animation:none !important; }
+  .landing-options{ visibility:visible !important; transform:none !important; opacity:1 !important; animation:none !important; }
   .landing-option-label{ transform:none !important; opacity:1 !important; animation:none !important; }
 }
 @media (max-width: 767px) and (prefers-reduced-motion: reduce){
@@ -3927,7 +3942,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-landing-word-reveal-1";
+const BUILD_VERSION = "2026-10-22-landing-word-reveal-2";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
