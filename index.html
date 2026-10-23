@@ -4362,7 +4362,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-capability-based-backend-probe-21";
+const BUILD_VERSION = "2026-10-23-post-healthcheck-22";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4742,6 +4742,7 @@ let pinsDrawerReturnFocusEl = null;  // element to restore focus to when the dra
 // a safe fallback until the browser-safe Apps Script version is deployed.
 let submissionBackendReady = false;
 let submissionBackendVersion = 0;
+let submissionPostTransportReady = false;
 let capacityPollTimer = null;
 let capacityRequestInFlight = null;
 let lastCapacityRefreshAt = 0;
@@ -6923,7 +6924,6 @@ function refreshLiveCapacity(options){
         throw new Error('Unexpected capacity response.');
       }
       if(payload.backendVersion) submissionBackendVersion = Number(payload.backendVersion) || 0;
-      if(options && options.probe) submissionBackendReady = true;
       lastCapacityRefreshAt = Date.now();
       return applyLiveCapacityPayload(payload, options);
     })
@@ -6950,14 +6950,37 @@ function startCapacityPolling(){
   scheduleNext();
 }
 
+function probeSubmissionPostTransport(){
+  const token = makeClientToken();
+  return postToSubmissionBackend({
+    action:'healthcheck',
+    clientToken:token
+  }, token).then(result => {
+    const version = Number(result && result.backendVersion) || 0;
+    if(!result || !result.ok || result.postTransport !== true || version < 9){
+      throw new Error('Submission POST transport is not on the required backend version.');
+    }
+    submissionBackendVersion = version;
+    submissionPostTransportReady = true;
+    return result;
+  });
+}
+
 function probeSubmissionBackend(){
-  // The capacity endpoint is the capability we actually need. Older
-  // compatible deployments may not report a backendVersion field, so
-  // version metadata is diagnostic only and never blocks students.
+  submissionBackendReady = false;
+  submissionPostTransportReady = false;
+
+  // First verify read access, then verify the exact POST path used by real
+  // submissions. Students are only enabled after both succeed.
   refreshLiveCapacity({probe:true, pruneShortlist:true, notify:false})
-    .then(() => startCapacityPolling())
+    .then(() => probeSubmissionPostTransport())
+    .then(() => {
+      submissionBackendReady = true;
+      startCapacityPolling();
+    })
     .catch(err => {
       submissionBackendReady = false;
+      submissionPostTransportReady = false;
       if(capacityPollTimer){
         clearTimeout(capacityPollTimer);
         capacityPollTimer = null;
@@ -7028,7 +7051,7 @@ function postToSubmissionBackend(payload, responseToken){
   // reliably across that redirect. We do NOT depend on the iframe response:
   // v7 writes the terminal result under clientToken and JSONP polling below
   // confirms the outcome as soon as the locked reservation commits.
-  if(payload && payload.action === 'submit'){
+  if(payload && (payload.action === 'submit' || payload.action === 'healthcheck')){
     return new Promise((resolve, reject) => {
       if(pendingBackendPost){
         reject(new Error('Another submission request is still in progress.'));
@@ -7065,7 +7088,7 @@ function postToSubmissionBackend(payload, responseToken){
             return;
           }
 
-          if(status && status.ok && status.found && status.status === 'ACTIVE'){
+          if(payload.action === 'submit' && status && status.ok && status.found && status.status === 'ACTIVE'){
             finish({
               ok:true,
               submissionId:status.submissionId,
@@ -7085,17 +7108,21 @@ function postToSubmissionBackend(payload, responseToken){
       // v7 can wait up to 15s for the shared reservation lock during a burst.
       // Keep the browser alive longer than that so it cannot time out before
       // the backend has had a chance to return its definitive result.
-      const timer = setTimeout(async () => {
-        if(!pendingBackendPost || pendingBackendPost.token !== token) return;
-        await verify();
+      const isHealthcheck = payload.action === 'healthcheck';
+      const confirmationTimeoutMs = isHealthcheck ? 6000 : 20000;
+      const timer = setTimeout(() => {
         if(!pendingBackendPost || pendingBackendPost.token !== token) return;
         finish(
-          new Error('We could not confirm the submission yet. Please check the sheet or confirmation email before trying again.'),
+          new Error(
+            isHealthcheck
+              ? 'Submission POST health check failed.'
+              : 'We could not confirm the submission yet. Please check the sheet or confirmation email before trying again.'
+          ),
           true
         );
-      }, 22000);
+      }, confirmationTimeoutMs);
 
-      const poller = setInterval(verify, 900);
+      const poller = setInterval(verify, isHealthcheck ? 500 : 900);
       pendingBackendPost = {token, resolve, reject, timer, poller};
 
       form.submit();
@@ -7565,7 +7592,7 @@ function buildPrefillUrl(){
 }
 
 async function goSubmitNewPicks(){
-  if(submissionBackendReady){
+  if(submissionBackendReady && submissionPostTransportReady){
     const before = shortlist.join(',');
     showSubmissionProcessing('Confirming availability');
 
