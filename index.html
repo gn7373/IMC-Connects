@@ -610,7 +610,10 @@ header.site{
   font-weight:600;
   line-height:1.45;
 }
-.claim-success-panel > p{ text-align:center; }
+.claim-success-panel > p{
+  margin-top:4px;
+  text-align:center;
+}
 .claim-summary-section{ margin-top:22px; }
 .claim-summary-label{
   margin-bottom:10px;
@@ -741,20 +744,28 @@ header.site{
   opacity:.48;
   cursor:not-allowed;
 }
+.claim-native-wrap.success-mode{
+  padding-top:64px;
+}
 .claim-success-panel{
   text-align:left;
-  padding-top:22px;
-  padding-bottom:20px;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
 }
 .claim-success-panel[style*="display: none"]{ opacity:0; }
 .claim-success-panel:not([style*="display: none"]){
-  animation:claimSuccessIn 180ms ease-out both;
+  animation:none;
 }
-@keyframes claimSuccessIn{
-  from{ opacity:.72; }
-  to{ opacity:1; }
+.claim-success-email-icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:12px auto 2px;
+  color:#4E2A84;
 }
-.claim-success-matches{ margin-top:14px; }
+.claim-success-matches{ margin-top:16px; }
 .claim-submission-id{
   margin-top:10px;
   font-family:'Inter',sans-serif;
@@ -892,9 +903,11 @@ body.submission-processing{ overflow:hidden; }
 }
 @media (min-width:701px) and (max-height:850px){
   .claim-native-wrap{ padding-top:14px; padding-bottom:18px; }
-  .claim-success-panel{ padding:18px 24px 16px; }
+  .claim-native-wrap.success-mode{ padding-top:42px; }
+  .claim-success-panel{ padding:0; }
   .claim-success-panel h2{ font-size:24px; }
-  .claim-success-panel > p{ margin-top:5px; }
+  .claim-success-email-icon{ margin-top:8px; }
+  .claim-success-panel > p{ margin-top:2px; }
   .claim-success-matches{ margin-top:10px; gap:6px; }
   .claim-success-panel .claim-summary-item{ padding:7px 11px; }
   .claim-submission-id{ margin-top:7px; }
@@ -4193,6 +4206,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 
     <section id="claimSuccessPanel" class="claim-native-card claim-success-panel" style="display:none">
       <h2>Submission Successful.</h2>
+      <div class="claim-success-email-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+          <path d="M4 7l8 6 8-6"></path>
+        </svg>
+      </div>
       <p id="claimSuccessMessage">A confirmation receipt will be sent to your email.</p>
       <div id="claimSuccessMatches" class="claim-summary-list claim-success-matches"></div>
       <div class="claim-submission-id" id="claimSubmissionId"></div>
@@ -4403,7 +4422,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-instant-confirm-handoff-26";
+const BUILD_VERSION = "2026-10-23-fast-submit-open-success-27";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -7108,6 +7127,13 @@ function verifySubmittedToken(clientToken, email){
   );
 }
 
+function verifySubmittedTokenFast(clientToken){
+  return backendJsonp(
+    {action:'submissionFastStatus', token:clientToken},
+    {timeoutMs:2200, retries:0}
+  );
+}
+
 function postToSubmissionBackend(payload, responseToken){
   // Submissions use a hidden form POST because Apps Script web apps redirect
   // internally and normal browser form navigation preserves the POST body
@@ -7129,6 +7155,7 @@ function postToSubmissionBackend(payload, responseToken){
       document.getElementById('submissionPayload').value = JSON.stringify(payload);
 
       let statusCheckInFlight = false;
+      const verificationStartedAt = Date.now();
 
       const finish = (result, isError) => {
         if(!pendingBackendPost || pendingBackendPost.token !== token) return;
@@ -7144,14 +7171,21 @@ function postToSubmissionBackend(payload, responseToken){
         if(statusCheckInFlight) return;
         statusCheckInFlight = true;
         try{
-          const status = await verifySubmittedToken(payload.clientToken, payload.email);
+          const canUseFastStatus =
+            payload.action === 'submit' &&
+            submissionBackendVersion >= 10 &&
+            Date.now() - verificationStartedAt < 7000;
+
+          const status = canUseFastStatus
+            ? await verifySubmittedTokenFast(payload.clientToken)
+            : await verifySubmittedToken(payload.clientToken, payload.email);
 
           if(status && status.ok && status.requestComplete && status.result){
             finish(status.result, false);
             return;
           }
 
-          if(payload.action === 'submit' && status && status.ok && status.found && status.status === 'ACTIVE'){
+          if(!canUseFastStatus && payload.action === 'submit' && status && status.ok && status.found && status.status === 'ACTIVE'){
             finish({
               ok:true,
               submissionId:status.submissionId,
@@ -7160,9 +7194,8 @@ function postToSubmissionBackend(payload, responseToken){
             }, false);
           }
         }catch(err){
-          // Apps Script may still be queued or processing. Keep polling until
-          // the confirmation window ends; do not turn a transient read into
-          // a false submission failure.
+          // Keep polling. Fast status is cache-only and the full status
+          // endpoint remains the fallback if the cache is delayed or missed.
         }finally{
           statusCheckInFlight = false;
         }
@@ -7185,11 +7218,11 @@ function postToSubmissionBackend(payload, responseToken){
         );
       }, confirmationTimeoutMs);
 
-      const poller = setInterval(verify, isHealthcheck ? 500 : 900);
+      const poller = setInterval(verify, isHealthcheck ? 500 : 400);
       pendingBackendPost = {token, resolve, reject, timer, poller};
 
       form.submit();
-      setTimeout(verify, 350);
+      setTimeout(verify, isHealthcheck ? 350 : 250);
     });
   }
 
@@ -7264,6 +7297,7 @@ function renderNativeClaimSummary(){
 }
 
 function prepareNativeClaimForm(){
+  document.getElementById('claimNativeWrap').classList.remove('success-mode');
   claimClientToken = makeClientToken();
   selectedClaimRating = 0;
   lastSuccessfulSubmission = null;
@@ -7285,6 +7319,7 @@ function prepareNativeClaimForm(){
 }
 
 function showNativeSubmissionSuccess(result, guaranteedSnapshot, wishlistSnapshot, studentEmail){
+  document.getElementById('claimNativeWrap').classList.add('success-mode');
   lastSuccessfulSubmission = {
     submissionId:result.submissionId || '',
     email:studentEmail,
