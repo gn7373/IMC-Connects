@@ -605,6 +605,15 @@ header.site{
   border-radius:14px;
   padding:24px 28px;
 }
+/* Confirmation page lives directly on the page canvas; only the individual
+   alumni rows remain carded. The success panel already uses the same flat
+   treatment separately below. */
+#claimSubmitPanel{
+  background:transparent;
+  border:0;
+  border-radius:0;
+  padding:0;
+}
 .claim-native-heading h2,
 .claim-success-panel h2{
   margin:0;
@@ -632,12 +641,17 @@ header.site{
 .claim-summary-label{
   margin-bottom:10px;
   font-family:'Inter',sans-serif;
-  font-size:20px;
-  font-weight:600;
+  font-size:13px;
+  font-weight:700;
   line-height:1.2;
   letter-spacing:0;
   text-transform:none;
   color:var(--ink);
+}
+.claim-summary-label-note{
+  font-size:10.5px;
+  font-weight:500;
+  color:var(--muted);
 }
 .claim-summary-list{
   display:flex;
@@ -657,6 +671,7 @@ header.site{
 .claim-summary-item-name{
   font-family:'Libre Baskerville',serif;
   font-size:15px;
+  font-weight:700;
   color:var(--ink);
 }
 .claim-summary-item-company{
@@ -683,8 +698,8 @@ header.site{
   grid-template-columns:1fr 1fr;
   gap:14px;
   margin-top:22px;
-  padding-top:20px;
-  border-top:1px solid var(--border);
+  padding-top:0;
+  border-top:0;
 }
 .claim-field{
   display:flex;
@@ -4227,9 +4242,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
       </div>
 
       <div class="claim-summary-section" id="claimWishlistSection" style="display:none">
-        <div class="claim-summary-label">Wishlist</div>
+        <div class="claim-summary-label">Wishlist <span class="claim-summary-label-note">(not guaranteed)</span></div>
         <div id="claimWishlistList" class="claim-summary-list claim-summary-list-muted"></div>
-        <p class="claim-summary-note">Alumni on your wishlist are not guaranteed matches.</p>
       </div>
 
       <form id="claimSubmissionForm" class="claim-native-form" novalidate>
@@ -4473,7 +4487,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-hero-image-zoom-reveal-34";
+const BUILD_VERSION = "2026-10-23-flat-confirmation-layout-35";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
