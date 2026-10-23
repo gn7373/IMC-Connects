@@ -588,9 +588,10 @@ header.site{
   margin:0;
   font-family:'Baskerville','Libre Baskerville',serif;
   font-size:26px;
-  font-weight:400;
+  font-weight:700;
   color:var(--ink);
 }
+.claim-native-heading h2{ text-align:center; }
 .claim-native-heading p,
 .claim-success-panel > p{
   margin:10px 0 0;
@@ -600,12 +601,13 @@ header.site{
 }
 .claim-summary-section{ margin-top:26px; }
 .claim-summary-label{
-  margin-bottom:9px;
-  font-size:13px;
+  margin-bottom:12px;
+  font-size:26px;
   font-weight:600;
+  line-height:1.15;
   letter-spacing:0;
   text-transform:none;
-  color:var(--muted);
+  color:var(--ink);
 }
 .claim-summary-list{
   display:flex;
@@ -795,13 +797,37 @@ header.site{
 
 /* ---------- REVIEW YOUR PINNED ALUMNI ---------- */
 .review-intro{
-  color: var(--muted);
-  font-size: 16px;
-  line-height: 1.6;
-  margin: 24px 0 28px;
-  text-wrap: pretty;
+  color:var(--ink);
+  font-family:'Inter', sans-serif;
+  font-size:15px;
+  font-weight:600;
+  line-height:1.45;
+  margin:10px 0 24px;
+  text-wrap:pretty;
 }
-.review-list{ display: flex; flex-direction: column; gap: 10px; }
+.review-list{ display:flex; flex-direction:column; gap:10px; }
+#pinsDrawerReviewPane,
+#pinsDrawerReviewFooter{
+  transition:opacity 180ms ease, transform 180ms ease;
+}
+#pinsDrawer.review-advancing #pinsDrawerReviewPane,
+#pinsDrawer.review-advancing #pinsDrawerReviewFooter{
+  opacity:.38;
+  transform:translateX(-8px);
+  pointer-events:none;
+}
+@keyframes claimStepIn{
+  from{ opacity:0; transform:translateY(10px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+#claimNativeWrap .claim-native-card{
+  animation:claimStepIn 260ms cubic-bezier(.22,.8,.32,1) both;
+}
+@media (prefers-reduced-motion:reduce){
+  #claimNativeWrap .claim-native-card{ animation:none; }
+  #pinsDrawerReviewPane,
+  #pinsDrawerReviewFooter{ transition:none; }
+}
 /* Compact horizontal row (2026-10-21, per request) - checkbox/checkmark,
    then the text column (name/title/company, each its own line), left to
    right in one row, rather than the checkbox/remove button floating
@@ -940,16 +966,18 @@ header.site{
   border-top: 2px solid var(--line);
 }
 .review-back-btn{
-  background: none;
-  border: none;
-  color: var(--muted);
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 0;
-  white-space: nowrap;
+  background:var(--accent);
+  border:none;
+  border-radius:20px;
+  color:#fff;
+  font-family:'Inter', sans-serif;
+  font-size:14px;
+  font-weight:500;
+  cursor:pointer;
+  padding:8px 16px;
+  white-space:nowrap;
 }
-.review-back-btn:hover{ color: var(--ink); }
+.review-back-btn:hover{ background:var(--accent-deep); color:#fff; }
 @media (max-width: 700px){
   .review-actions{ flex-direction: column-reverse; align-items: stretch; }
   .review-actions .submit-btn{ justify-content: center; }
@@ -3024,6 +3052,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   font-size: 21px;
   margin: 0;
 }
+.pins-drawer.review-mode .pins-drawer-header{
+  justify-content:flex-end;
+  border-bottom:0;
+  padding-bottom:0;
+}
+.pins-drawer.review-mode #pinsDrawerTitle{ display:none; }
 .pins-drawer-close{
   background: none;
   border: none;
@@ -3058,12 +3092,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    to .review-back-btn's own 14px. */
 #pinsDrawerReviewFooter{ flex-wrap: nowrap; }
 #pinsDrawerReviewFooter .submit-btn{
-  width: auto;
-  flex-shrink: 0;
-  font-size: 14px;
-  padding: 8px 16px;
-  letter-spacing: normal;
+  width:auto;
+  flex-shrink:0;
+  font-size:14px;
+  padding:8px 16px;
+  letter-spacing:normal;
+  background:var(--accent);
 }
+#pinsDrawerReviewFooter .submit-btn:hover{ background:var(--accent-deep); }
 .pins-drawer-continue-exploring{
   background: none;
   border: none;
@@ -4019,7 +4055,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
       <div class="claim-summary-section" id="claimWishlistSection" style="display:none">
         <div class="claim-summary-label">Wishlist</div>
         <div id="claimWishlistList" class="claim-summary-list claim-summary-list-muted"></div>
-        <p class="claim-summary-note">Wishlist alumni do not reserve capacity.</p>
+        <p class="claim-summary-note">Alumni on your wishlist are not guaranteed matches.</p>
       </div>
 
       <form id="claimSubmissionForm" class="claim-native-form" novalidate>
@@ -4188,11 +4224,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   </div>
 
   <div class="pins-drawer-body" id="pinsDrawerReviewPane" style="display:none">
-    <p class="review-intro">These are the alumni you're submitting for coffee-chat introductions. You can submit up to 3.</p>
+    <p class="review-intro">These are your top picks for coffee chat introductions. You can submit up to 3.</p>
     <div id="reviewList" class="review-list"></div>
   </div>
   <div class="pins-drawer-footer" id="pinsDrawerReviewFooter" style="display:none">
-    <button class="review-back-btn" id="pinsDrawerEditBtn">← Edit my list</button>
+    <button class="review-back-btn" id="pinsDrawerEditBtn">← Back</button>
     <button class="submit-btn" id="reviewSubmitBtn">Continue →</button>
   </div>
 </aside>
@@ -4243,7 +4279,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-submission-handshake-11";
+const BUILD_VERSION = "2026-10-22-list-cap-review-ui-12";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4471,9 +4507,10 @@ const SUBMISSION_BACKEND = {
   capacityPollMs: 12000
 };
 
-// Caps the SHORTLIST only - "my list" (cart, below) itself remains
-// unlimited; this gates how many alumni can be submitted for introductions.
+// Up to 3 alumni can be guaranteed. My List can contain up to 8 total;
+// everyone not chosen for the guaranteed shortlist becomes wishlist.
 const MAX_PICKS = 3;
+const MAX_MY_LIST = 8;
 
 // ------------------------------------------------------------
 // SAMPLE DATA — used automatically for previewing/design purposes
@@ -4610,7 +4647,7 @@ const SAMPLE_ROWS = [
 
 let alumni = [];       // normalized alumni records
 let filterState = {};  // { categoryKey: Set of active filter values }
-let cart = [];         // unordered array of ids added to "my list" - unlimited size (2026-10-17)
+let cart = [];         // unordered array of ids added to "my list" - capped at MAX_MY_LIST
 let shortlist = [];    // subset of cart's ids marked for the final Review & Submit step - capped at MAX_PICKS
 let pinsDrawerOpen = false;
 let pinsDrawerMode = 'list';         // 'list' | 'review' - two states of the same drawer, not separate pages
@@ -7040,8 +7077,8 @@ function showToast(msg, type, alignEl){
   setTimeout(() => toast.classList.remove('show'), duration);
 }
 
-// "My list" (cart) is unlimited (2026-10-17) - the old 5-max lived here,
-// at add-time; it now only applies to the shortlist, below.
+// My List holds up to 8 alumni total. Up to 3 can be guaranteed;
+// everyone else is stored as wishlist at final submission.
 function toggleCart(id){
   const idx = cart.indexOf(id);
   let inList;
@@ -7051,6 +7088,10 @@ function toggleCart(id){
     if(sIdx !== -1) shortlist.splice(sIdx, 1);
     inList = false;
   } else {
+    if(cart.length >= MAX_MY_LIST){
+      showToast(`My List can hold up to ${MAX_MY_LIST} alumni. Remove someone before adding another.`);
+      return;
+    }
     cart.push(id);
     inList = true;
   }
@@ -7154,7 +7195,10 @@ function renderPinCardsInto(containerId, ids, opts){
   }).join('');
 
   list.querySelectorAll('.review-card-remove').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (event) => {
+      // A remove click on a grayed-out card is valid. Do not let it bubble
+      // into the card-level "you already chose 3" warning handler.
+      event.stopPropagation();
       toggleCart(parseInt(btn.dataset.id, 10));
     });
   });
@@ -7168,7 +7212,10 @@ function renderPinCardsInto(containerId, ids, opts){
   // what lets a tap/click on a grayed-out card trigger the shake +
   // message feedback instead of just silently doing nothing.
   list.querySelectorAll('.review-card[data-at-cap]').forEach(card => {
-    card.addEventListener('click', () => showShortlistCapFeedback());
+    card.addEventListener('click', (event) => {
+      if(event.target.closest('.review-card-remove')) return;
+      showShortlistCapFeedback();
+    });
   });
 }
 
@@ -7264,12 +7311,15 @@ function renderPinsDrawer(){
 function setPinsDrawerMode(mode){
   pinsDrawerMode = mode;
   const isReview = mode === 'review';
+  const drawer = document.getElementById('pinsDrawer');
+  drawer.classList.toggle('review-mode', isReview);
+  drawer.classList.remove('review-advancing');
   document.getElementById('pinsDrawerListPane').style.display = isReview ? 'none' : '';
   document.getElementById('pinsDrawerListFooter').style.display = isReview ? 'none' : '';
   document.getElementById('pinsDrawerReviewPane').style.display = isReview ? '' : 'none';
   document.getElementById('pinsDrawerReviewFooter').style.display = isReview ? '' : 'none';
   document.getElementById('pinsDrawerTitle').firstChild.textContent = isReview
-    ? 'Your submission'
+    ? ''
     : (cart.length > MAX_PICKS
         ? 'Select up to 3 alums to submit. The rest stay on your wish list.'
         : 'Your list');
@@ -7384,9 +7434,23 @@ document.getElementById('pinsDrawerEditBtn').addEventListener('click', () => {
   setPinsDrawerMode('list');
   document.getElementById('pinsDrawerClose').focus();
 });
-document.getElementById('reviewSubmitBtn').addEventListener('click', () => {
+document.getElementById('reviewSubmitBtn').addEventListener('click', async (event) => {
   if(shortlist.length === 0) return;
-  goSubmitNewPicks();
+  const btn = event.currentTarget;
+  const drawer = document.getElementById('pinsDrawer');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Checking…';
+  drawer.classList.add('review-advancing');
+  try{
+    await goSubmitNewPicks();
+  }finally{
+    if(document.contains(btn)){
+      btn.disabled = shortlist.length === 0;
+      btn.textContent = originalText;
+    }
+    drawer.classList.remove('review-advancing');
+  }
 });
 
 document.getElementById('claimFormBack').addEventListener('click', () => {
