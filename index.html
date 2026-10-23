@@ -762,8 +762,13 @@ header.site{
   display:flex;
   align-items:center;
   justify-content:center;
-  margin:12px auto 2px;
+  margin:14px auto 6px;
   color:#4E2A84;
+}
+.claim-success-email-icon svg{
+  width:66px;
+  height:66px;
+  display:block;
 }
 .claim-success-matches{ margin-top:16px; }
 .claim-submission-id{
@@ -4232,9 +4237,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <section id="claimSuccessPanel" class="claim-native-card claim-success-panel" style="display:none">
       <h2>Submission Successful.</h2>
       <div class="claim-success-email-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="5" width="18" height="14" rx="2"></rect>
-          <path d="M4 7l8 6 8-6"></path>
+        <svg viewBox="0 0 64 64" width="66" height="66" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 20L32 9L46 20" fill="#E9E1F2" stroke="#4E2A84" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 22C10 20.9 10.9 20 12 20H52C53.1 20 54 20.9 54 22V46C54 47.1 53.1 48 52 48H12C10.9 48 10 47.1 10 46V22Z" fill="#F6F2EA" stroke="#4E2A84" stroke-width="2.8" stroke-linejoin="round"/>
+          <path d="M20 20H44V37C44 38.1 43.1 39 42 39H22C20.9 39 20 38.1 20 37V20Z" fill="#FFFFFF" stroke="#4E2A84" stroke-width="2.4" stroke-linejoin="round"/>
+          <path d="M10 22L24 34" stroke="#4E2A84" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M54 22L40 34" stroke="#4E2A84" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 46L26 31.5" stroke="#4E2A84" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M54 46L38 31.5" stroke="#4E2A84" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M26.5 29.5L31 34L38.5 24.8" stroke="#84C441" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
       <p id="claimSuccessMessage">A confirmation receipt will be sent to your email.</p>
@@ -4447,7 +4458,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-split-view-capacity-visible-30";
+const BUILD_VERSION = "2026-10-23-success-envelope-icon-31";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
