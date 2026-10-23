@@ -4269,7 +4269,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     </section>
   </div>
 
-  <div id="claimLegacyWrap">
+  <div id="claimLegacyWrap" style="display:none" aria-hidden="true">
     <div class="claim-form-intro">
       <p>You can submit up to 3 alumni. Your selected alumni will be prefilled below; complete the remaining form fields and submit when you're ready.</p>
     </div>
@@ -4458,7 +4458,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-explicit-picks-no-success-divider-32";
+const BUILD_VERSION = "2026-10-23-native-submit-all-devices-33";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -8357,37 +8357,24 @@ function showListing(contextLabel, fromHistory, categoryKey, categoryValue){
   if(!fromHistory) pushHistory({view:'listing', contextLabel, categoryKey, categoryValue});
 }
 
-// Embeds the sign-up Google Form in-site (2026-10-19, per request) -
-// "embedded=true" is the Form's own supported mode for exactly this;
-// it keeps rendering inside this iframe (including Google's own post-
-// submission confirmation screen) rather than ever navigating the
-// parent page away. formUrl already carries whatever prefill params
-// the caller built (buildPrefillUrl() for a fresh submission, or the
-// bare base form for "edit my response") - this just adds embedded=true
-// on top and swaps the view.
-function showClaimForm(formUrl, fromHistory){
+// Native IMC Connects submission view. The legacy embedded Google Form
+// is no longer a runtime fallback on any device; a slow backend probe must
+// never send mobile users into a different submission experience.
+function showClaimForm(_formUrl, fromHistory){
   window.scrollTo(0, 0);
   if(currentView !== 'claimForm'){
     subTitleBeforeClaimForm = document.getElementById('subTitle').textContent;
   }
 
-  const useNative = submissionBackendReady && !formUrl;
   const claimView = document.getElementById('view-claim-form');
   const nativeWrap = document.getElementById('claimNativeWrap');
   const legacyWrap = document.getElementById('claimLegacyWrap');
 
-  // Build the destination while it is still hidden so the browser never
-  // paints an empty/partial confirmation card and then visibly reflows it.
+  // Build the native destination while hidden, then reveal it in one frame.
   claimView.style.display = 'none';
-  nativeWrap.style.display = useNative ? '' : 'none';
-  legacyWrap.style.display = useNative ? 'none' : '';
-
-  if(useNative){
-    prepareNativeClaimForm();
-  } else if(formUrl){
-    const separator = formUrl.includes('?') ? '&' : '?';
-    document.getElementById('claimFormFrame').src = `${formUrl}${separator}embedded=true`;
-  }
+  nativeWrap.style.display = '';
+  legacyWrap.style.display = 'none';
+  prepareNativeClaimForm();
 
   currentView = 'claimForm';
   document.getElementById('heroLanding').style.display = 'none';
@@ -8400,10 +8387,9 @@ function showClaimForm(formUrl, fromHistory){
   document.getElementById('view-info').style.display = 'none';
   document.body.classList.remove('listing-active');
 
-  // One finished-frame swap.
   claimView.style.display = '';
 
-  if(!fromHistory) pushHistory({view:'claimForm', formUrl:formUrl || '', subTitleBeforeClaimForm});
+  if(!fromHistory) pushHistory({view:'claimForm', subTitleBeforeClaimForm});
 }
 
 function goToAllAlumni(){
@@ -8475,7 +8461,7 @@ window.addEventListener('popstate', (e) => {
     showInfo(state.tab, true);
   } else if(state.view === 'claimForm'){
     subTitleBeforeClaimForm = state.subTitleBeforeClaimForm;
-    showClaimForm(state.formUrl, true);
+    showClaimForm(null, true);
   }
 });
 history.replaceState({view:'landing'}, '', location.href);
