@@ -2013,17 +2013,23 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .directory-entry-spots .capacity-badge{ font-size: 13.5px; }
 .directory-entry-chevron{ color: var(--muted); flex-shrink: 0; }
 .directory-entry.selected .directory-entry-chevron{ color: var(--accent); }
-/* .directory-entry-right hidden outright now, not just its children,
-   AND the grid itself collapses to a single column (2026-10-17 bugfix)
-   - an explicit grid-template-columns track still claims its defined
-   share of the row's width even once its item is display:none (grid
-   tracks are sized independently of occupancy), so this was quietly
-   halving the name column's real width in compact mode and wrapping
-   names that had plenty of room - this is what the "names should stay
-   on one line" bug report several turns later traced back to. */
-.directory-split:not(.profile-collapsed) .directory-entry{ grid-template-columns: 1fr; }
-.directory-split:not(.profile-collapsed) .directory-entry-location-inline,
-.directory-split:not(.profile-collapsed) .directory-entry-right{ display: none; }
+/* Split laptop view: keep capacity visible in the directory even while
+   the profile panel is open. Location remains hidden to protect name
+   width, but the spots+chevron group stays visible as a compact right
+   column so live capacity changes remain noticeable in both places. */
+.directory-split:not(.profile-collapsed) .directory-entry{
+  grid-template-columns:minmax(0,1fr) auto;
+}
+.directory-split:not(.profile-collapsed) .directory-entry-location-inline{
+  display:none;
+}
+.directory-split:not(.profile-collapsed) .directory-entry-right{
+  display:flex;
+}
+.directory-split:not(.profile-collapsed) .directory-entry-spots .capacity-badge{
+  font-size:12px;
+  padding:4px 9px;
+}
 /* Shuffle-in (2026-10-17, per request) - plays once per card whenever a
    filter or sort change re-renders the list (see renderDirectoryList's
    pendingShuffle flag), so it's visually obvious something changed even
@@ -4441,7 +4447,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-live-capacity-attention-pulse-29";
+const BUILD_VERSION = "2026-10-23-split-view-capacity-visible-30";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
