@@ -4364,7 +4364,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-scaled-capacity-polling-16";
+const BUILD_VERSION = "2026-10-23-live-capacity-add-guard-16";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6497,10 +6497,11 @@ function updateProfileAvailability(a){
   const el = document.querySelector('.profile-availability');
   if(!el) return;
   const inCart = cart.includes(a.id);
+  const unavailable = Number(a.capacity) <= 0 && !inCart;
   el.innerHTML = `
     ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
-    <button class="add-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name} from my list` : `Add ${a.name} to my list`}">
-      ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>
+    <button class="add-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name} from my list` : unavailable ? `${a.name} is fully booked` : `Add ${a.name} to my list`}" ${unavailable ? 'disabled' : ''}>
+      ${inCart ? CHECK_ICON_SVG : unavailable ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : unavailable ? 'Fully booked' : 'Add to my list'}</span>
     </button>
   `;
   const mobileSpots = document.querySelector('.mobile-profile-meta-spots');
@@ -6517,10 +6518,12 @@ function updateProfileAddButton(a){
   const btn = document.querySelector('.profile-add-btn');
   if(!btn || Number(btn.dataset.id) !== a.id) return;
   const inCart = cart.includes(a.id);
+  const unavailable = Number(a.capacity) <= 0 && !inCart;
   btn.classList.toggle('added', inCart);
+  btn.disabled = unavailable;
   btn.setAttribute('aria-pressed', String(inCart));
-  btn.setAttribute('aria-label', inCart ? `Remove ${a.name} from my list` : `Add ${a.name} to my list`);
-  btn.innerHTML = `${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>`;
+  btn.setAttribute('aria-label', inCart ? `Remove ${a.name} from my list` : unavailable ? `${a.name} is fully booked` : `Add ${a.name} to my list`);
+  btn.innerHTML = `${inCart ? CHECK_ICON_SVG : unavailable ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : unavailable ? 'Fully booked' : 'Add to my list'}</span>`;
 }
 
 // Name/role/company/location/LinkedIn - no images involved, so a plain
@@ -7237,6 +7240,11 @@ function toggleCart(id){
     if(sIdx !== -1) shortlist.splice(sIdx, 1);
     inList = false;
   } else {
+    const alumToAdd = alumni.find(a => a.id === id);
+    if(alumToAdd && Number(alumToAdd.capacity) <= 0){
+      showToast(`${alumToAdd.name} is fully booked and can't be added to My List.`);
+      return;
+    }
     if(cart.length >= MAX_MY_LIST){
       showToast(`My List can hold up to ${MAX_MY_LIST} alumni. Remove someone before adding another.`);
       return;
@@ -7389,9 +7397,17 @@ function renderPinsDrawer(){
   // If My List contains 1–3 people, all of them are automatically
   // guaranteed. Manual shortlisting only becomes necessary at 4+.
   if(cart.length <= MAX_PICKS){
-    shortlist = [...cart];
+    shortlist = cart.filter(id => {
+      const a = alumni.find(alum => alum.id === id);
+      return a && Number(a.capacity) > 0;
+    });
   } else {
-    shortlist = shortlist.filter(id => cart.includes(id)).slice(0, MAX_PICKS);
+    shortlist = shortlist
+      .filter(id => {
+        const a = alumni.find(alum => alum.id === id);
+        return cart.includes(id) && a && Number(a.capacity) > 0;
+      })
+      .slice(0, MAX_PICKS);
   }
 
   const empty = cart.length === 0;
