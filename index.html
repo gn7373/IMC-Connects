@@ -209,21 +209,15 @@ header.site{
   justify-content: flex-end;
   pointer-events: none;
   z-index: 1;
-  /* First-paint transition is readiness-driven rather than an immediate
-     keyframe. This prevents the illustration from "blinking" if its
-     image bytes finish loading after CSS animation has already begun. */
-  opacity:0;
-  transform:translateX(12px);
-  transition:
-    opacity 620ms cubic-bezier(.22,.61,.36,1) 90ms,
-    transform 620ms cubic-bezier(.22,.61,.36,1) 90ms;
+  /* Static visual foundation: like the logo/nav, the Arch is in its
+     final position from the first paint and does not participate in the
+     landing entrance animation on laptop or mobile. */
+  opacity:1;
+  transform:none;
+  transition:none;
 }
 #heroLanding.hero-text-ready .hero-copy{
   opacity:1;
-}
-#heroLanding.hero-art-ready .hero-illustration{
-  opacity:1;
-  transform:translateX(0);
 }
 .hero-illustration img{
   display: block;
@@ -934,7 +928,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   will-change:transform,opacity;
 }
 #heroLanding.hero-text-ready .hero-lede{
-  animation:heroLedeSlideIn 420ms cubic-bezier(.22,.8,.32,1) 360ms both;
+  animation:heroLedeSlideIn 420ms cubic-bezier(.22,.8,.32,1) 620ms both;
 }
 @keyframes heroLedeSlideIn{
   from{ opacity:0; transform:translateX(-24px); }
@@ -945,15 +939,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   display:flex;
   visibility:hidden;
   opacity:0;
-  transform:translateY(8px);
+  transform:translateY(14px) scale(.985);
   will-change:transform,opacity;
 }
 #heroLanding.hero-text-ready .landing-options{
-  animation:landingOptionsIn 360ms cubic-bezier(.22,.8,.32,1) 360ms both;
+  animation:landingOptionsIn 360ms cubic-bezier(.2,.82,.25,1.12) 620ms both;
 }
 @keyframes landingOptionsIn{
-  from{ visibility:visible; opacity:0; transform:translateY(8px); }
-  to{ visibility:visible; opacity:1; transform:translateY(0); }
+  from{ visibility:visible; opacity:0; transform:translateY(14px) scale(.985); }
+  to{ visibility:visible; opacity:1; transform:translateY(0) scale(1); }
 }
 .landing-option{
   background: var(--accent);
@@ -980,7 +974,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   will-change:transform,opacity;
 }
 #heroLanding.hero-text-ready .landing-option-label{
-  animation:landingLabelRise 360ms cubic-bezier(.22,.8,.32,1) 360ms both;
+  animation:landingLabelRise 360ms cubic-bezier(.22,.8,.32,1) 620ms both;
 }
 @keyframes landingLabelRise{
   from{ transform:translateY(145%); opacity:0; }
@@ -1003,7 +997,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    to minimize motion. */
 @media (prefers-reduced-motion: reduce){
   .hero-copy{ transition:none; opacity:1; transform:translateY(-50%); }
-  .hero-illustration{ transition:none; opacity:1; transform:translateX(0); }
+  .hero-illustration{ transition:none; opacity:1; transform:none; }
   .hero-word{ transform:none !important; opacity:1 !important; animation:none !important; }
   .hero-lede{ transform:none !important; opacity:1 !important; animation:none !important; }
   .landing-options{ visibility:visible !important; transform:none !important; opacity:1 !important; animation:none !important; }
@@ -1350,12 +1344,23 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   font-size: 12.5px;
   color: var(--muted);
 }
+/* The count/Sort row lives inside a listing-container with 24px side
+   padding. At single-column laptop/mobile widths the profile is hidden,
+   so that inherited padding was visibly stopping the divider short on
+   BOTH sides. Bleed only the divider-bearing wrapper through it while
+   keeping the controls at their existing x positions. */
+@media (max-width: 1023px){
+  .directory-list-header{
+    width:calc(100% + 48px);
+    margin-left:-24px;
+  }
+  .directory-list-header-inner{
+    padding-left:48px;
+    padding-right:48px;
+  }
+}
 @media (min-width: 1024px){
-  /* With the profile collapsed, the directory is the whole workspace.
-     Pull only the divider-bearing wrapper through the workspace's 24px
-     inner padding so the rule under Sort runs edge-to-edge. Double the
-     inner padding here to keep the count and Sort controls at exactly
-     their existing x positions. */
+  /* Same treatment when the desktop profile is explicitly collapsed. */
   .directory-split.profile-collapsed .directory-list-header{
     width:calc(100% + 48px);
     margin-left:-24px;
@@ -3942,7 +3947,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-landing-word-reveal-2";
+const BUILD_VERSION = "2026-10-22-static-arch-full-divider-3";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
