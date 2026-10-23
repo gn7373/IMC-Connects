@@ -233,6 +233,17 @@ header.site{
   aspect-ratio: 1672 / 941;
   object-fit: contain;
   object-position: right bottom;
+
+  /* Subtle landing entrance: start just slightly closer, then ease back
+     to the final composition. Scale only - no opacity/fade - so the image
+     never blinks or disappears while the text sequence is starting. */
+  transform:scale(1.035);
+  transform-origin:right bottom;
+  transition:transform 980ms cubic-bezier(.22,.72,.28,1);
+  will-change:transform;
+}
+#heroLanding.hero-text-ready .hero-illustration img{
+  transform:scale(1);
 }
 /* Tablet - a smaller share of the hero width (per request), same
    clamp() mechanism, just a narrower range. */
@@ -265,6 +276,9 @@ header.site{
     margin:0;
     padding:0;
     justify-content:center;
+  }
+  .hero-illustration img{
+    transform-origin:center bottom;
   }
 }
 .hero-options{
@@ -1381,6 +1395,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 @media (prefers-reduced-motion: reduce){
   .hero-copy{ transition:none; opacity:1; transform:translateY(-50%); }
   .hero-illustration{ transition:none; opacity:1; transform:none; }
+  .hero-illustration img{ transition:none !important; transform:none !important; }
   .hero-word{ transform:none !important; opacity:1 !important; animation:none !important; }
   .hero-lede{ transform:none !important; opacity:1 !important; animation:none !important; }
   .landing-options{ visibility:visible !important; transform:none !important; opacity:1 !important; animation:none !important; }
@@ -4434,9 +4449,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 if('scrollRestoration' in history) history.scrollRestoration = 'manual';
 window.scrollTo(0, 0);
 
-// Smooth first paint for the animated TEXT only. The Arch is deliberately
-// excluded from this readiness sequence: it is preloaded in <head>, eager,
-// synchronously decoded, and painted in its final state from frame one.
+// Smooth first paint for the coordinated landing entrance. The Arch image
+// is preloaded/eager and never fades; the same readiness class that starts
+// the text sequence only eases its scale from 1.035 down to its final size.
 (function prepareLandingEntrance(){
   const hero = document.getElementById('heroLanding');
   if(!hero) return;
@@ -4458,7 +4473,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-native-submit-all-devices-33";
+const BUILD_VERSION = "2026-10-23-hero-image-zoom-reveal-34";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
