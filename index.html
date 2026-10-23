@@ -1372,16 +1372,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
 }
 
-/* Single-column laptop/mobile: the directory is the whole workspace,
-   so run the divider all the way to both outer section edges. */
+/* Single-column laptop/mobile: the workspace itself is already
+   edge-to-edge, so the divider needs no artificial bleed. Keep the row
+   at 100% width; responsive inner gutters below align its controls with
+   Show filters and Review & Submit. */
 @media (max-width: 1023px){
   .directory-list-header{
-    width:calc(100% + 48px);
-    margin-left:-24px;
-  }
-  .directory-list-header-inner{
-    padding-left:48px;
-    padding-right:48px;
+    width:100%;
+    margin-left:0;
   }
 }
 /* Sort (2026-10-17, revised again) - a plain icon button here read as
@@ -3077,6 +3075,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
   .directory-list-header-inner{
     padding:9px 20px !important;
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
   }
 
   /* Mobile directory card:
@@ -3945,7 +3946,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-full-sort-divider-5";
+const BUILD_VERSION = "2026-10-22-mobile-sort-alignment-6";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
