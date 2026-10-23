@@ -4362,7 +4362,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-backend-version-handshake-21";
+const BUILD_VERSION = "2026-10-23-capability-based-backend-probe-21";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4741,9 +4741,7 @@ let pinsDrawerReturnFocusEl = null;  // element to restore focus to when the dra
 // after a JSONP capacity probe succeeds, so the existing Google Form remains
 // a safe fallback until the browser-safe Apps Script version is deployed.
 let submissionBackendReady = false;
-let submissionBackendVersionMismatch = false;
 let submissionBackendVersion = 0;
-const MIN_SUBMISSION_BACKEND_VERSION = 8;
 let capacityPollTimer = null;
 let capacityRequestInFlight = null;
 let lastCapacityRefreshAt = 0;
@@ -6924,6 +6922,7 @@ function refreshLiveCapacity(options){
       if(!payload || !payload.ok || !Array.isArray(payload.alumni)){
         throw new Error('Unexpected capacity response.');
       }
+      if(payload.backendVersion) submissionBackendVersion = Number(payload.backendVersion) || 0;
       if(options && options.probe) submissionBackendReady = true;
       lastCapacityRefreshAt = Date.now();
       return applyLiveCapacityPayload(payload, options);
@@ -6952,25 +6951,10 @@ function startCapacityPolling(){
 }
 
 function probeSubmissionBackend(){
-  backendJsonp(
-    {action:'ping'},
-    {timeoutMs:5000, retries:1}
-  )
-    .then(ping => {
-      submissionBackendVersion = Number(ping && ping.backendVersion) || 0;
-      submissionBackendVersionMismatch =
-        !ping || !ping.ok || submissionBackendVersion < MIN_SUBMISSION_BACKEND_VERSION;
-
-      if(submissionBackendVersionMismatch){
-        throw new Error(
-          'Submission backend deployment is outdated. Expected v' +
-          MIN_SUBMISSION_BACKEND_VERSION + ', received v' +
-          (submissionBackendVersion || 'unknown') + '.'
-        );
-      }
-
-      return refreshLiveCapacity({probe:true, pruneShortlist:true, notify:false});
-    })
+  // The capacity endpoint is the capability we actually need. Older
+  // compatible deployments may not report a backendVersion field, so
+  // version metadata is diagnostic only and never blocks students.
+  refreshLiveCapacity({probe:true, pruneShortlist:true, notify:false})
     .then(() => startCapacityPolling())
     .catch(err => {
       submissionBackendReady = false;
@@ -7581,11 +7565,6 @@ function buildPrefillUrl(){
 }
 
 async function goSubmitNewPicks(){
-  if(submissionBackendVersionMismatch){
-    showToast('Submission service is not on the current version. Please refresh the page or contact Gaby.');
-    return false;
-  }
-
   if(submissionBackendReady){
     const before = shortlist.join(',');
     showSubmissionProcessing('Confirming availability');
@@ -7614,10 +7593,9 @@ async function goSubmitNewPicks(){
     return true;
   }
 
-  const url = buildPrefillUrl();
-  if(pinsDrawerOpen) closePinsDrawer();
-  showClaimForm(url);
-  return true;
+  showToast('Submission service is temporarily unavailable. Please try again in a moment.');
+  probeSubmissionBackend();
+  return false;
 }
 
 document.getElementById('pinsDrawerContinueBtn').addEventListener('click', () => {
