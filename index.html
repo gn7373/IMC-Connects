@@ -2153,8 +2153,20 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   margin-left: auto;
   white-space: nowrap;
 }
+.pins-toggle-btn{
+  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
 .pins-toggle-btn:hover{ background: var(--accent-deep); border-color: var(--accent-deep); }
-.pins-toggle-btn.active{ background: var(--success-on-light); border-color: var(--success-on-light); color: #fff; }
+/* Turn Review & Submit green as soon as My List has at least one alum.
+   Opening the drawer by itself no longer changes the button's color. */
+.pins-toggle-btn.has-items,
+.pins-toggle-btn.has-items:hover{
+  background: var(--success-on-light);
+  border-color: var(--success-on-light);
+  color: #fff;
+}
+.pins-toggle-btn.active{ box-shadow:0 0 0 2px rgba(78,42,132,.12); }
+.pins-toggle-btn.has-items.active{ box-shadow:0 0 0 2px rgba(64,117,82,.14); }
 
 .result-line{
   margin-top: 14px;
@@ -4231,7 +4243,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-imc-rebrand-9";
+const BUILD_VERSION = "2026-10-22-review-submit-green-9";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -7167,6 +7179,7 @@ function renderPinsDrawer(){
   const isReview = pinsDrawerMode === 'review';
 
   const empty = cart.length === 0;
+  document.getElementById('pinsToggleBtn').classList.toggle('has-items', !empty);
   document.getElementById('pinsDrawerEmpty').style.display = empty ? '' : 'none';
   document.getElementById('pinsDrawerContinueExploring').style.display = empty ? '' : 'none';
   document.getElementById('pinsDrawerContinueBtn').disabled = shortlist.length === 0;
