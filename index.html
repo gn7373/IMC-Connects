@@ -2816,6 +2816,25 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .capacity-badge-open{ background: var(--soft-green); color: #535C55; }
 .capacity-badge-low{ background: #EEE6DA; color: #7C6B5C; }
 .capacity-badge-full{ background: #E2DFDC; color: #747681; }
+
+/* Live-capacity attention cue: only applied when the backend reports an
+   actual spot-count change. A restrained double pulse is enough to catch
+   peripheral vision while someone is reading the profile without making
+   normal polling visually noisy. */
+@keyframes capacityUpdatedPulse{
+  0%{ transform:scale(1); box-shadow:0 0 0 0 rgba(78,42,132,0); }
+  24%{ transform:scale(1.08); box-shadow:0 0 0 5px rgba(78,42,132,.13); }
+  48%{ transform:scale(1); box-shadow:0 0 0 0 rgba(78,42,132,0); }
+  70%{ transform:scale(1.05); box-shadow:0 0 0 3px rgba(78,42,132,.09); }
+  100%{ transform:scale(1); box-shadow:0 0 0 0 rgba(78,42,132,0); }
+}
+.capacity-badge.capacity-updated{
+  animation:capacityUpdatedPulse 900ms cubic-bezier(.22,.8,.32,1);
+  transform-origin:center;
+}
+@media (prefers-reduced-motion:reduce){
+  .capacity-badge.capacity-updated{ animation:none; }
+}
 /* In the review-card (My Pins drawer), the badge sits next to the name
    (see .review-card-header). On the main grid card it's relocated into
    .card-action, top-right, above the Pin button - see .card-action
@@ -4422,7 +4441,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-launch-safe-status-polling-28";
+const BUILD_VERSION = "2026-10-23-live-capacity-attention-pulse-29";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6902,10 +6921,34 @@ function backendJsonp(params, options){
   });
 }
 
+function animateCapacityChanges(changedIds){
+  if(!changedIds || !changedIds.length) return;
+
+  const pulse = el => {
+    if(!el) return;
+    el.classList.remove('capacity-updated');
+    void el.offsetWidth;
+    el.classList.add('capacity-updated');
+    setTimeout(() => el.classList.remove('capacity-updated'), 950);
+  };
+
+  changedIds.forEach(id => {
+    document
+      .querySelectorAll(`.directory-entry[data-id="${id}"] .capacity-badge`)
+      .forEach(pulse);
+  });
+
+  if(changedIds.includes(selectedAlumId)){
+    pulse(document.querySelector('.profile-availability .capacity-badge'));
+    pulse(document.querySelector('.mobile-profile-meta-spots .capacity-badge'));
+  }
+}
+
 function applyLiveCapacityPayload(payload, options){
   options = options || {};
   if(!payload || !payload.ok || !Array.isArray(payload.alumni)) return [];
 
+  const changedCapacityIds = [];
   const exact = new Map();
   const fallback = new Map();
   payload.alumni.forEach(remote => {
@@ -6924,8 +6967,12 @@ function applyLiveCapacityPayload(payload, options){
       exact.get(alumniCapacityLookupKey(a.timestamp, a.name, a.company)) ||
       fallback.get(alumniCapacityLookupKey('', a.name, a.company));
     if(!remote) return;
+    const nextCapacity = Math.max(0, Number(remote.spotsRemaining) || 0);
+    if(!options.probe && Number(a.capacity) !== nextCapacity){
+      changedCapacityIds.push(a.id);
+    }
     a.backendKey = remote.alumniKey || '';
-    a.capacity = Math.max(0, Number(remote.spotsRemaining) || 0);
+    a.capacity = nextCapacity;
     a.capacityAssumed = false;
   });
 
@@ -6953,6 +7000,10 @@ function applyLiveCapacityPayload(payload, options){
     });
     const selected = alumni.find(x => x.id === selectedAlumId);
     if(selected) updateProfileAvailability(selected);
+  }
+
+  if(changedCapacityIds.length){
+    requestAnimationFrame(() => animateCapacityChanges(changedCapacityIds));
   }
 
   if(removed.length){
