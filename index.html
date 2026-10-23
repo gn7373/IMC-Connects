@@ -890,13 +890,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   will-change:clip-path;
 }
 #heroLanding.hero-text-ready .hero-type-line-1{
-  animation:heroTypeLine1 420ms steps(9,end) 80ms both;
+  animation:heroTypeLine1 200ms steps(9,end) 60ms both;
 }
 #heroLanding.hero-text-ready .hero-type-line-2{
-  animation:heroTypeLine2 610ms steps(12,end) 500ms both;
+  animation:heroTypeLine2 330ms steps(12,end) 260ms both;
 }
 #heroLanding.hero-text-ready .hero-type-line-3{
-  animation:heroTypeLine3 460ms steps(8,end) 1110ms both;
+  animation:heroTypeLine3 240ms steps(8,end) 590ms both;
 }
 @keyframes heroTypeLine1{ to{ clip-path:inset(0 0 0 0); } }
 @keyframes heroTypeLine2{ to{ clip-path:inset(0 0 0 0); } }
@@ -909,6 +909,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   color: var(--ink);
   max-width: 450px;
   margin: 0 0 28px;
+  opacity:0;
+  transform:translateX(-24px);
+  will-change:transform,opacity;
+}
+#heroLanding.hero-text-ready .hero-lede{
+  animation:heroLedeSlideIn 420ms cubic-bezier(.22,.8,.32,1) 830ms both;
+}
+@keyframes heroLedeSlideIn{
+  from{ opacity:0; transform:translateX(-24px); }
+  to{ opacity:1; transform:translateX(0); }
 }
 .round-note{ display: none; }
 .landing-options{ display: flex; }
@@ -937,7 +947,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   will-change:transform,opacity;
 }
 #heroLanding.hero-text-ready .landing-option-label{
-  animation:landingLabelRise 430ms cubic-bezier(.22,.8,.32,1) 1500ms both;
+  animation:landingLabelRise 360ms cubic-bezier(.22,.8,.32,1) 1010ms both;
 }
 @keyframes landingLabelRise{
   from{ transform:translateY(145%); opacity:0; }
@@ -962,6 +972,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .hero-copy{ transition:none; opacity:1; transform:translateY(-50%); }
   .hero-illustration{ transition:none; opacity:1; transform:translateX(0); }
   .hero-type-line{ clip-path:none !important; animation:none !important; }
+  .hero-lede{ transform:none !important; opacity:1 !important; animation:none !important; }
   .landing-option-label{ transform:none !important; opacity:1 !important; animation:none !important; }
 }
 @media (max-width: 767px) and (prefers-reduced-motion: reduce){
@@ -3868,7 +3879,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-landing-typewriter-1";
+const BUILD_VERSION = "2026-10-22-landing-typewriter-2";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
