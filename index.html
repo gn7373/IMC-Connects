@@ -4364,7 +4364,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-22-submission-progress-overlay-15";
+const BUILD_VERSION = "2026-10-22-scaled-capacity-polling-16";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4589,7 +4589,8 @@ const CLAIM_FORM = {
 
 const SUBMISSION_BACKEND = {
   webAppUrl: "https://script.google.com/macros/s/AKfycbw1yvUUH3KoCamjcDVPzTwhWRhkpQJCNrLIKXcCUTq9Is2y5tq1Vat4ZTvDPUWFc4frjg/exec",
-  capacityPollMs: 12000
+  capacityPollMs: 30000,
+  capacityPollJitterMs: 15000
 };
 
 // Up to 3 alumni can be guaranteed. My List can contain up to 8 total;
@@ -6929,12 +6930,21 @@ function refreshLiveCapacity(options){
 }
 
 function startCapacityPolling(){
-  if(capacityPollTimer) clearInterval(capacityPollTimer);
-  capacityPollTimer = setInterval(() => {
-    if(document.visibilityState === 'visible'){
-      refreshLiveCapacity({pruneShortlist:true, notify:true}).catch(() => {});
-    }
-  }, SUBMISSION_BACKEND.capacityPollMs);
+  if(capacityPollTimer) clearTimeout(capacityPollTimer);
+
+  const scheduleNext = () => {
+    const jitter = Math.floor(Math.random() * (SUBMISSION_BACKEND.capacityPollJitterMs || 0));
+    capacityPollTimer = setTimeout(async () => {
+      if(document.visibilityState === 'visible'){
+        try{
+          await refreshLiveCapacity({pruneShortlist:true, notify:true});
+        }catch(err){}
+      }
+      scheduleNext();
+    }, SUBMISSION_BACKEND.capacityPollMs + jitter);
+  };
+
+  scheduleNext();
 }
 
 function probeSubmissionBackend(){
@@ -6943,7 +6953,7 @@ function probeSubmissionBackend(){
     .catch(() => {
       submissionBackendReady = false;
       if(capacityPollTimer){
-        clearInterval(capacityPollTimer);
+        clearTimeout(capacityPollTimer);
         capacityPollTimer = null;
       }
     });
