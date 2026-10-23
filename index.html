@@ -6881,27 +6881,27 @@ function renderNativeClaimSummary(){
     .map(id => alumni.find(a => a.id === id))
     .filter(Boolean);
 
-  guaranteedList.innerHTML = guaranteed.map(a => \`
+  guaranteedList.innerHTML = guaranteed.map(a => `
     <div class="claim-summary-item">
       <div>
-        <div class="claim-summary-item-name">\${a.name}</div>
-        \${a.company ? \`<div class="claim-summary-item-company">\${a.company}</div>\` : ''}
+        <div class="claim-summary-item-name">${a.name}</div>
+        ${a.company ? `<div class="claim-summary-item-company">${a.company}</div>` : ''}
       </div>
-      <div class="claim-summary-item-spots">\${a.capacity === 1 ? '1 spot left' : \`\${Math.max(0,a.capacity)} spots left\`}</div>
+      <div class="claim-summary-item-spots">${a.capacity === 1 ? '1 spot left' : `${Math.max(0,a.capacity)} spots left`}</div>
     </div>
-  \`).join('');
+  `).join('');
 
   const wishlistSection = document.getElementById('claimWishlistSection');
   const wishlistList = document.getElementById('claimWishlistList');
   wishlistSection.style.display = wishlist.length ? '' : 'none';
-  wishlistList.innerHTML = wishlist.map(a => \`
+  wishlistList.innerHTML = wishlist.map(a => `
     <div class="claim-summary-item">
       <div>
-        <div class="claim-summary-item-name">\${a.name}</div>
-        \${a.company ? \`<div class="claim-summary-item-company">\${a.company}</div>\` : ''}
+        <div class="claim-summary-item-name">${a.name}</div>
+        ${a.company ? `<div class="claim-summary-item-company">${a.company}</div>` : ''}
       </div>
     </div>
-  \`).join('');
+  `).join('');
 }
 
 function prepareNativeClaimForm(){
@@ -6936,14 +6936,14 @@ function showNativeSubmissionSuccess(result, guaranteedSnapshot, wishlistSnapsho
       ? 'Your spots are reserved. The confirmation email could not be verified, so keep the submission ID below for your records.'
       : 'Your spots are reserved. A confirmation receipt will be sent to your email.';
 
-  document.getElementById('claimSuccessMatches').innerHTML = guaranteedSnapshot.map(a => \`
+  document.getElementById('claimSuccessMatches').innerHTML = guaranteedSnapshot.map(a => `
     <div class="claim-summary-item">
       <div>
-        <div class="claim-summary-item-name">\${a.name}</div>
-        \${a.company ? \`<div class="claim-summary-item-company">\${a.company}</div>\` : ''}
+        <div class="claim-summary-item-name">${a.name}</div>
+        ${a.company ? `<div class="claim-summary-item-company">${a.company}</div>` : ''}
       </div>
     </div>
-  \`).join('');
+  `).join('');
   document.getElementById('claimSubmissionId').textContent =
     result.submissionId ? 'Submission ID: ' + result.submissionId : '';
 
