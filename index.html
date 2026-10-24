@@ -4510,7 +4510,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-persistent-full-state-52";
+const BUILD_VERSION = "2026-10-24-full-state-precedence-53";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6982,7 +6982,7 @@ function alumniCapacityLookupKey(timestamp, name, company){
 // fully booked alumni correctly on the very first directory render instead
 // of briefly showing the original signup capacity while Apps Script warms.
 const CAPACITY_CACHE_KEY = 'cmi-connect-capacity-v1';
-const CAPACITY_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const CAPACITY_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const KNOWN_FULL_CACHE_KEY = 'cmi-connect-known-full-v1';
 
 function cacheCapacityPayload(payload){
@@ -7064,12 +7064,21 @@ function applyCachedCapacitySnapshot(){
 
 function applyBestKnownCapacitySnapshot(){
   if(!alumni.length) return false;
-  const fullApplied = applyKnownFullSnapshot();
+
+  // A same-load live response is authoritative because it is the freshest
+  // source and can legitimately reopen an alumnus whose capacity changed.
   if(lastLiveCapacityPayload){
     applyLiveCapacityPayload(lastLiveCapacityPayload, {probe:true, pruneShortlist:true, notify:false});
     return true;
   }
-  return applyCachedCapacitySnapshot() || fullApplied;
+
+  // On cold/reload startup, apply the broader cached counts first, then
+  // overlay the persistent known-full set. This ordering is intentional:
+  // an older cached snapshot must never turn a previously confirmed-full
+  // alumnus back to "available" while the new live request is still pending.
+  const cachedApplied = applyCachedCapacitySnapshot();
+  const fullApplied = applyKnownFullSnapshot();
+  return cachedApplied || fullApplied;
 }
 
 function backendJsonp(params, options){
