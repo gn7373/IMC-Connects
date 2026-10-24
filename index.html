@@ -2653,8 +2653,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      already covers this area, so visibility:hidden preserves the scroll
      geometry without leaving interactive controls underneath. */
   #view-listing.mobile-detail-open .directory-toolbar{
-    visibility:hidden;
-    pointer-events:none;
+    visibility:visible !important;
+    pointer-events:none !important;
   }
   .profile-back-btn{ display: inline-block; }
   .profile-toolbar{ justify-content: space-between; margin-bottom: 12px; }
@@ -3456,6 +3456,71 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 0;
 }
 
+
+/* Compact laptop browse controls: use the same collapsed filter affordance
+   as mobile instead of wrapping five desktop pills across multiple rows. */
+@media (min-width: 768px) and (max-width: 1199px){
+  .mobile-filters-toggle{
+    display:inline-flex !important;
+    align-items:center !important;
+    gap:6px !important;
+    background:none !important;
+    border:1.5px solid var(--ink) !important;
+    border-radius:20px !important;
+    padding:8px 18px !important;
+    font-family:'Inter', sans-serif !important;
+    font-size:13px !important;
+    font-weight:500 !important;
+    color:var(--ink) !important;
+    cursor:pointer !important;
+    white-space:nowrap !important;
+  }
+  .toolbar-row2.mobile-filters-open .mobile-filters-toggle{
+    border-color:var(--accent) !important;
+    color:var(--accent) !important;
+  }
+
+  .filter-dropdowns{
+    display:none !important;
+    grid-column:1 / -1 !important;
+    grid-row:3 !important;
+    width:100% !important;
+  }
+  .clear-btn{ display:none !important; }
+
+  .toolbar-row2.mobile-filters-open .filter-dropdowns{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    gap:10px !important;
+    margin-top:4px !important;
+  }
+  .toolbar-row2.mobile-filters-open .filter-dropdown{
+    width:100% !important;
+  }
+  .toolbar-row2.mobile-filters-open .filter-dropdown-toggle{
+    width:100% !important;
+    justify-content:space-between !important;
+    font-size:13px !important;
+  }
+  .toolbar-row2.mobile-filters-open .filter-dropdown-panel{
+    position:relative !important;
+    inset:auto !important;
+    width:100% !important;
+    max-width:none !important;
+    margin-top:6px !important;
+    box-shadow:none !important;
+  }
+  .toolbar-row2.mobile-filters-open .filter-checkboxes,
+  .toolbar-row2.mobile-filters-open .filter-checkbox-option,
+  .toolbar-row2.mobile-filters-open .location-outside-us-toggle{
+    font-size:13px !important;
+  }
+  .pins-toggle-btn{
+    margin-left:0 !important;
+  }
+}
+
 /* ============================================================
    RESPONSIVE BROWSE/PROFILE — mobile + compact laptop
    6-mobile page.png is the spacing/layout reference.
@@ -3805,7 +3870,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     display:block;
   }
   #view-listing.mobile-detail-open .directory-toolbar{
-    visibility:hidden !important;
+    visibility:visible !important;
     pointer-events:none !important;
   }
 
@@ -4537,7 +4602,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-unified-responsive-profile-67";
+const BUILD_VERSION = "2026-10-24-compact-filter-drawer-68";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
