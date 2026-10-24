@@ -204,6 +204,7 @@ function setupSheets() {
   recalculateSpots_();
   invalidateCapacityCache_();
   rebuildGuaranteedMatches_();
+  archiveCancelledSubmissions_();
 
   SpreadsheetApp.getUi().alert(
     'IMC Connects setup complete.\n\n' +
