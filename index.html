@@ -4507,7 +4507,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-full-card-opacity-45";
+const BUILD_VERSION = "2026-10-24-instant-capacity-state-46";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6957,6 +6957,45 @@ function alumniCapacityLookupKey(timestamp, name, company){
   ].join('|');
 }
 
+// Persist the most recent live capacity snapshot so a refresh can paint
+// fully booked alumni correctly on the very first directory render instead
+// of briefly showing the original signup capacity while Apps Script warms.
+const CAPACITY_CACHE_KEY = 'cmi-connect-capacity-v1';
+const CAPACITY_CACHE_MAX_AGE_MS = 10 * 60 * 1000;
+
+function cacheCapacityPayload(payload){
+  if(!payload || !payload.ok || !Array.isArray(payload.alumni)) return;
+  try{
+    localStorage.setItem(CAPACITY_CACHE_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      payload
+    }));
+  }catch(err){}
+}
+
+function readCachedCapacityPayload(){
+  try{
+    const raw = localStorage.getItem(CAPACITY_CACHE_KEY);
+    if(!raw) return null;
+    const cached = JSON.parse(raw);
+    if(!cached || !cached.savedAt || !cached.payload) return null;
+    if(Date.now() - Number(cached.savedAt) > CAPACITY_CACHE_MAX_AGE_MS){
+      localStorage.removeItem(CAPACITY_CACHE_KEY);
+      return null;
+    }
+    return cached.payload;
+  }catch(err){
+    return null;
+  }
+}
+
+function applyCachedCapacitySnapshot(){
+  const payload = readCachedCapacityPayload();
+  if(!payload || !alumni.length) return false;
+  applyLiveCapacityPayload(payload, {probe:true, pruneShortlist:true, notify:false});
+  return true;
+}
+
 function backendJsonp(params, options){
   options = options || {};
   const timeoutMs = options.timeoutMs || 8000;
@@ -7125,6 +7164,7 @@ function refreshLiveCapacity(options){
       }
       if(payload.backendVersion) submissionBackendVersion = Number(payload.backendVersion) || 0;
       lastCapacityRefreshAt = Date.now();
+      cacheCapacityPayload(payload);
       return applyLiveCapacityPayload(payload, options);
     })
     .finally(() => { capacityRequestInFlight = null; });
@@ -7142,6 +7182,7 @@ function refreshLiveCapacityForReview(){
     }
     if(payload.backendVersion) submissionBackendVersion = Number(payload.backendVersion) || 0;
     lastCapacityRefreshAt = Date.now();
+    cacheCapacityPayload(payload);
     return applyLiveCapacityPayload(payload, {pruneShortlist:true, notify:true});
   });
 }
@@ -8194,6 +8235,7 @@ function loadData(){
     buildConversationTopicQA(alumni);
     FILTERABLE.forEach(key => filterState[key] = new Set());
     document.getElementById('roundNote').textContent = ROUND_LABEL + " (preview mode)";
+    applyCachedCapacitySnapshot();
     buildFilterPanel();
     renderGrid();
     renderPinsDrawer();
@@ -8212,6 +8254,7 @@ function loadData(){
     buildConversationTopicQA(alumni);
     FILTERABLE.forEach(key => filterState[key] = new Set());
     document.getElementById('roundNote').textContent = ROUND_LABEL;
+    applyCachedCapacitySnapshot();
     buildFilterPanel();
     renderGrid();
     renderPinsDrawer();
@@ -8639,6 +8682,11 @@ document.querySelectorAll('.faq-item').forEach(item => {
 });
 
 // (Palette is fixed — no runtime theme call needed.)
+// Start the first capacity request immediately, in parallel with the alumni
+// CSV and landing-page paint. On refresh, the cached snapshot handles the
+// first frame; this request then replaces it with current data as soon as
+// Apps Script responds.
+refreshLiveCapacity({probe:true, pruneShortlist:true, notify:false}).catch(() => {});
 showLanding();
 
 loadData();
