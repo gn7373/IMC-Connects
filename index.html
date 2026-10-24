@@ -787,21 +787,8 @@ header.site{
 .claim-success-panel:not([style*="display: none"]){
   animation:none;
 }
-.claim-success-email-icon{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  margin:18px auto 10px;
-}
-.claim-success-email-icon img,
-.claim-success-email-icon .claim-success-email-fallback{
-  display:block;
-  width:clamp(140px, 18vw, 178px);
-  height:auto;
-  max-width:100%;
-}
 #claimSuccessMessage{
-  margin:0;
+  margin:14px 0 0;
   text-align:center;
   color:var(--ink);
   font-family:'Inter',sans-serif;
@@ -944,26 +931,6 @@ body.submission-processing{ overflow:hidden; }
   .claim-form-back,
   .claim-final-submit{ flex:1 1 0; }
   .claim-feedback-submit{ width:100%; }
-
-  /* Keep the final-success visual explicit on mobile. The icon is embedded
-     directly in index.html, so phone browsers do not depend on a second
-     cached/network asset request before showing the receipt state. */
-  .claim-success-panel{ padding:0 !important; }
-  .claim-success-email-icon{
-    display:flex !important;
-    visibility:visible !important;
-    opacity:1 !important;
-    margin:18px auto 10px !important;
-  }
-  .claim-success-email-icon img,
-.claim-success-email-icon .claim-success-email-fallback{
-    display:block !important;
-    visibility:visible !important;
-    opacity:1 !important;
-    width:156px !important;
-    max-width:58vw !important;
-    height:auto !important;
-  }
   #claimSuccessMessage{
     display:block !important;
     visibility:visible !important;
@@ -976,9 +943,6 @@ body.submission-processing{ overflow:hidden; }
   .claim-native-wrap.success-mode{ padding-top:42px; }
   .claim-success-panel{ padding:0; }
   .claim-success-panel h2{ font-size:24px; }
-  .claim-success-email-icon{ margin-top:10px; margin-bottom:6px; }
-  .claim-success-email-icon img,
-.claim-success-email-icon .claim-success-email-fallback{ width:148px; }
   #claimSuccessMessage{ margin-top:0; }
   .claim-feedback-block{ margin-top:18px; padding-top:0; }
   .claim-feedback-block h3{ margin-bottom:5px; }
@@ -4303,17 +4267,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <section id="claimSuccessPanel" class="claim-native-card claim-success-panel" style="display:none">
       <div id="claimSuccessContent">
         <h2>Submission Successful</h2>
-        <div class="claim-success-email-icon" aria-hidden="true">
-          <img src="submission-envelope.png?v=20261024-42" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-          <svg class="claim-success-email-fallback" viewBox="0 0 160 120" role="presentation" aria-hidden="true" style="display:none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M36 36L80 10L124 36" fill="#E9E1F2" stroke="#4E2A84" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-            <rect x="18" y="34" width="124" height="72" rx="8" fill="#F6F2EA" stroke="#4E2A84" stroke-width="5"/>
-            <path d="M20 40L68 78C75 84 85 84 92 78L140 40" fill="none" stroke="#4E2A84" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M20 102L62 67M140 102L98 67" fill="none" stroke="#4E2A84" stroke-width="5" stroke-linecap="round"/>
-            <circle cx="119" cy="88" r="22" fill="#FFFFFF" stroke="#4E2A84" stroke-width="4"/>
-            <path d="M108 88L116 96L131 78" fill="none" stroke="#84C441" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
         <p id="claimSuccessMessage">A confirmation receipt will be sent to your email.</p>
 
         <div class="claim-feedback-block">
@@ -4526,7 +4479,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-card-click-and-icon-fallback-42";
+const BUILD_VERSION = "2026-10-24-no-success-email-icon-43";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
