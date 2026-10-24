@@ -4520,7 +4520,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-filter-photo-load-fix-57";
+const BUILD_VERSION = "2026-10-24-filter-photo-hydration-58";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6438,29 +6438,37 @@ function directoryPortraitCandidates(a){
 }
 
 function directoryPortraitHtml(a){
-  const candidates = directoryPortraitCandidates(a);
-  const encoded = encodeURIComponent(JSON.stringify(candidates));
-  return `<div class="directory-entry-photo" aria-hidden="true">
-    <img
-      src="${candidates[0] || ''}"
-      data-photo-candidates="${encoded}"
-      data-photo-index="0"
-      alt=""
-      loading="lazy"
-      decoding="async"
-      onload="this.parentElement.classList.add('has-photo');"
-      onerror="(function(img){var arr=[];try{arr=JSON.parse(decodeURIComponent(img.dataset.photoCandidates||'%5B%5D'));}catch(e){}var i=Number(img.dataset.photoIndex||0)+1;if(i<arr.length){img.dataset.photoIndex=String(i);img.src=arr[i];}else{img.style.opacity='0';}})(this)"
-    >
+  const slug = slugifyAlumName(a.name);
+  return `<div class="directory-entry-photo" aria-hidden="true" data-photo-slug="${slug}">
+    <img alt="" decoding="async">
     <span class="directory-entry-photo-fallback">${PORTRAIT_PLACEHOLDER_SVG}</span>
   </div>`;
 }
 
-function syncDirectoryPortraitState(card){
-  const img = card && card.querySelector('.directory-entry-photo img');
-  if(!img) return;
-  if(img.complete && img.naturalWidth > 0){
-    img.parentElement.classList.add('has-photo');
-  }
+function hydrateDirectoryPortrait(card, alum){
+  const wrap = card && card.querySelector('.directory-entry-photo');
+  const img = wrap && wrap.querySelector('img');
+  if(!wrap || !img) return;
+
+  const expectedSlug = slugifyAlumName(alum.name);
+  resolveAlumPhoto(alum).then(result => {
+    // Filters rebuild the card list. Never let a stale async result paint
+    // into a newer card that happens to occupy the same visual position.
+    if(!card.isConnected || wrap.dataset.photoSlug !== expectedSlug) return;
+
+    if(result && result.src){
+      img.src = result.src;
+      wrap.classList.add('has-photo');
+    }else{
+      img.removeAttribute('src');
+      wrap.classList.remove('has-photo');
+    }
+  }).catch(() => {
+    if(card.isConnected && wrap.dataset.photoSlug === expectedSlug){
+      img.removeAttribute('src');
+      wrap.classList.remove('has-photo');
+    }
+  });
 }
 
 // The left-hand list - compact identity + location/availability.
@@ -6515,10 +6523,9 @@ function renderDirectoryList(filtered){
     btn.addEventListener('pointerdown', () => preloadAlumPhotoOnDemand(a), {passive:true});
     btn.addEventListener('touchstart', () => preloadAlumPhotoOnDemand(a), {passive:true});
     list.appendChild(btn);
-    syncDirectoryPortraitState(btn);
+    hydrateDirectoryPortrait(btn, a);
   });
   enforceDirectoryListMinWidth();
-  preloadDirectoryViewportPhotos(filtered);
 }
 
 // Up/Down arrow-key navigation across the list rows - moves focus to
