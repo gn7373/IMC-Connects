@@ -4602,7 +4602,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-landing-copy-69";
+const BUILD_VERSION = "2026-10-24-empty-location-card-fix-70";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6760,7 +6760,7 @@ function renderDirectoryList(filtered){
           </div>
         </div>
       </div>
-      ${contactHtml ? `<div class="directory-entry-location-inline">${contactHtml}</div>` : '<div></div>'}
+      ${contactHtml ? `<div class="directory-entry-location-inline">${contactHtml}</div>` : ''}
       <div class="directory-entry-right">
         <div class="directory-entry-spots">${capacityBadgeHtml(a.capacity, a.capacityAssumed)}</div>
         <svg class="directory-entry-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
