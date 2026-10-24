@@ -2483,8 +2483,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 /* Location is a single flat list now (2026-10-21, per request -
    "simplify the filter... do not list every individual city... do not
-   add accordions within the four U.S. regions") - Midwest/East Coast/
-   South/West Coast are plain checkboxes, same as any other filter.
+   add accordions within the four U.S. regions") - Midwest/Northeast/
+   South/West/West Coast are plain checkboxes, same as any other filter.
    "Outside U.S." is the one remaining expandable piece - not a filter
    value itself, just a disclosure toggle for Asia/Canada/Latin America/
    Europe underneath it, and it expands straight DOWN inline (never
@@ -4520,7 +4520,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-complete-us-location-bucketing-60";
+const BUILD_VERSION = "2026-10-24-location-labels-61";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5366,20 +5366,20 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
 // bare "USA" with no city), simply isn't shown as its own checkbox -
 // "exact cities remain discoverable through the existing search bar"
 // covers that case instead of guessing a region for it.
-const US_REGIONS = ["Midwest", "East Coast", "South", "West Coast"];
+const US_REGIONS = ["Midwest", "Northeast", "South", "West/West/West Coast"];
 const US_REGION_BY_CITY = {
-  "boston": "East Coast", "cambridge": "East Coast", "new york": "East Coast",
-  "new york city": "East Coast", "nyc": "East Coast", "washington, d.c.": "East Coast",
-  "washington dc": "East Coast", "pittsburgh": "East Coast",
-  "lancaster": "East Coast", "montville": "East Coast",
+  "boston": "Northeast", "cambridge": "Northeast", "new york": "Northeast",
+  "new york city": "Northeast", "nyc": "Northeast", "washington, d.c.": "Northeast",
+  "washington dc": "Northeast", "pittsburgh": "Northeast",
+  "lancaster": "Northeast", "montville": "Northeast",
   "chicago": "Midwest", "minneapolis": "Midwest", "urbana": "Midwest",
   "deerfield": "Midwest", "columbus": "Midwest", "park ridge": "Midwest",
   "wilmette": "Midwest",
-  "los angeles": "West Coast", "bay area": "West Coast",
-  "san francisco": "West Coast", "san francisco bay area": "West Coast",
-  "salt lake city": "West Coast", "denver": "West Coast", "phoenix": "West Coast",
-  "boise": "West Coast", "reno": "West Coast", "palo alto": "West Coast",
-  "vacaville": "West Coast", "vacaville, california": "West Coast",
+  "los angeles": "West/West/West Coast", "bay area": "West/West/West Coast",
+  "san francisco": "West/West/West Coast", "san francisco bay area": "West/West/West Coast",
+  "salt lake city": "West/West/West Coast", "denver": "West/West/West Coast", "phoenix": "West/West/West Coast",
+  "boise": "West/West/West Coast", "reno": "West/West/West Coast", "palo alto": "West/West/West Coast",
+  "vacaville": "West/West/West Coast", "vacaville, california": "West/West/West Coast",
   "atlanta": "South", "houston": "South", "miami": "South",
   "san antonio": "South",
 
@@ -5394,20 +5394,20 @@ const US_REGION_BY_CITY = {
 };
 
 const US_REGION_BY_STATE = {
-  // East Coast
-  "ct":"East Coast","connecticut":"East Coast",
-  "de":"East Coast","delaware":"East Coast",
-  "dc":"East Coast","district of columbia":"East Coast",
-  "me":"East Coast","maine":"East Coast",
-  "md":"East Coast","maryland":"East Coast",
-  "ma":"East Coast","massachusetts":"East Coast",
-  "nh":"East Coast","new hampshire":"East Coast",
-  "nj":"East Coast","new jersey":"East Coast",
-  "ny":"East Coast","new york":"East Coast",
-  "pa":"East Coast","pennsylvania":"East Coast",
-  "ri":"East Coast","rhode island":"East Coast",
-  "vt":"East Coast","vermont":"East Coast",
-  "va":"East Coast","virginia":"East Coast",
+  // Northeast
+  "ct":"Northeast","connecticut":"Northeast",
+  "de":"Northeast","delaware":"Northeast",
+  "dc":"Northeast","district of columbia":"Northeast",
+  "me":"Northeast","maine":"Northeast",
+  "md":"Northeast","maryland":"Northeast",
+  "ma":"Northeast","massachusetts":"Northeast",
+  "nh":"Northeast","new hampshire":"Northeast",
+  "nj":"Northeast","new jersey":"Northeast",
+  "ny":"Northeast","new york":"Northeast",
+  "pa":"Northeast","pennsylvania":"Northeast",
+  "ri":"Northeast","rhode island":"Northeast",
+  "vt":"Northeast","vermont":"Northeast",
+  "va":"Northeast","virginia":"Northeast",
 
   // Midwest
   "il":"Midwest","illinois":"Midwest",
@@ -5438,25 +5438,25 @@ const US_REGION_BY_STATE = {
   "tx":"South","texas":"South",
   "wv":"South","west virginia":"South",
 
-  // West (labelled "West Coast" in the current UI)
-  "ak":"West Coast","alaska":"West Coast",
-  "az":"West Coast","arizona":"West Coast",
-  "ca":"West Coast","california":"West Coast",
-  "co":"West Coast","colorado":"West Coast",
-  "hi":"West Coast","hawaii":"West Coast",
-  "id":"West Coast","idaho":"West Coast",
-  "mt":"West Coast","montana":"West Coast",
-  "nv":"West Coast","nevada":"West Coast",
-  "nm":"West Coast","new mexico":"West Coast",
-  "or":"West Coast","oregon":"West Coast",
-  "ut":"West Coast","utah":"West Coast",
-  "wa":"West Coast","washington":"West Coast",
-  "wy":"West Coast","wyoming":"West Coast"
+  // West (labelled "West/West/West Coast" in the current UI)
+  "ak":"West/West/West Coast","alaska":"West/West/West Coast",
+  "az":"West/West/West Coast","arizona":"West/West/West Coast",
+  "ca":"West/West/West Coast","california":"West/West/West Coast",
+  "co":"West/West/West Coast","colorado":"West/West/West Coast",
+  "hi":"West/West/West Coast","hawaii":"West/West/West Coast",
+  "id":"West/West/West Coast","idaho":"West/West/West Coast",
+  "mt":"West/West/West Coast","montana":"West/West/West Coast",
+  "nv":"West/West/West Coast","nevada":"West/West/West Coast",
+  "nm":"West/West/West Coast","new mexico":"West/West/West Coast",
+  "or":"West/West/West Coast","oregon":"West/West/West Coast",
+  "ut":"West/West/West Coast","utah":"West/West/West Coast",
+  "wa":"West/West/West Coast","washington":"West/West/West Coast",
+  "wy":"West/West/West Coast","wyoming":"West/West/West Coast"
 };
 
 
 const US_STATE_BY_BARE_CITY = {
-  // Northeast / East Coast
+  // Northeast / Northeast
   "boston":"massachusetts","cambridge":"massachusetts",
   "new york":"new york","new york city":"new york","nyc":"new york",
   "washington dc":"district of columbia","washington, dc":"district of columbia",
@@ -5485,7 +5485,7 @@ const US_STATE_BY_BARE_CITY = {
   "charlotte":"north carolina","raleigh":"north carolina",
   "nashville":"tennessee","new orleans":"louisiana",
 
-  // West (displayed as "West Coast" in the current UI)
+  // West (displayed as "West/West/West Coast" in the current UI)
   "boise":"idaho","denver":"colorado","phoenix":"arizona",
   "salt lake city":"utah","reno":"nevada",
   "los angeles":"california","san francisco":"california",
@@ -5703,7 +5703,7 @@ function buildOutsideUSGroup(outsideUS, onAnyChange){
   return container;
 }
 
-// Location's own panel: Midwest/East Coast/South/West Coast as plain
+// Location's own panel: Midwest/Northeast/South/West/West Coast as plain
 // flat checkboxes, then "Outside U.S." as the one disclosure toggle for
 // Asia/Canada/Latin America/Europe (2026-10-21, per request).
 function buildLocationRegionGroup(values, onAnyChange){
