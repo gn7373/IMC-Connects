@@ -3457,9 +3457,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 
 /* ============================================================
-   MOBILE REDESIGN — 2026-10-21 v3
+   RESPONSIVE BROWSE/PROFILE — mobile + compact laptop
    6-mobile page.png is the spacing/layout reference.
-   Directory uses generic person icons; profile keeps real photo.
+   Below 1200px, Browse/Profile intentionally uses the exact same
+   drawer interaction and hierarchy as mobile to avoid a hybrid layout.
    ============================================================ */
 .mobile-profile-shell{ display:contents; }
 .mobile-profile-retract,
@@ -3467,7 +3468,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .mobile-profile-meta-row,
 .directory-entry-photo{ display:none; }
 
-@media (max-width: 767px){
+@media (max-width: 1199px){
   body.listing-active{
     height:auto !important;
     overflow-y:auto !important;
@@ -4536,7 +4537,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-compact-laptop-layout-66";
+const BUILD_VERSION = "2026-10-24-unified-responsive-profile-67";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
