@@ -4510,7 +4510,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-photo-sync-54";
+const BUILD_VERSION = "2026-10-24-auto-photo-discovery-55";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6409,12 +6409,32 @@ function updateClearButtonVisibility(){
   if(toolbar) toolbar.classList.toggle('has-active-filters', hasActiveFilter);
 }
 
-function directoryPortraitHtml(a){
+function directoryPortraitCandidates(a){
   const slug = slugifyAlumName(a.name);
-  const file = PHOTO_FILE_BY_SLUG[slug];
-  const cls = file ? 'directory-entry-photo has-photo' : 'directory-entry-photo';
-  return `<div class="${cls}" aria-hidden="true">
-    ${file ? `<img src="photos/${file}" alt="" loading="lazy" decoding="async">` : ''}
+  const exact = PHOTO_FILE_BY_SLUG[slug];
+  const candidates = [];
+  if(exact) candidates.push('photos/' + exact);
+  PORTRAIT_EXTS.forEach(ext => {
+    const src = 'photos/' + slug + '.' + ext;
+    if(!candidates.includes(src)) candidates.push(src);
+  });
+  return candidates;
+}
+
+function directoryPortraitHtml(a){
+  const candidates = directoryPortraitCandidates(a);
+  const encoded = encodeURIComponent(JSON.stringify(candidates));
+  return `<div class="directory-entry-photo" aria-hidden="true">
+    <img
+      src="${candidates[0] || ''}"
+      data-photo-candidates="${encoded}"
+      data-photo-index="0"
+      alt=""
+      loading="lazy"
+      decoding="async"
+      onload="this.parentElement.classList.add('has-photo');this.nextElementSibling.style.display='none';"
+      onerror="(function(img){var arr=[];try{arr=JSON.parse(decodeURIComponent(img.dataset.photoCandidates||'%5B%5D'));}catch(e){}var i=Number(img.dataset.photoIndex||0)+1;if(i<arr.length){img.dataset.photoIndex=String(i);img.src=arr[i];}else{img.style.display='none';img.nextElementSibling.style.display='';}})(this)"
+    >
     <span class="directory-entry-photo-fallback">${PORTRAIT_PLACEHOLDER_SVG}</span>
   </div>`;
 }
