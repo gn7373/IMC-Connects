@@ -2000,6 +2000,18 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   border-left: 3px solid var(--list-added);
 }
 .directory-entry.in-list .directory-entry-chevron{ color: var(--list-added); }
+/* Full alumni stay readable but recede slightly from available options. */
+.directory-entry.is-full,
+.directory-entry.is-full:hover{
+  background:#F2F1F0;
+  border-color:rgba(83,79,76,.18);
+}
+.directory-entry.is-full.selected{
+  background:#EFEEED;
+}
+.directory-entry.is-full .directory-entry-chevron{
+  color:#97938F;
+}
 .directory-entry-info{ min-width: 0; }
 .directory-entry-mobile-meta{ display:none; }
 .directory-company-mobile{ display:none; }
@@ -3083,6 +3095,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    scoped to .profile-add-btn specifically, not the shared .add-btn base,
    was 13.5px/9px 16px. */
 .profile-add-btn{ font-size: 13.5px; padding: 5px 12px; }
+.profile-add-btn.unavailable,
+.profile-add-btn.unavailable:hover{
+  background:#E7E5E3;
+  border-color:#C8C4C0;
+  color:#8A8784;
+  cursor:not-allowed;
+  opacity:1;
+}
 
 /* Card select control - a round "+" that becomes a white check once the
    alum is selected, at which point the whole card turns purple (below). */
@@ -3363,12 +3383,17 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
+  width:max-content;
+  max-width:min(560px, calc(100vw - 40px));
+  box-sizing:border-box;
   background: var(--error-red);
   color: #fff;
   padding: 14px 26px;
+  border-radius:10px;
   font-size: 16px;
+  line-height:1.35;
   text-align: center;
-  z-index: 30;
+  z-index: 1300;
   display:none;
 }
 
@@ -3442,6 +3467,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     width:100% !important;
     height:auto !important;
     overflow:hidden !important;
+  }
+  .toast{
+    width:calc(100vw - 48px);
+    max-width:420px;
+    bottom:24px;
+    padding:13px 18px;
+    font-size:14px;
   }
 
   /* Compact universal masthead. */
@@ -4479,7 +4511,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-no-success-email-icon-43";
+const BUILD_VERSION = "2026-10-24-capacity-consistency-44";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4704,8 +4736,8 @@ const CLAIM_FORM = {
 
 const SUBMISSION_BACKEND = {
   webAppUrl: "https://script.google.com/macros/s/AKfycbw1yvUUH3KoCamjcDVPzTwhWRhkpQJCNrLIKXcCUTq9Is2y5tq1Vat4ZTvDPUWFc4frjg/exec",
-  capacityPollMs: 30000,
-  capacityPollJitterMs: 15000
+  capacityPollMs: 15000,
+  capacityPollJitterMs: 5000
 };
 
 // Up to 3 alumni can be guaranteed. My List can contain up to 8 total;
@@ -6361,7 +6393,7 @@ function directoryPortraitHtml(a){
 function renderDirectoryList(filtered){
   const list = document.getElementById('directoryList');
   const countEl = document.getElementById('directoryCount');
-  if(countEl) countEl.textContent = `${filtered.length} alumni available`;
+  if(countEl) countEl.textContent = `${filtered.length} alumni`;
   const shuffle = pendingShuffle;
   pendingShuffle = false;
   list.innerHTML = '';
@@ -6376,6 +6408,7 @@ function renderDirectoryList(filtered){
     btn.className = 'directory-entry'
       + (a.id === selectedAlumId ? ' selected' : '')
       + (cart.includes(a.id) ? ' in-list' : '')
+      + (Number(a.capacity) <= 0 ? ' is-full' : '')
       + (shuffle ? ' shuffle-in' : '');
     if(shuffle) btn.style.animationDelay = Math.min(i * 16, 400) + 'ms';
     btn.dataset.id = a.id;
@@ -6632,8 +6665,8 @@ function updateProfileAvailability(a){
   const unavailable = Number(a.capacity) <= 0 && !inCart;
   el.innerHTML = `
     ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
-    <button class="add-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name} from my list` : unavailable ? `${a.name} is fully booked` : `Add ${a.name} to my list`}" ${unavailable ? 'disabled' : ''}>
-      ${inCart ? CHECK_ICON_SVG : unavailable ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : unavailable ? 'Fully booked' : 'Add to my list'}</span>
+    <button class="add-btn profile-add-btn ${inCart ? 'added' : ''} ${unavailable ? 'unavailable' : ''}" data-id="${a.id}" aria-pressed="${inCart}" aria-disabled="${unavailable}" aria-label="${inCart ? `Remove ${a.name} from my list` : unavailable ? `${a.name} is fully booked` : `Add ${a.name} to my list`}">
+      ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>
     </button>
   `;
   const mobileSpots = document.querySelector('.mobile-profile-meta-spots');
@@ -6652,10 +6685,12 @@ function updateProfileAddButton(a){
   const inCart = cart.includes(a.id);
   const unavailable = Number(a.capacity) <= 0 && !inCart;
   btn.classList.toggle('added', inCart);
-  btn.disabled = unavailable;
+  btn.classList.toggle('unavailable', unavailable);
+  btn.disabled = false;
   btn.setAttribute('aria-pressed', String(inCart));
+  btn.setAttribute('aria-disabled', String(unavailable));
   btn.setAttribute('aria-label', inCart ? `Remove ${a.name} from my list` : unavailable ? `${a.name} is fully booked` : `Add ${a.name} to my list`);
-  btn.innerHTML = `${inCart ? CHECK_ICON_SVG : unavailable ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : unavailable ? 'Fully booked' : 'Add to my list'}</span>`;
+  btn.innerHTML = `${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>`;
 }
 
 // Name/role/company/location/LinkedIn - no images involved, so a plain
@@ -7047,13 +7082,18 @@ function applyLiveCapacityPayload(payload, options){
     document.querySelectorAll('.directory-entry').forEach(entry => {
       const a = alumni.find(x => x.id === Number(entry.dataset.id));
       if(!a) return;
+      entry.classList.toggle('is-full', Number(a.capacity) <= 0);
       entry.querySelectorAll('.directory-entry-spots').forEach(el => {
         el.innerHTML = capacityBadgeHtml(a.capacity, a.capacityAssumed);
       });
     });
-    const selected = alumni.find(x => x.id === selectedAlumId);
-    if(selected) updateProfileAvailability(selected);
   }
+
+  // Always refresh the open profile after a capacity payload. renderGrid()
+  // deliberately skips rebuilding an already-open profile, so without this
+  // explicit update a sort-by-capacity refresh could leave the profile stale.
+  const selected = alumni.find(x => x.id === selectedAlumId);
+  if(selected) updateProfileAvailability(selected);
 
   if(changedCapacityIds.length){
     requestAnimationFrame(() => animateCapacityChanges(changedCapacityIds));
