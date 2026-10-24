@@ -791,27 +791,26 @@ header.site{
   display:flex;
   align-items:center;
   justify-content:center;
-  margin:14px auto 6px;
-  color:#4E2A84;
+  margin:18px auto 10px;
 }
-.claim-success-email-icon svg{
-  width:66px;
-  height:66px;
+.claim-success-email-icon img{
   display:block;
+  width:clamp(140px, 18vw, 178px);
+  height:auto;
+  max-width:100%;
 }
-.claim-success-matches{ margin-top:16px; }
-#claimSuccessMatches .claim-summary-item-name{
-  font-weight:700;
-}
-.claim-submission-id{
-  margin-top:10px;
+#claimSuccessMessage{
+  margin:0;
+  text-align:center;
+  color:var(--ink);
   font-family:'Inter',sans-serif;
-  font-size:11px;
-  color:var(--muted);
+  font-size:15px;
+  font-weight:600;
+  line-height:1.45;
 }
 .claim-feedback-block{
-  margin-top:16px;
-  padding-top:14px;
+  margin-top:26px;
+  padding-top:0;
   border-top:0;
 }
 .claim-feedback-block h3{
@@ -855,11 +854,18 @@ header.site{
   display:block;
   margin:8px 0 0 auto;
 }
-.claim-feedback-thanks{
-  margin-top:12px;
-  color:var(--list-added);
-  font-size:13px;
-  font-weight:600;
+.claim-thank-you-state{
+  min-height:55vh;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+.claim-thank-you-state h2{
+  margin:0;
+  font-family:'Libre Baskerville',serif;
+  font-size:26px;
+  font-weight:700;
+  color:var(--ink);
 }
 
 /* Full-site processing veil for availability checks and final submission.
@@ -943,12 +949,10 @@ body.submission-processing{ overflow:hidden; }
   .claim-native-wrap.success-mode{ padding-top:42px; }
   .claim-success-panel{ padding:0; }
   .claim-success-panel h2{ font-size:24px; }
-  .claim-success-email-icon{ margin-top:8px; }
-  .claim-success-panel > p{ margin-top:2px; }
-  .claim-success-matches{ margin-top:10px; gap:6px; }
-  .claim-success-panel .claim-summary-item{ padding:7px 11px; }
-  .claim-submission-id{ margin-top:7px; }
-  .claim-feedback-block{ margin-top:11px; padding-top:10px; }
+  .claim-success-email-icon{ margin-top:10px; margin-bottom:6px; }
+  .claim-success-email-icon img{ width:148px; }
+  #claimSuccessMessage{ margin-top:0; }
+  .claim-feedback-block{ margin-top:18px; padding-top:0; }
   .claim-feedback-block h3{ margin-bottom:5px; }
   .claim-rating{ margin-bottom:5px; }
   .claim-rating button{ width:30px; height:30px; font-size:27px; }
@@ -4267,36 +4271,30 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     </section>
 
     <section id="claimSuccessPanel" class="claim-native-card claim-success-panel" style="display:none">
-      <h2>Submission Successful.</h2>
-      <div class="claim-success-email-icon" aria-hidden="true">
-        <svg viewBox="0 0 64 64" width="66" height="66" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M18 20L32 9L46 20" fill="#E9E1F2" stroke="#4E2A84" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M10 22C10 20.9 10.9 20 12 20H52C53.1 20 54 20.9 54 22V46C54 47.1 53.1 48 52 48H12C10.9 48 10 47.1 10 46V22Z" fill="#F6F2EA" stroke="#4E2A84" stroke-width="2.8" stroke-linejoin="round"/>
-          <path d="M20 20H44V37C44 38.1 43.1 39 42 39H22C20.9 39 20 38.1 20 37V20Z" fill="#FFFFFF" stroke="#4E2A84" stroke-width="2.4" stroke-linejoin="round"/>
-          <path d="M10 22L24 34" stroke="#4E2A84" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M54 22L40 34" stroke="#4E2A84" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M10 46L26 31.5" stroke="#4E2A84" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M54 46L38 31.5" stroke="#4E2A84" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M26.5 29.5L31 34L38.5 24.8" stroke="#84C441" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <p id="claimSuccessMessage">A confirmation receipt will be sent to your email.</p>
-      <div id="claimSuccessMatches" class="claim-summary-list claim-success-matches"></div>
-      <div class="claim-submission-id" id="claimSubmissionId"></div>
-
-      <div class="claim-feedback-block">
-        <h3>How was your experience?</h3>
-        <div class="claim-rating" id="claimRating" role="group" aria-label="Rate your submission experience">
-          <button type="button" data-rating="1" aria-label="1 star" aria-pressed="false">★</button>
-          <button type="button" data-rating="2" aria-label="2 stars" aria-pressed="false">★</button>
-          <button type="button" data-rating="3" aria-label="3 stars" aria-pressed="false">★</button>
-          <button type="button" data-rating="4" aria-label="4 stars" aria-pressed="false">★</button>
-          <button type="button" data-rating="5" aria-label="5 stars" aria-pressed="false">★</button>
+      <div id="claimSuccessContent">
+        <h2>Submission Successful</h2>
+        <div class="claim-success-email-icon" aria-hidden="true">
+          <img src="submission-envelope.png" alt="">
         </div>
-        <textarea id="claimFeedbackText" placeholder="Optional feedback"></textarea>
-        <div class="claim-submit-error" id="claimFeedbackError" role="alert" style="display:none"></div>
-        <button type="button" class="claim-feedback-submit" id="claimFeedbackSubmit" disabled>Send feedback</button>
-        <div class="claim-feedback-thanks" id="claimFeedbackThanks" style="display:none">Thank you!</div>
+        <p id="claimSuccessMessage">A confirmation receipt will be sent to your email.</p>
+
+        <div class="claim-feedback-block">
+          <h3>How was your experience?</h3>
+          <div class="claim-rating" id="claimRating" role="group" aria-label="Rate your submission experience">
+            <button type="button" data-rating="1" aria-label="1 star" aria-pressed="false">★</button>
+            <button type="button" data-rating="2" aria-label="2 stars" aria-pressed="false">★</button>
+            <button type="button" data-rating="3" aria-label="3 stars" aria-pressed="false">★</button>
+            <button type="button" data-rating="4" aria-label="4 stars" aria-pressed="false">★</button>
+            <button type="button" data-rating="5" aria-label="5 stars" aria-pressed="false">★</button>
+          </div>
+          <textarea id="claimFeedbackText" placeholder="Optional feedback"></textarea>
+          <div class="claim-submit-error" id="claimFeedbackError" role="alert" style="display:none"></div>
+          <button type="button" class="claim-feedback-submit" id="claimFeedbackSubmit" disabled>Send feedback</button>
+        </div>
+      </div>
+
+      <div id="claimThankYouState" class="claim-thank-you-state" style="display:none">
+        <h2>Thank you!</h2>
       </div>
     </section>
   </div>
@@ -4490,7 +4488,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-reliable-fast-feedback-39";
+const BUILD_VERSION = "2026-10-24-simplified-final-success-40";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -7468,7 +7466,9 @@ function prepareNativeClaimForm(){
   document.getElementById('claimSubmissionForm').reset();
   document.getElementById('claimFeedbackText').value = '';
   document.getElementById('claimFeedbackError').style.display = 'none';
-  document.getElementById('claimFeedbackThanks').style.display = 'none';
+  document.getElementById('claimSuccessContent').style.display = '';
+  document.getElementById('claimThankYouState').style.display = 'none';
+  document.getElementById('claimFeedbackSubmit').style.display = '';
   document.getElementById('claimFeedbackSubmit').disabled = true;
   document.querySelectorAll('#claimRating button').forEach(btn => {
     btn.classList.remove('active');
@@ -7490,19 +7490,8 @@ function showNativeSubmissionSuccess(result, guaranteedSnapshot, wishlistSnapsho
   document.getElementById('claimSuccessPanel').style.display = '';
   document.getElementById('claimSuccessMessage').textContent =
     result.receiptEmailSent === false
-      ? 'Your submission is confirmed. The confirmation email could not be verified, so keep the submission ID below for your records.'
+      ? 'Your submission is confirmed, but the confirmation email could not be verified.'
       : 'A confirmation receipt will be sent to your email.';
-
-  document.getElementById('claimSuccessMatches').innerHTML = guaranteedSnapshot.map(a => `
-    <div class="claim-summary-item">
-      <div>
-        <div class="claim-summary-item-name">${a.name}</div>
-        ${a.company ? `<div class="claim-summary-item-company">${a.company}</div>` : ''}
-      </div>
-    </div>
-  `).join('');
-  document.getElementById('claimSubmissionId').textContent =
-    result.submissionId ? 'Submission ID: ' + result.submissionId : '';
 
   cart = [];
   shortlist = [];
@@ -8055,8 +8044,9 @@ document.getElementById('claimFeedbackSubmit').addEventListener('click', async (
     }, makeClientToken());
 
     if(!result || !result.ok) throw new Error((result && result.message) || 'Could not save feedback.');
-    document.getElementById('claimFeedbackThanks').style.display = '';
-    btn.style.display = 'none';
+    document.getElementById('claimSuccessContent').style.display = 'none';
+    document.getElementById('claimThankYouState').style.display = 'flex';
+    window.scrollTo(0,0);
   }catch(err){
     errorEl.textContent = err.message || 'Could not save feedback.';
     errorEl.style.display = '';
