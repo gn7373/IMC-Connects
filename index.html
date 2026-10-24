@@ -4520,7 +4520,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-state-aware-location-filter-59";
+const BUILD_VERSION = "2026-10-24-complete-us-location-bucketing-60";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5454,6 +5454,57 @@ const US_REGION_BY_STATE = {
   "wy":"West Coast","wyoming":"West Coast"
 };
 
+
+const US_STATE_BY_BARE_CITY = {
+  // Northeast / East Coast
+  "boston":"massachusetts","cambridge":"massachusetts",
+  "new york":"new york","new york city":"new york","nyc":"new york",
+  "washington dc":"district of columbia","washington, dc":"district of columbia",
+  "pittsburgh":"pennsylvania","philadelphia":"pennsylvania",
+  "lancaster":"pennsylvania","montville":"new jersey",
+  "annapolis":"maryland","hartford":"connecticut",
+
+  // Midwest
+  "chicago":"illinois","urbana":"illinois","deerfield":"illinois",
+  "park ridge":"illinois","wilmette":"illinois",
+  "minneapolis":"minnesota","columbus":"ohio",
+  "detroit":"michigan","ann arbor":"michigan","grand rapids":"michigan",
+  "milwaukee":"wisconsin","madison":"wisconsin",
+  "st louis":"missouri","st. louis":"missouri",
+  "kansas city":"missouri","indianapolis":"indiana",
+
+  // South
+  "atlanta":"georgia","houston":"texas","san antonio":"texas",
+  "dallas":"texas","austin":"texas","miami":"florida",
+  "boca raton":"florida","orlando":"florida","tampa":"florida",
+  "jacksonville":"florida","fort lauderdale":"florida",
+  "west palm beach":"florida","palm beach":"florida",
+  "fort myers":"florida","naples":"florida","sarasota":"florida",
+  "st petersburg":"florida","st. petersburg":"florida",
+  "clearwater":"florida","gainesville":"florida","tallahassee":"florida",
+  "charlotte":"north carolina","raleigh":"north carolina",
+  "nashville":"tennessee","new orleans":"louisiana",
+
+  // West (displayed as "West Coast" in the current UI)
+  "boise":"idaho","denver":"colorado","phoenix":"arizona",
+  "salt lake city":"utah","reno":"nevada",
+  "los angeles":"california","san francisco":"california",
+  "san francisco bay area":"california","bay area":"california",
+  "san diego":"california","san jose":"california","oakland":"california",
+  "sacramento":"california","palo alto":"california",
+  "mountain view":"california","sunnyvale":"california",
+  "santa clara":"california","san mateo":"california",
+  "redwood city":"california","menlo park":"california",
+  "berkeley":"california","fremont":"california",
+  "walnut creek":"california","emeryville":"california",
+  "irvine":"california","anaheim":"california",
+  "long beach":"california","santa monica":"california",
+  "pasadena":"california","burbank":"california",
+  "culver city":"california","vacaville":"california",
+  "carlsbad":"california","san luis obispo":"california",
+  "portland":"oregon","seattle":"washington"
+};
+
 function normalizeUSLocationToken(value){
   return (value || "")
     .trim()
@@ -5467,9 +5518,6 @@ function usRegionForCity(value){
   if(!raw) return null;
 
   const normalized = normalizeUSLocationToken(raw);
-
-  // First preserve explicit city overrides for bare values.
-  if(US_REGION_BY_CITY[normalized]) return US_REGION_BY_CITY[normalized];
 
   // State entered by itself, e.g. "Florida" or "FL".
   if(US_REGION_BY_STATE[normalized]) return US_REGION_BY_STATE[normalized];
@@ -5485,6 +5533,16 @@ function usRegionForCity(value){
   const tokens = normalized.split(" ");
   const trailingToken = tokens[tokens.length - 1];
   if(US_REGION_BY_STATE[trailingToken]) return US_REGION_BY_STATE[trailingToken];
+
+  // For bare cities, resolve city -> state -> region. This keeps the
+  // regional filter consistent as alumni appear in smaller cities.
+  const cityState = US_STATE_BY_BARE_CITY[normalized];
+  if(cityState && US_REGION_BY_STATE[cityState]){
+    return US_REGION_BY_STATE[cityState];
+  }
+
+  // Legacy direct override as a final fallback.
+  if(US_REGION_BY_CITY[normalized]) return US_REGION_BY_CITY[normalized];
 
   return null;
 }
@@ -5555,7 +5613,13 @@ const PROFILE_SMALL_US_CITY_STATES = {
   "boise": "Idaho",
   "reno": "Nevada",
   "annapolis": "Maryland",
-  "hartford": "Connecticut"
+  "hartford": "Connecticut",
+  "grand rapids": "Michigan",
+  "san diego": "California",
+  "san jose": "California",
+  "oakland": "California",
+  "sacramento": "California",
+  "mountain view": "California"
 };
 
 function profileLocationDisplayValue(value){
