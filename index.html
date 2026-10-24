@@ -4510,7 +4510,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-capacity-race-fix-50";
+const BUILD_VERSION = "2026-10-24-capacity-race-fix-51";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -7023,7 +7023,7 @@ function applyBestKnownCapacitySnapshot(){
     applyLiveCapacityPayload(lastLiveCapacityPayload, {probe:true, pruneShortlist:true, notify:false});
     return true;
   }
-  return applyBestKnownCapacitySnapshot();
+  return applyCachedCapacitySnapshot();
 }
 
 function backendJsonp(params, options){
@@ -8293,7 +8293,7 @@ function loadData(){
     buildConversationTopicQA(alumni);
     FILTERABLE.forEach(key => filterState[key] = new Set());
     document.getElementById('roundNote').textContent = ROUND_LABEL;
-    applyCachedCapacitySnapshot();
+    applyBestKnownCapacitySnapshot();
     buildFilterPanel();
     renderGrid();
     renderPinsDrawer();
