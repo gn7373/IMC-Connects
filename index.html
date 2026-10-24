@@ -3611,6 +3611,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-entry-photo{
     grid-area:photo;
     display:flex !important;
+    position:relative;
     width:72px !important;
     height:84px !important;
     align-self:start;
@@ -3620,17 +3621,26 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     border-radius:8px;
     background:var(--selected-bg);
   }
+  /* Keep the img in the render tree while it loads. Safari may defer a
+     lazy image indefinitely when the element itself is display:none,
+     which caused first-pass filtered results to show placeholders until
+     a second render warmed the browser cache. */
   .directory-entry-photo img{
-    display:none;
+    display:block !important;
+    position:absolute;
+    inset:0;
     width:100%;
     height:100%;
     object-fit:cover;
+    opacity:0;
   }
-  .directory-entry-photo.has-photo img{ display:block !important; }
+  .directory-entry-photo.has-photo img{ opacity:1; }
   .directory-entry-photo.has-photo .directory-entry-photo-fallback{ display:none !important; }
   .directory-entry-photo-fallback{
-    width:34px !important;
-    height:34px !important;
+    position:absolute;
+    inset:0;
+    width:100% !important;
+    height:100% !important;
     display:flex !important;
     align-items:center;
     justify-content:center;
@@ -4510,7 +4520,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-photo-sync-56";
+const BUILD_VERSION = "2026-10-24-filter-photo-load-fix-57";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6438,11 +6448,19 @@ function directoryPortraitHtml(a){
       alt=""
       loading="lazy"
       decoding="async"
-      onload="this.parentElement.classList.add('has-photo');this.nextElementSibling.style.display='none';"
-      onerror="(function(img){var arr=[];try{arr=JSON.parse(decodeURIComponent(img.dataset.photoCandidates||'%5B%5D'));}catch(e){}var i=Number(img.dataset.photoIndex||0)+1;if(i<arr.length){img.dataset.photoIndex=String(i);img.src=arr[i];}else{img.style.display='none';img.nextElementSibling.style.display='';}})(this)"
+      onload="this.parentElement.classList.add('has-photo');"
+      onerror="(function(img){var arr=[];try{arr=JSON.parse(decodeURIComponent(img.dataset.photoCandidates||'%5B%5D'));}catch(e){}var i=Number(img.dataset.photoIndex||0)+1;if(i<arr.length){img.dataset.photoIndex=String(i);img.src=arr[i];}else{img.style.opacity='0';}})(this)"
     >
     <span class="directory-entry-photo-fallback">${PORTRAIT_PLACEHOLDER_SVG}</span>
   </div>`;
+}
+
+function syncDirectoryPortraitState(card){
+  const img = card && card.querySelector('.directory-entry-photo img');
+  if(!img) return;
+  if(img.complete && img.naturalWidth > 0){
+    img.parentElement.classList.add('has-photo');
+  }
 }
 
 // The left-hand list - compact identity + location/availability.
@@ -6497,6 +6515,7 @@ function renderDirectoryList(filtered){
     btn.addEventListener('pointerdown', () => preloadAlumPhotoOnDemand(a), {passive:true});
     btn.addEventListener('touchstart', () => preloadAlumPhotoOnDemand(a), {passive:true});
     list.appendChild(btn);
+    syncDirectoryPortraitState(btn);
   });
   enforceDirectoryListMinWidth();
   preloadDirectoryViewportPhotos(filtered);
