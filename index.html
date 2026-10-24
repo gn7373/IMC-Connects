@@ -4510,7 +4510,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-fresh-capacity-gate-49";
+const BUILD_VERSION = "2026-10-24-capacity-race-fix-50";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4898,6 +4898,7 @@ let alumniDataReady = false;
 let initialFreshCapacityReady = false;
 let initialFreshCapacityFailed = false;
 let initialCapacityPromise = null;
+let lastLiveCapacityPayload = null;
 let claimClientToken = '';
 let lastSuccessfulSubmission = null;
 let selectedClaimRating = 0;
@@ -7016,6 +7017,15 @@ function applyCachedCapacitySnapshot(){
   return true;
 }
 
+function applyBestKnownCapacitySnapshot(){
+  if(!alumni.length) return false;
+  if(lastLiveCapacityPayload){
+    applyLiveCapacityPayload(lastLiveCapacityPayload, {probe:true, pruneShortlist:true, notify:false});
+    return true;
+  }
+  return applyBestKnownCapacitySnapshot();
+}
+
 function backendJsonp(params, options){
   options = options || {};
   const timeoutMs = options.timeoutMs || 8000;
@@ -7184,6 +7194,7 @@ function refreshLiveCapacity(options){
       }
       if(payload.backendVersion) submissionBackendVersion = Number(payload.backendVersion) || 0;
       lastCapacityRefreshAt = Date.now();
+      lastLiveCapacityPayload = payload;
       cacheCapacityPayload(payload);
       return applyLiveCapacityPayload(payload, options);
     })
@@ -7202,6 +7213,7 @@ function refreshLiveCapacityForReview(){
     }
     if(payload.backendVersion) submissionBackendVersion = Number(payload.backendVersion) || 0;
     lastCapacityRefreshAt = Date.now();
+    lastLiveCapacityPayload = payload;
     cacheCapacityPayload(payload);
     return applyLiveCapacityPayload(payload, {pruneShortlist:true, notify:true});
   });
@@ -8261,7 +8273,7 @@ function loadData(){
     buildConversationTopicQA(alumni);
     FILTERABLE.forEach(key => filterState[key] = new Set());
     document.getElementById('roundNote').textContent = ROUND_LABEL + " (preview mode)";
-    applyCachedCapacitySnapshot();
+    applyBestKnownCapacitySnapshot();
     buildFilterPanel();
     renderGrid();
     renderPinsDrawer();
@@ -8717,6 +8729,9 @@ initialCapacityPromise = refreshLiveCapacity({probe:true, pruneShortlist:true, n
   .then(() => {
     initialFreshCapacityReady = true;
     initialFreshCapacityFailed = false;
+    if(alumniDataReady && lastLiveCapacityPayload){
+      applyLiveCapacityPayload(lastLiveCapacityPayload, {probe:true, pruneShortlist:true, notify:false});
+    }
     if(currentView === 'listing' && alumniDataReady){
       renderGrid();
       renderPinsDrawer();
