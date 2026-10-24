@@ -4490,7 +4490,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-23-purple-serif-favicon-37";
+const BUILD_VERSION = "2026-10-24-profile-row-toggle-38";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6411,7 +6411,7 @@ function renderDirectoryList(filtered){
         <svg class="directory-entry-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
       </div>
     `;
-    btn.addEventListener('click', () => selectAlum(a.id, {openMobileDetail: true, reopenProfile: true}));
+    btn.addEventListener('click', () => selectAlum(a.id, {toggleProfile: true}));
     btn.addEventListener('mouseenter', () => preloadAlumPhotoOnDemand(a));
     btn.addEventListener('focus', () => preloadAlumPhotoOnDemand(a));
     btn.addEventListener('pointerdown', () => preloadAlumPhotoOnDemand(a), {passive:true});
@@ -6457,31 +6457,46 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Selecting an entry never rebuilds the list (so its scroll position is
-// untouched) - just swaps the .selected class and re-renders the
-// profile panel. openMobileDetail is only passed from an actual click
-// on a list entry, not from the default-selection renderGrid does on
-// load/filter-change, so landing on the directory never auto-opens the
-// mobile full-screen profile view. reopenProfile (same reasoning) only
-// comes from an actual entry click - clicking an alum while the profile
-// panel is collapsed reopens it, per request.
+// untouched) - just swaps the .selected class and re-renders the profile
+// panel when the selected alum actually changes. Real row taps use
+// toggleProfile:true: tapping a different alum opens/swaps the profile,
+// while tapping the same alum again closes the already-open profile.
+// Keyboard/default selection still passes no toggle option and therefore
+// never unexpectedly opens or closes a panel.
 function selectAlum(id, opts){
   opts = opts || {};
   const alreadySelected = selectedAlumId === id;
+  const split = document.getElementById('directorySplit');
+  const mobileMode = window.innerWidth < 1024;
+  const mobileDetailOpen = split.classList.contains('mobile-detail-open');
+  const desktopProfileOpen = !split.classList.contains('profile-collapsed');
+
   selectedAlumId = id;
   document.querySelectorAll('.directory-entry').forEach(el => {
     const isSelected = Number(el.dataset.id) === id;
     el.classList.toggle('selected', isSelected);
     el.setAttribute('aria-pressed', String(isSelected));
   });
-  // Re-clicking whoever's already selected still needs to handle
-  // opening (openMobileDetail/reopenProfile below), but must NOT rebuild
-  // the profile panel's innerHTML - that recreates the <img> from
-  // scratch, which briefly flashes/reloads the photo even though it's
-  // the exact same one already showing (per request - "set it to remain
-  // static").
+
+  // Keep the current profile DOM intact when the same alum is tapped;
+  // rebuilding it would unnecessarily reload/flash the portrait.
   if(!alreadySelected) renderProfilePanel();
-  if(opts.openMobileDetail) openMobileDetail();
-  if(opts.reopenProfile) expandProfilePanel();
+
+  if(opts.toggleProfile){
+    if(mobileMode){
+      if(alreadySelected && mobileDetailOpen){
+        closeMobileDetail();
+      } else {
+        openMobileDetail();
+      }
+    } else {
+      if(alreadySelected && desktopProfileOpen){
+        collapseProfilePanel();
+      } else {
+        expandProfilePanel();
+      }
+    }
+  }
 }
 
 // The mobile profile drawer locks the underlying directory at its exact
