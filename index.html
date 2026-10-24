@@ -4510,7 +4510,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-capacity-race-fix-51";
+const BUILD_VERSION = "2026-10-24-persistent-full-state-52";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6982,7 +6982,8 @@ function alumniCapacityLookupKey(timestamp, name, company){
 // fully booked alumni correctly on the very first directory render instead
 // of briefly showing the original signup capacity while Apps Script warms.
 const CAPACITY_CACHE_KEY = 'cmi-connect-capacity-v1';
-const CAPACITY_CACHE_MAX_AGE_MS = 10 * 60 * 1000;
+const CAPACITY_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const KNOWN_FULL_CACHE_KEY = 'cmi-connect-known-full-v1';
 
 function cacheCapacityPayload(payload){
   if(!payload || !payload.ok || !Array.isArray(payload.alumni)) return;
@@ -7010,6 +7011,50 @@ function readCachedCapacityPayload(){
   }
 }
 
+function readKnownFullKeys(){
+  try{
+    const raw = localStorage.getItem(KNOWN_FULL_CACHE_KEY);
+    const values = raw ? JSON.parse(raw) : [];
+    return Array.isArray(values) ? new Set(values) : new Set();
+  }catch(err){
+    return new Set();
+  }
+}
+
+function writeKnownFullKeys(keys){
+  try{
+    localStorage.setItem(KNOWN_FULL_CACHE_KEY, JSON.stringify([...keys]));
+  }catch(err){}
+}
+
+function applyKnownFullSnapshot(){
+  if(!alumni.length) return false;
+  const knownFull = readKnownFullKeys();
+  if(!knownFull.size) return false;
+  let applied = false;
+  alumni.forEach(a => {
+    const exactKey = alumniCapacityLookupKey(a.timestamp, a.name, a.company);
+    const fallbackKey = alumniCapacityLookupKey('', a.name, a.company);
+    if(knownFull.has(exactKey) || knownFull.has(fallbackKey)){
+      a.capacity = 0;
+      a.capacityAssumed = false;
+      applied = true;
+    }
+  });
+  return applied;
+}
+
+function syncKnownFullFromLivePayload(payload){
+  if(!payload || !Array.isArray(payload.alumni)) return;
+  const next = new Set();
+  payload.alumni.forEach(remote => {
+    if(Math.max(0, Number(remote.spotsRemaining) || 0) > 0) return;
+    next.add(alumniCapacityLookupKey(remote.timestamp, remote.name, remote.company));
+    next.add(alumniCapacityLookupKey('', remote.name, remote.company));
+  });
+  writeKnownFullKeys(next);
+}
+
 function applyCachedCapacitySnapshot(){
   const payload = readCachedCapacityPayload();
   if(!payload || !alumni.length) return false;
@@ -7019,11 +7064,12 @@ function applyCachedCapacitySnapshot(){
 
 function applyBestKnownCapacitySnapshot(){
   if(!alumni.length) return false;
+  const fullApplied = applyKnownFullSnapshot();
   if(lastLiveCapacityPayload){
     applyLiveCapacityPayload(lastLiveCapacityPayload, {probe:true, pruneShortlist:true, notify:false});
     return true;
   }
-  return applyCachedCapacitySnapshot();
+  return applyCachedCapacitySnapshot() || fullApplied;
 }
 
 function backendJsonp(params, options){
@@ -7196,6 +7242,7 @@ function refreshLiveCapacity(options){
       lastCapacityRefreshAt = Date.now();
       lastLiveCapacityPayload = payload;
       cacheCapacityPayload(payload);
+      syncKnownFullFromLivePayload(payload);
       return applyLiveCapacityPayload(payload, options);
     })
     .finally(() => { capacityRequestInFlight = null; });
@@ -7215,6 +7262,7 @@ function refreshLiveCapacityForReview(){
     lastCapacityRefreshAt = Date.now();
     lastLiveCapacityPayload = payload;
     cacheCapacityPayload(payload);
+    syncKnownFullFromLivePayload(payload);
     return applyLiveCapacityPayload(payload, {pruneShortlist:true, notify:true});
   });
 }
