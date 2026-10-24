@@ -4520,7 +4520,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-location-labels-61";
+const BUILD_VERSION = "2026-10-24-census-location-regions-62";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5369,8 +5369,8 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
 const US_REGIONS = ["Midwest", "Northeast", "South", "West/West Coast"];
 const US_REGION_BY_CITY = {
   "boston": "Northeast", "cambridge": "Northeast", "new york": "Northeast",
-  "new york city": "Northeast", "nyc": "Northeast", "washington, d.c.": "Northeast",
-  "washington dc": "Northeast", "pittsburgh": "Northeast",
+  "new york city": "Northeast", "nyc": "Northeast", "washington, d.c.": "South",
+  "washington dc": "South", "pittsburgh": "Northeast",
   "lancaster": "Northeast", "montville": "Northeast",
   "chicago": "Midwest", "minneapolis": "Midwest", "urbana": "Midwest",
   "deerfield": "Midwest", "columbus": "Midwest", "park ridge": "Midwest",
@@ -5394,12 +5394,10 @@ const US_REGION_BY_CITY = {
 };
 
 const US_REGION_BY_STATE = {
+  // U.S. Census Bureau regions
   // Northeast
   "ct":"Northeast","connecticut":"Northeast",
-  "de":"Northeast","delaware":"Northeast",
-  "dc":"Northeast","district of columbia":"Northeast",
   "me":"Northeast","maine":"Northeast",
-  "md":"Northeast","maryland":"Northeast",
   "ma":"Northeast","massachusetts":"Northeast",
   "nh":"Northeast","new hampshire":"Northeast",
   "nj":"Northeast","new jersey":"Northeast",
@@ -5407,7 +5405,6 @@ const US_REGION_BY_STATE = {
   "pa":"Northeast","pennsylvania":"Northeast",
   "ri":"Northeast","rhode island":"Northeast",
   "vt":"Northeast","vermont":"Northeast",
-  "va":"Northeast","virginia":"Northeast",
 
   // Midwest
   "il":"Midwest","illinois":"Midwest",
@@ -5426,19 +5423,23 @@ const US_REGION_BY_STATE = {
   // South
   "al":"South","alabama":"South",
   "ar":"South","arkansas":"South",
+  "de":"South","delaware":"South",
+  "dc":"South","district of columbia":"South",
   "fl":"South","florida":"South",
   "ga":"South","georgia":"South",
   "ky":"South","kentucky":"South",
   "la":"South","louisiana":"South",
+  "md":"South","maryland":"South",
   "ms":"South","mississippi":"South",
   "nc":"South","north carolina":"South",
   "ok":"South","oklahoma":"South",
   "sc":"South","south carolina":"South",
   "tn":"South","tennessee":"South",
   "tx":"South","texas":"South",
+  "va":"South","virginia":"South",
   "wv":"South","west virginia":"South",
 
-  // West (labelled "West/West Coast" in the current UI)
+  // West (displayed as "West/West Coast" in the UI)
   "ak":"West/West Coast","alaska":"West/West Coast",
   "az":"West/West Coast","arizona":"West/West Coast",
   "ca":"West/West Coast","california":"West/West Coast",
