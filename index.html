@@ -138,12 +138,12 @@ body.listing-active{
 }
 /* Desktop-only lock (2026-10-21, per request - "fix the directory so it
    scrolls normally on mobile... do not lock body scrolling unless a
-   modal/drawer genuinely requires it") - below 1024px the directory is
+   modal/drawer genuinely requires it") - below 1200px the directory is
    already one plain flowing column (see .directory-split's own mobile
    rule), so the page should just scroll normally like every other
    mobile view; this was the actual cause of mobile scroll being locked
    the whole time the Browse page was open. */
-@media (max-width: 1023px){
+@media (max-width: 1199px){
   body.listing-active{ height: auto; overflow: visible; }
   /* "Lock the underlying directory only while the profile drawer is
      open" (2026-10-21, per request) - the one mobile case that
@@ -251,6 +251,15 @@ header.site{
    clamp() mechanism, just a narrower range. */
 @media (max-width: 1100px) and (min-width: 768px){
   .hero-illustration{ width: clamp(920px, 100vw, 1400px); right: 0; }
+}
+/* Compact laptop / non-fullscreen browser windows: keep the desktop
+   navigation and copy treatment, but shrink the artwork enough that it
+   remains a right-side visual instead of overlapping the text column. */
+@media (max-width: 1199px) and (min-width: 768px){
+  .hero-illustration{
+    width:min(860px, 74vw);
+    right:-2vw;
+  }
 }
 /* Mobile - stacks below the text and centers (2026-10-21, revised per
    request - "recompose the hero so the image feels connected to the
@@ -1624,7 +1633,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   display: flex;
   flex-direction: column;
 }
-@media (min-width: 1024px){
+@media (min-width: 1200px){
   /* Desktop/laptop browse framing: beige outer page with the cream
      directory surface floating inside it. The boundary is deliberately
      as subtle as the alumni cards themselves, not a heavy container. */
@@ -1660,6 +1669,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+@media (max-width: 1199px) and (min-width: 768px){
+  .workspace,
+  .directory-toolbar{
+    width:calc(100% - 32px);
+  }
 }
 /* The directory/profile card's own wrapper (not the toolbar's - that's
    nested inside .directory-toolbar, a grandchild, so this direct-child
@@ -1726,7 +1742,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    Review & Submit's own margin-left:auto is what pushes it to the row's
    far right edge, no measured/absolute positioning needed.
    flex-wrap:nowrap is the desktop/laptop default - the existing
-   max-width:1023px breakpoint (where the whole split view collapses to
+   max-width:1199px breakpoint (where the whole split view collapses to
    a single column anyway) is the one intentional point where this is
    allowed to wrap instead. */
 .toolbar-row2{
@@ -1765,7 +1781,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    left directory section ends at the center of the 16px separator, so
    the header bleeds 24px left + 8px right. The inner padding compensates
    so the count and Sort controls do not move at all. */
-@media (min-width: 1024px){
+@media (min-width: 1200px){
   .directory-list-header{
     width:calc(100% + 32px);
     margin-left:-24px;
@@ -1792,7 +1808,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    edge-to-edge, so the divider needs no artificial bleed. Keep the row
    at 100% width; responsive inner gutters below align its controls with
    Show filters and Review & Submit. */
-@media (max-width: 1023px){
+@media (max-width: 1199px){
   .directory-list-header{
     width:100%;
     margin-left:0;
@@ -2107,7 +2123,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 0 24px; /* restores the inset now that #directoryRight no longer provides it (2026-10-21) */
 }
 .profile-back-btn{
-  display: none; /* shown only below 1024px, see the max-width block */
+  display: none; /* shown only below 1200px, see the max-width block */
   background: none;
   border: none;
   color: var(--muted);
@@ -2571,11 +2587,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 
 /* ---------- LISTING ---------- */
-/* Below 1024px the split view collapses to one column - the directory
+/* Below 1200px the split view collapses to one column - the directory
    list fills the screen, and selecting someone opens their profile as a
    full-screen "page" over it (.mobile-detail-open) with a Back control,
    rather than squeezing both panels side by side. */
-@media (max-width: 1023px){
+@media (max-width: 1199px){
   /* The one intentional breakpoint where the toolbar is allowed to wrap
      - everywhere wider, it's a single nowrap row. */
   .toolbar-row2{ flex-wrap: wrap; }
@@ -2591,7 +2607,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      own full-screen detail pattern below. */
   .directory-resizer{ display: none !important; }
   /* The list's own height is auto here (.directory-split isn't given a
-     fixed height below 1024px - see sizeDirectorySplit), so it just
+     fixed height below 1200px - see sizeDirectorySplit), so it just
      flows with the page instead of scrolling in its own box. The detail
      view below can't rely on that same auto-height parent for its own
      sizing though, which is why it's position:fixed against the
@@ -4400,8 +4416,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      right panel is the selected alumnus's full profile, resizable via
      the drag handle between them and collapsible via the X on the
      profile panel (reopen via the floating "›" that appears in its
-     place once collapsed). Below 1024px this collapses to a single
-     column - see the max-width:1023px block in the CSS - with the
+     place once collapsed). Below 1200px this collapses to a single
+     column - see the max-width:1199px block in the CSS - with the
      right panel becoming a full-screen detail view
      (.directory-split.mobile-detail-open) instead of a side-by-side
      column; the resize/collapse controls are desktop-only. -->
@@ -4520,7 +4536,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-mobile-hero-right-anchor-65";
+const BUILD_VERSION = "2026-10-24-compact-laptop-layout-66";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6740,7 +6756,7 @@ function selectAlum(id, opts){
   opts = opts || {};
   const alreadySelected = selectedAlumId === id;
   const split = document.getElementById('directorySplit');
-  const mobileMode = window.innerWidth < 1024;
+  const mobileMode = window.innerWidth < 1200;
   const mobileDetailOpen = split.classList.contains('mobile-detail-open');
   const desktopProfileOpen = !split.classList.contains('profile-collapsed');
 
@@ -7081,7 +7097,7 @@ window.addEventListener('resize', () => {
 // masthead, measured at runtime rather than a guessed px value - the
 // masthead's real height varies (padding mixes px and vw), so a
 // hardcoded calc(100vh - Npx) would
-// drift at some viewport width. No-ops below 1024px, where the split
+// drift at some viewport width. No-ops below 1200px, where the split
 // view isn't in effect (single-column directory scrolls with the page
 // instead).
 // Desktop's own height comes from pure CSS flex now (body/#view-listing/
@@ -7110,7 +7126,7 @@ window.addEventListener('resize', () => {
 // resizing or collapsing" without any extra state-tracking. Pointer
 // events (not mouse/touch separately) so drag works the same on
 // trackpad and touchscreen. Desktop-only in effect - the resizer is
-// display:none below 1024px, see the max-width:1023px block.
+// display:none below 1200px, see the max-width:1199px block.
 // The widest currently-listed name's rendered width (2026-10-17) - used
 // as an extra resize floor so dragging the divider can never squeeze the
 // left column tight enough to wrap a name onto 2 lines. Measured against
@@ -8710,7 +8726,7 @@ function sizeInfoLayout(){
 // used) - spans exactly from the masthead logo's own right edge to the
 // "About" nav tab's left edge, not a guessed/hardcoded width, since
 // both of those are themselves responsive (clamp()-based padding).
-// No-ops below 1024px, where the masthead's own compact layout doesn't
+// No-ops below 1200px, where the masthead's own compact layout doesn't
 // apply (see #heroSub.compact).
 function positionPanelToNavBounds(panel){
   if(!panel) return;
@@ -8718,7 +8734,7 @@ function positionPanelToNavBounds(panel){
   panel.style.width = '';
   panel.style.maxWidth = '';
   if(!panel.classList.contains('active')) return;
-  if(window.innerWidth <= 1023) return;
+  if(window.innerWidth <= 1199) return;
   const logo = document.querySelector('#heroSub .masthead-logo');
   const aboutTab = document.querySelector('#heroSub .tab-link[data-nav="about"]');
   const parent = panel.parentElement;
