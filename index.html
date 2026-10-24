@@ -2003,14 +2003,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 /* Full alumni stay readable but recede slightly from available options. */
 .directory-entry.is-full,
 .directory-entry.is-full:hover{
-  background:#F2F1F0;
-  border-color:rgba(83,79,76,.18);
-}
-.directory-entry.is-full.selected{
-  background:#EFEEED;
+  opacity:.58;
 }
 .directory-entry.is-full .directory-entry-chevron{
-  color:#97938F;
+  opacity:.8;
 }
 .directory-entry-info{ min-width: 0; }
 .directory-entry-mobile-meta{ display:none; }
@@ -4511,7 +4507,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-capacity-consistency-44";
+const BUILD_VERSION = "2026-10-24-full-card-opacity-45";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
