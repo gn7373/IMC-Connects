@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <title>Alumni Coffee Chats</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%234E2A84'/><text x='32' y='41' font-family='Georgia, Times New Roman, serif' font-size='25' font-weight='700' letter-spacing='-0.8' fill='%23F7F4EC' text-anchor='middle'>IMC</text></svg>">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -4508,7 +4510,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-about-copy-48";
+const BUILD_VERSION = "2026-10-24-fresh-capacity-gate-49";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -4892,6 +4894,10 @@ let submissionPostTransportReady = false;
 let capacityPollTimer = null;
 let capacityRequestInFlight = null;
 let lastCapacityRefreshAt = 0;
+let alumniDataReady = false;
+let initialFreshCapacityReady = false;
+let initialFreshCapacityFailed = false;
+let initialCapacityPromise = null;
 let claimClientToken = '';
 let lastSuccessfulSubmission = null;
 let selectedClaimRating = 0;
@@ -6330,6 +6336,19 @@ function applySort(list){
 }
 
 function renderGrid(){
+  // Never show signup-time/stale capacity on the visible Browse page.
+  // A brand-new browser has no trustworthy local snapshot, and Apps Script
+  // can take several seconds to cold-start. Hold the directory in a loading
+  // state until this page load has received a fresh capacity response.
+  if(currentView === 'listing' && (!alumniDataReady || !initialFreshCapacityReady)){
+    const list = document.getElementById('directoryList');
+    const countEl = document.getElementById('directoryCount');
+    if(countEl) countEl.textContent = '';
+    if(list) list.innerHTML = '<div class="directory-empty">Checking live availability…</div>';
+    setStatus('Checking live availability…', 'loading');
+    return;
+  }
+  if(currentView === 'listing') setStatus(null);
   const filtered = applySort(alumni.filter(matchesFilters));
   renderDirectoryList(filtered);
   updateClearButtonVisibility();
@@ -7232,6 +7251,11 @@ function probeSubmissionBackend(){
   refreshLiveCapacity({probe:true, pruneShortlist:true, notify:false})
     .then(() => {
       submissionBackendReady = true;
+      initialFreshCapacityReady = true;
+      initialFreshCapacityFailed = false;
+      if(currentView === 'listing' && alumniDataReady){
+        renderGrid();
+      }
       startCapacityPolling();
 
       // Verify the write transport in the background. Real final submission
@@ -8233,6 +8257,7 @@ function loadData(){
   if(SHEET_CSV_URL.includes("PASTE_YOUR")){
     // No real Sheet connected yet — preview with sample data instead.
     alumni = applyPhaseCutoff(SAMPLE_ROWS.map(normalizeRow).filter(a => a.name));
+    alumniDataReady = true;
     buildConversationTopicQA(alumni);
     FILTERABLE.forEach(key => filterState[key] = new Set());
     document.getElementById('roundNote').textContent = ROUND_LABEL + " (preview mode)";
@@ -8252,6 +8277,7 @@ function loadData(){
         .map(normalizeRow)
         .filter(a => a.name) // drop any blank rows
     );
+    alumniDataReady = true;
     buildConversationTopicQA(alumni);
     FILTERABLE.forEach(key => filterState[key] = new Set());
     document.getElementById('roundNote').textContent = ROUND_LABEL;
@@ -8687,7 +8713,31 @@ document.querySelectorAll('.faq-item').forEach(item => {
 // CSV and landing-page paint. On refresh, the cached snapshot handles the
 // first frame; this request then replaces it with current data as soon as
 // Apps Script responds.
-refreshLiveCapacity({probe:true, pruneShortlist:true, notify:false}).catch(() => {});
+initialCapacityPromise = refreshLiveCapacity({probe:true, pruneShortlist:true, notify:false})
+  .then(() => {
+    initialFreshCapacityReady = true;
+    initialFreshCapacityFailed = false;
+    if(currentView === 'listing' && alumniDataReady){
+      renderGrid();
+      renderPinsDrawer();
+      sizeDirectorySplit();
+    }
+    return true;
+  })
+  .catch(err => {
+    initialFreshCapacityFailed = true;
+    // Keep the directory from hanging forever if the live service is
+    // genuinely unavailable. The normal backend probe can recover later.
+    // Until then, fall back to the latest cached/signup data with a warning.
+    initialFreshCapacityReady = true;
+    if(currentView === 'listing' && alumniDataReady){
+      renderGrid();
+      setStatus('Live availability could not be verified. Retrying in the background.', 'error');
+    }
+    console.warn('Initial live availability check did not complete.', err);
+    return false;
+  });
+
 showLanding();
 
 loadData();
