@@ -5366,7 +5366,7 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
 // bare "USA" with no city), simply isn't shown as its own checkbox -
 // "exact cities remain discoverable through the existing search bar"
 // covers that case instead of guessing a region for it.
-const US_REGIONS = ["Midwest", "Northeast", "South", "West/West/West Coast"];
+const US_REGIONS = ["Midwest", "Northeast", "South", "West/West Coast"];
 const US_REGION_BY_CITY = {
   "boston": "Northeast", "cambridge": "Northeast", "new york": "Northeast",
   "new york city": "Northeast", "nyc": "Northeast", "washington, d.c.": "Northeast",
@@ -5375,11 +5375,11 @@ const US_REGION_BY_CITY = {
   "chicago": "Midwest", "minneapolis": "Midwest", "urbana": "Midwest",
   "deerfield": "Midwest", "columbus": "Midwest", "park ridge": "Midwest",
   "wilmette": "Midwest",
-  "los angeles": "West/West/West Coast", "bay area": "West/West/West Coast",
-  "san francisco": "West/West/West Coast", "san francisco bay area": "West/West/West Coast",
-  "salt lake city": "West/West/West Coast", "denver": "West/West/West Coast", "phoenix": "West/West/West Coast",
-  "boise": "West/West/West Coast", "reno": "West/West/West Coast", "palo alto": "West/West/West Coast",
-  "vacaville": "West/West/West Coast", "vacaville, california": "West/West/West Coast",
+  "los angeles": "West/West Coast", "bay area": "West/West Coast",
+  "san francisco": "West/West Coast", "san francisco bay area": "West/West Coast",
+  "salt lake city": "West/West Coast", "denver": "West/West Coast", "phoenix": "West/West Coast",
+  "boise": "West/West Coast", "reno": "West/West Coast", "palo alto": "West/West Coast",
+  "vacaville": "West/West Coast", "vacaville, california": "West/West Coast",
   "atlanta": "South", "houston": "South", "miami": "South",
   "san antonio": "South",
 
@@ -5438,20 +5438,20 @@ const US_REGION_BY_STATE = {
   "tx":"South","texas":"South",
   "wv":"South","west virginia":"South",
 
-  // West (labelled "West/West/West Coast" in the current UI)
-  "ak":"West/West/West Coast","alaska":"West/West/West Coast",
-  "az":"West/West/West Coast","arizona":"West/West/West Coast",
-  "ca":"West/West/West Coast","california":"West/West/West Coast",
-  "co":"West/West/West Coast","colorado":"West/West/West Coast",
-  "hi":"West/West/West Coast","hawaii":"West/West/West Coast",
-  "id":"West/West/West Coast","idaho":"West/West/West Coast",
-  "mt":"West/West/West Coast","montana":"West/West/West Coast",
-  "nv":"West/West/West Coast","nevada":"West/West/West Coast",
-  "nm":"West/West/West Coast","new mexico":"West/West/West Coast",
-  "or":"West/West/West Coast","oregon":"West/West/West Coast",
-  "ut":"West/West/West Coast","utah":"West/West/West Coast",
-  "wa":"West/West/West Coast","washington":"West/West/West Coast",
-  "wy":"West/West/West Coast","wyoming":"West/West/West Coast"
+  // West (labelled "West/West Coast" in the current UI)
+  "ak":"West/West Coast","alaska":"West/West Coast",
+  "az":"West/West Coast","arizona":"West/West Coast",
+  "ca":"West/West Coast","california":"West/West Coast",
+  "co":"West/West Coast","colorado":"West/West Coast",
+  "hi":"West/West Coast","hawaii":"West/West Coast",
+  "id":"West/West Coast","idaho":"West/West Coast",
+  "mt":"West/West Coast","montana":"West/West Coast",
+  "nv":"West/West Coast","nevada":"West/West Coast",
+  "nm":"West/West Coast","new mexico":"West/West Coast",
+  "or":"West/West Coast","oregon":"West/West Coast",
+  "ut":"West/West Coast","utah":"West/West Coast",
+  "wa":"West/West Coast","washington":"West/West Coast",
+  "wy":"West/West Coast","wyoming":"West/West Coast"
 };
 
 
@@ -5485,7 +5485,7 @@ const US_STATE_BY_BARE_CITY = {
   "charlotte":"north carolina","raleigh":"north carolina",
   "nashville":"tennessee","new orleans":"louisiana",
 
-  // West (displayed as "West/West/West Coast" in the current UI)
+  // West (displayed as "West/West Coast" in the current UI)
   "boise":"idaho","denver":"colorado","phoenix":"arizona",
   "salt lake city":"utah","reno":"nevada",
   "los angeles":"california","san francisco":"california",
