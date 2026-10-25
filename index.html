@@ -4602,7 +4602,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-linkedin-new-tab-73";
+const BUILD_VERSION = "2026-10-24-abbreviated-photo-slugs-74";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6448,6 +6448,12 @@ function slugifyAlumName(name){
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
 }
+
+function abbreviatedPhotoSlug(name){
+  const parts = slugifyAlumName(name).split('_').filter(Boolean);
+  if(parts.length < 2) return '';
+  return parts[0] + '_' + parts[parts.length - 1].charAt(0);
+}
 // Resolves (never touches the DOM) which photo, if any, an alum has -
 // trying each known extension in turn via the image's own onerror, same
 // fallback chain the site has always used - and settles once a candidate
@@ -6470,7 +6476,8 @@ function resolveAlumPhoto(a){
   const slug = slugifyAlumName(a.name);
   if(resolvedPhotoCache.has(slug)) return Promise.resolve(resolvedPhotoCache.get(slug));
 
-  const exactFile = PHOTO_FILE_BY_SLUG[slug];
+  const abbreviatedSlug = abbreviatedPhotoSlug(a.name);
+  const exactFile = PHOTO_FILE_BY_SLUG[slug] || PHOTO_FILE_BY_SLUG[abbreviatedSlug];
   if(exactFile){
     return new Promise(resolve => {
       const candidate = new Image();
@@ -6677,12 +6684,17 @@ function updateClearButtonVisibility(){
 
 function directoryPortraitCandidates(a){
   const slug = slugifyAlumName(a.name);
-  const exact = PHOTO_FILE_BY_SLUG[slug];
+  const abbreviatedSlug = abbreviatedPhotoSlug(a.name);
+  const exact = PHOTO_FILE_BY_SLUG[slug] || PHOTO_FILE_BY_SLUG[abbreviatedSlug];
   const candidates = [];
   if(exact) candidates.push('photos/' + exact);
   PORTRAIT_EXTS.forEach(ext => {
     const src = 'photos/' + slug + '.' + ext;
     if(!candidates.includes(src)) candidates.push(src);
+    if(abbreviatedSlug){
+      const abbreviatedSrc = 'photos/' + abbreviatedSlug + '.' + ext;
+      if(!candidates.includes(abbreviatedSrc)) candidates.push(abbreviatedSrc);
+    }
   });
   return candidates;
 }
