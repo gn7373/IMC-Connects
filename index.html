@@ -4455,7 +4455,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <button class="search-btn" id="searchBtn" aria-label="Search">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     </button>
-    <input type="text" id="searchInput" placeholder="Search by name, company, or keyword…">
+    <input type="text" id="searchInput" placeholder="Search by name, job title, company, or keyword…">
     <button type="button" class="search-clear-btn" id="searchClearBtn" aria-label="Clear search" style="display:none">×</button>
   </div>
   <div class="toolbar-row2" id="toolbarRow2">
@@ -4602,7 +4602,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-my-list-ashley-photo-71";
+const BUILD_VERSION = "2026-10-24-search-job-title-72";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5935,7 +5935,7 @@ function matchesFilters(alum){
   // here, so changing filters or search can never remove anyone from it.
   const q = document.getElementById('searchInput').value.trim();
   if(q){
-    const hay = [alum.name, alum.company, ...alum.city, ...alum.industries, ...alum.marketingAreas, ...alum.topics]
+    const hay = [alum.name, alum.role, alum.company, ...alum.city, ...alum.industries, ...alum.marketingAreas, ...alum.topics]
       .join(" ");
     // Match at a word boundary rather than any substring, so a short query
     // like "AI" doesn't match text that merely contains those letters in
