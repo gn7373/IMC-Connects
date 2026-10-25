@@ -2056,6 +2056,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    open, location just isn't shown on the card at all). Sized to match
    .alum-company (13.5px) in this left-column context only - the profile
    panel's own badge keeps its usual smaller size. */
+.directory-entry-location-spacer{
+  display:block;
+  width:1px;
+  height:1px;
+  justify-self:center;
+}
 .directory-entry-location-inline{
   display: flex;
   align-items: center;
@@ -2082,7 +2088,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .directory-split:not(.profile-collapsed) .directory-entry{
   grid-template-columns:minmax(0,1fr) auto;
 }
-.directory-split:not(.profile-collapsed) .directory-entry-location-inline{
+.directory-split:not(.profile-collapsed) .directory-entry-location-inline,
+.directory-split:not(.profile-collapsed) .directory-entry-location-spacer{
   display:none;
 }
 .directory-split:not(.profile-collapsed) .directory-entry-right{
@@ -4602,7 +4609,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-hide-email-verification-79";
+const BUILD_VERSION = "2026-10-24-directory-alignment-80";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6788,7 +6795,7 @@ function renderDirectoryList(filtered){
           </div>
         </div>
       </div>
-      ${contactHtml ? `<div class="directory-entry-location-inline">${contactHtml}</div>` : ''}
+      ${contactHtml ? `<div class="directory-entry-location-inline">${contactHtml}</div>` : '<div class="directory-entry-location-spacer" aria-hidden="true"></div>'}
       <div class="directory-entry-right">
         <div class="directory-entry-spots">${capacityBadgeHtml(a.capacity, a.capacityAssumed)}</div>
         <svg class="directory-entry-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
