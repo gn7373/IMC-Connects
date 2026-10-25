@@ -4602,7 +4602,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-fresh-roster-retry-78";
+const BUILD_VERSION = "2026-10-24-hide-email-verification-79";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -7992,10 +7992,16 @@ function showNativeSubmissionSuccess(result, guaranteedSnapshot, wishlistSnapsho
 
   document.getElementById('claimSubmitPanel').style.display = 'none';
   document.getElementById('claimSuccessPanel').style.display = '';
+  // A confirmed submission always gets the same calm user-facing success copy.
+  // Email delivery/verification status is operational telemetry only and must
+  // never replace the success message or alarm the student after a successful write.
   document.getElementById('claimSuccessMessage').textContent =
-    result.receiptEmailSent === false
-      ? 'Your submission is confirmed, but the confirmation email could not be verified.'
-      : 'A confirmation receipt will be sent to your email.';
+    'A confirmation receipt will be sent to your email.';
+  if(result.receiptEmailSent === false){
+    console.warn('Submission confirmed; receipt-email verification was not positive.', {
+      submissionId: result.submissionId || ''
+    });
+  }
 
   cart = [];
   shortlist = [];
