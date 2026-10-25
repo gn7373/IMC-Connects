@@ -4602,7 +4602,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-abbreviated-photo-slugs-74";
+const BUILD_VERSION = "2026-10-24-photo-abbrev-rule-75";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -6507,23 +6507,38 @@ function resolveAlumPhoto(a){
   }
 
   // Fallback for any future photo not yet present in the manifest.
+  // Naming rule: after trying the full-name slug, always also try
+  // firstname_x where x is the first character of the last-name token.
+  // Example: "Rhonda Lawson" -> rhonda_l.
   return new Promise(resolve => {
     function settleWith(result){
       resolvedPhotoCache.set(slug, result);
       resolve(result);
     }
-    function tryExt(extIdx){
-      if(extIdx >= PORTRAIT_EXTS.length){
+
+    const baseSlugs = [slug];
+    if(abbreviatedSlug && !baseSlugs.includes(abbreviatedSlug)){
+      baseSlugs.push(abbreviatedSlug);
+    }
+
+    function tryCandidate(baseIdx, extIdx){
+      if(baseIdx >= baseSlugs.length){
         settleWith({slug, src: null});
         return;
       }
+      if(extIdx >= PORTRAIT_EXTS.length){
+        tryCandidate(baseIdx + 1, 0);
+        return;
+      }
+
       const candidate = new Image();
-      const src = `photos/${slug}.${PORTRAIT_EXTS[extIdx]}`;
+      const src = `photos/${baseSlugs[baseIdx]}.${PORTRAIT_EXTS[extIdx]}`;
       candidate.onload = () => settleWith({slug, src});
-      candidate.onerror = () => tryExt(extIdx + 1);
+      candidate.onerror = () => tryCandidate(baseIdx, extIdx + 1);
       candidate.src = src;
     }
-    tryExt(0);
+
+    tryCandidate(0, 0);
   });
 }
 
