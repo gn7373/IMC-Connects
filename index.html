@@ -4602,7 +4602,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-search-job-title-72";
+const BUILD_VERSION = "2026-10-24-linkedin-new-tab-73";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -7038,12 +7038,10 @@ function updateProfileIdentity(a){
   const contactHtml = cardContactLineHtml(a);
   const mobileContactHtml = mobileProfileLocationHtml(a);
   const linkedinDesktopHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener noreferrer">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
-  // On mobile, avoid target="_blank": Android may create a transient
-  // browser tab/window before handing the URL to the LinkedIn app,
-  // which can leave a black/blank artifact when returning to the site.
-  // Same-tab navigation still hands linkedin.com URLs to the installed
-  // app, and Back returns to the preserved profile/directory state.
-  const linkedinMobileHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" rel="noreferrer">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
+  // Keep LinkedIn navigation consistent across responsive layouts:
+  // always open the external profile separately so IMC Connect remains
+  // open in the current tab.
+  const linkedinMobileHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener noreferrer">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
   wrap.innerHTML = `
     <div class="profile-info-identity">
       <div class="profile-name">${a.name}</div>
