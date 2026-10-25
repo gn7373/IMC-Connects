@@ -4626,7 +4626,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-25-ga4-analytics-86";
+const BUILD_VERSION = "2026-10-25-product-analytics-87";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5019,6 +5019,34 @@ let claimClientToken = '';
 let lastSuccessfulSubmission = null;
 let selectedClaimRating = 0;
 let pendingBackendPost = null;
+
+// Product analytics for IMC Connects. Keep event payloads deliberately
+// non-identifying: never send student names/emails, submission IDs,
+// typed search text, or alumni names to third-party analytics.
+function trackAnalyticsEvent(eventName, params){
+  const safeParams = Object.assign({product: 'imc_connects'}, params || {});
+  try{
+    if(typeof window.gtag === 'function'){
+      window.gtag('event', eventName, safeParams);
+    }
+  }catch(err){
+    console.warn('GA4 event tracking failed:', eventName, err);
+  }
+  try{
+    if(typeof window.clarity === 'function'){
+      window.clarity('event', eventName);
+    }
+  }catch(err){
+    console.warn('Clarity custom event tracking failed:', eventName, err);
+  }
+}
+
+function capacityAnalyticsBucket(capacity){
+  const n = Math.max(0, Number(capacity) || 0);
+  if(n <= 0) return 'full';
+  if(n === 1) return 'one_spot';
+  return 'two_plus';
+}
 
 // Standard location-pin glyph (same shape as the card's own location
 // icon, FORMAT_ICON_IN_PERSON) per request - replaces the old thumbtack
@@ -5421,6 +5449,11 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
       if(selectAllBox.checked) values.forEach(v => filterState[key].add(v));
       else values.forEach(v => filterState[key].delete(v));
       optionCheckboxes.forEach(cb => cb.checked = selectAllBox.checked);
+      trackAnalyticsEvent('filter_applied', {
+        filter_category: key,
+        filter_action: selectAllBox.checked ? 'select_all' : 'clear_all',
+        active_count: filterState[key].size
+      });
       resetMastheadToGeneric();
       pendingShuffle = true;
       renderGrid();
@@ -5445,6 +5478,11 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
       if(checkbox.checked) filterState[key].add(val);
       else filterState[key].delete(val);
       if(selectAllBox) selectAllBox.checked = values.every(v => filterState[key].has(v));
+      trackAnalyticsEvent('filter_applied', {
+        filter_category: key,
+        filter_action: checkbox.checked ? 'add' : 'remove',
+        active_count: filterState[key].size
+      });
       resetMastheadToGeneric();
       pendingShuffle = true;
       renderGrid();
@@ -6899,7 +6937,14 @@ function selectAlum(id, opts){
 
   // Keep the current profile DOM intact when the same alum is tapped;
   // rebuilding it would unnecessarily reload/flash the portrait.
-  if(!alreadySelected) renderProfilePanel();
+  if(!alreadySelected){
+    const selectedAlum = alumni.find(a => a.id === id);
+    trackAnalyticsEvent('alumni_profile_viewed', {
+      interaction: opts.toggleProfile ? 'row_click' : 'keyboard',
+      capacity_bucket: capacityAnalyticsBucket(selectedAlum && selectedAlum.capacity)
+    });
+    renderProfilePanel();
+  }
 
   if(opts.toggleProfile){
     if(mobileMode){
@@ -8095,6 +8140,11 @@ function toggleCart(id){
   // photo even though neither the selected alum nor their photo changed.
   const toggledAlum = alumni.find(x => x.id === id);
   if(toggledAlum && id === selectedAlumId) updateProfileAddButton(toggledAlum);
+  trackAnalyticsEvent(inList ? 'alumni_added_to_list' : 'alumni_removed_from_list', {
+    list_count: cart.length,
+    shortlist_count: shortlist.length,
+    capacity_bucket: capacityAnalyticsBucket(toggledAlum && toggledAlum.capacity)
+  });
   renderPinsDrawer();
 }
 
@@ -8333,7 +8383,14 @@ function onPinsDrawerKeydown(e){
 // the drawer has focus, then restored exactly as it was on close.
 function openPinsDrawer(mode, opener){
   pinsDrawerReturnFocusEl = opener || document.activeElement;
-  setPinsDrawerMode(mode || 'list');
+  const requestedMode = mode || 'list';
+  if(requestedMode === 'list'){
+    trackAnalyticsEvent('list_opened', {
+      list_count: cart.length,
+      shortlist_count: shortlist.length
+    });
+  }
+  setPinsDrawerMode(requestedMode);
   pinsDrawerOpen = true;
   document.getElementById('pinsDrawer').classList.add('open');
   document.getElementById('pinsDrawerBackdrop').classList.add('open');
@@ -8441,6 +8498,10 @@ async function goSubmitNewPicks(){
 
 document.getElementById('pinsDrawerContinueBtn').addEventListener('click', () => {
   if(shortlist.length === 0) return;
+  trackAnalyticsEvent('review_started', {
+    list_count: cart.length,
+    shortlist_count: shortlist.length
+  });
   setPinsDrawerMode('review');
   document.getElementById('pinsDrawerClose').focus();
 
@@ -8511,6 +8572,12 @@ document.getElementById('claimSubmissionForm').addEventListener('submit', async 
     .map(id => alumni.find(a => a.id === id))
     .filter(Boolean);
 
+  trackAnalyticsEvent('submission_started', {
+    guaranteed_count: guaranteedSnapshot.length,
+    wishlist_count: wishlistSnapshot.length,
+    list_count: cart.length
+  });
+
   const payload = {
     action:'submit',
     clientToken:claimClientToken,
@@ -8524,11 +8591,21 @@ document.getElementById('claimSubmissionForm').addEventListener('submit', async 
     const result = await postToSubmissionBackend(payload, claimClientToken);
 
     if(result && result.ok){
+      trackAnalyticsEvent('submission_success', {
+        guaranteed_count: guaranteedSnapshot.length,
+        wishlist_count: wishlistSnapshot.length
+      });
       updateSubmissionProcessing('Submission successful');
       showNativeSubmissionSuccess(result, guaranteedSnapshot, wishlistSnapshot, studentEmail);
       hideSubmissionProcessing();
       refreshLiveCapacity({pruneShortlist:true, notify:false}).catch(() => {});
       return;
+    }
+
+    if(result && result.error === 'DUPLICATE_EMAIL'){
+      trackAnalyticsEvent('submission_blocked_duplicate');
+    } else if(result && result.error){
+      trackAnalyticsEvent('submission_failed', {failure_type: String(result.error).toLowerCase()});
     }
 
     if(result && result.error === 'CAPACITY_CHANGED'){
@@ -8594,6 +8671,10 @@ document.getElementById('claimFeedbackSubmit').addEventListener('click', async (
     }, makeClientToken());
 
     if(!result || !result.ok) throw new Error((result && result.message) || 'Could not save feedback.');
+    trackAnalyticsEvent('feedback_submitted', {
+      rating: selectedClaimRating,
+      has_comment: Boolean(document.getElementById('claimFeedbackText').value.trim())
+    });
     document.getElementById('claimSuccessContent').style.display = 'none';
     document.getElementById('claimThankYouState').style.display = 'flex';
     window.scrollTo(0,0);
@@ -8614,8 +8695,30 @@ function updateSearchClearBtn(){
   const clearBtn = document.getElementById('searchClearBtn');
   clearBtn.style.display = input.value ? '' : 'none';
 }
-document.getElementById('searchInput').addEventListener('input', () => { updateSearchClearBtn(); renderGrid(); });
-document.getElementById('searchBtn').addEventListener('click', renderGrid);
+let searchAnalyticsTimer = null;
+document.getElementById('searchInput').addEventListener('input', () => {
+  updateSearchClearBtn();
+  renderGrid();
+  clearTimeout(searchAnalyticsTimer);
+  const input = document.getElementById('searchInput');
+  if(!input.value.trim()) return;
+  searchAnalyticsTimer = setTimeout(() => {
+    trackAnalyticsEvent('search_used', {
+      result_count: document.querySelectorAll('.directory-entry').length,
+      query_length: input.value.trim().length
+    });
+  }, 700);
+});
+document.getElementById('searchBtn').addEventListener('click', () => {
+  renderGrid();
+  const input = document.getElementById('searchInput');
+  if(input.value.trim()){
+    trackAnalyticsEvent('search_used', {
+      result_count: document.querySelectorAll('.directory-entry').length,
+      query_length: input.value.trim().length
+    });
+  }
+});
 document.getElementById('searchClearBtn').addEventListener('click', () => {
   const input = document.getElementById('searchInput');
   input.value = '';
@@ -8645,6 +8748,13 @@ document.querySelectorAll('.sort-option').forEach(btn => {
     pendingShuffle = true;
     renderGrid();
   });
+});
+
+document.addEventListener('click', (e) => {
+  const linkedIn = e.target.closest && e.target.closest('.alum-linkedin');
+  if(linkedIn){
+    trackAnalyticsEvent('linkedin_clicked');
+  }
 });
 
 document.getElementById('pinsToggleBtn').addEventListener('click', (e) => {
@@ -9028,6 +9138,7 @@ document.getElementById('landingOptions').addEventListener('click', (e) => {
   if(btn.dataset.action === 'category'){
     showCategoryPicker(btn.dataset.key);
   } else if(btn.dataset.action === 'all'){
+    trackAnalyticsEvent('browse_started');
     goToAllAlumni();
   }
 });
