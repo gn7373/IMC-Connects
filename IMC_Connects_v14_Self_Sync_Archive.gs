@@ -1,5 +1,5 @@
 /**
- * IMC Connects — live-capacity submission backend (v14 self-sync + cancellation archive)
+ * IMC Connects — live-capacity submission backend (v15 self-sync + admin attempt audit)
  *
  * Paste this entire file into Code.gs in a BOUND Apps Script project
  * attached to a blank Google Sheet.
@@ -51,10 +51,11 @@
  * - CANCELLED/ERROR submissions do not block the same email from submitting again.
  * - Organizer-cancelled submissions are moved to Test Submissions Archive.
  * - Missing guaranteed alumni trigger one automatic roster sync before rejection.
+ * - Blocked duplicate-email attempts are recorded in Submission Attempts for organizer follow-up.
  */
 
 const CONFIG = Object.freeze({
-  BACKEND_VERSION: 14,
+  BACKEND_VERSION: 15,
   ALUMNI_CSV_URL:
     'https://docs.google.com/spreadsheets/d/e/2PACX-1vQzxeSvTj4rQrR9zgUJHcR6iWvXidfCJUTRhSdD2NfiyUj_gfH3uVr331McW6CJwWfgobE8WRvEO1Ws/pub?gid=1834383749&single=true&output=csv',
 
@@ -68,6 +69,7 @@ const CONFIG = Object.freeze({
     SUBMISSIONS: 'Submissions',
     ARCHIVE: 'Test Submissions Archive',
     FEEDBACK: 'Feedback',
+    ATTEMPTS: 'Submission Attempts',
     CAPACITY: 'Alumni Capacity',
     RESERVATIONS: 'Reservations',
     MATCHES: 'Guaranteed Matches'
@@ -157,6 +159,19 @@ const FEEDBACK_HEADERS = Object.freeze([
   'Feedback'
 ]);
 
+const SUBMISSION_ATTEMPT_HEADERS = Object.freeze([
+  'Attempted At',
+  'Attempt ID',
+  'Student Name',
+  'Student Email',
+  'Normalized Email',
+  'Client Token',
+  'Outcome',
+  'Reason',
+  'Existing Submission ID',
+  'Existing Submission Status'
+]);
+
 
 /* ========================================================================== */
 /* SETUP + ORGANIZER MENU                                                     */
@@ -195,6 +210,7 @@ function setupSheets() {
   ensureArchiveSheet_(ss, submissionsSheet);
 
   ensureSheet_(ss, CONFIG.SHEETS.FEEDBACK, FEEDBACK_HEADERS);
+  ensureSheet_(ss, CONFIG.SHEETS.ATTEMPTS, SUBMISSION_ATTEMPT_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.CAPACITY, CAPACITY_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.RESERVATIONS, RESERVATION_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.MATCHES, MATCH_HEADERS);
@@ -208,7 +224,7 @@ function setupSheets() {
 
   SpreadsheetApp.getUi().alert(
     'IMC Connects setup complete.\n\n' +
-    'Created/verified: Submissions, Test Submissions Archive, Feedback, Alumni Capacity, Reservations, and Guaranteed Matches.'
+    'Created/verified: Submissions, Test Submissions Archive, Feedback, Submission Attempts, Alumni Capacity, Reservations, and Guaranteed Matches.'
   );
 }
 
@@ -444,7 +460,19 @@ function submitRequest_(payload) {
       // Capacity rows are maintained incrementally by every successful
       // reservation/cancellation. The final read still occurs inside the
       // shared script lock, so no two submissions can claim the same last spot.
-      if (emailHasSubmitted_(submissionSheet, normalizedEmail)) {
+      const blockingSubmission = findBlockingSubmission_(submissionSheet, normalizedEmail);
+      if (blockingSubmission) {
+        logSubmissionAttempt_(ss, {
+          studentName: studentName,
+          studentEmail: studentEmail,
+          normalizedEmail: normalizedEmail,
+          clientToken: clientToken,
+          outcome: 'BLOCKED',
+          reason: 'DUPLICATE_EMAIL',
+          existingSubmissionId: blockingSubmission.submissionId,
+          existingSubmissionStatus: blockingSubmission.status
+        });
+
         return fail_(
           'DUPLICATE_EMAIL',
           'A submission already exists for this email address. If you need to change it, reply to your confirmation email with your updated request.'
@@ -1549,8 +1577,8 @@ function ensureWishlistColumns_(sheet, needed) {
   }
 }
 
-function emailHasSubmitted_(sheet, normalizedEmail) {
-  return readObjects_(sheet).some(function (row) {
+function findBlockingSubmission_(sheet, normalizedEmail) {
+  const match = readObjects_(sheet).find(function (row) {
     const email = normalizeEmail_(row['Normalized Email'] || row['Student Email']);
     const status = String(row.Status || '').trim().toUpperCase();
 
@@ -1558,6 +1586,46 @@ function emailHasSubmitted_(sheet, normalizedEmail) {
     // a submission, its capacity is restored and that student may submit again.
     return email === normalizedEmail && (status === 'ACTIVE' || status === 'PENDING');
   });
+
+  if (!match) return null;
+
+  return {
+    submissionId: cleanSingleLine_(match['Submission ID']),
+    status: cleanSingleLine_(match.Status)
+  };
+}
+
+function emailHasSubmitted_(sheet, normalizedEmail) {
+  return !!findBlockingSubmission_(sheet, normalizedEmail);
+}
+
+function logSubmissionAttempt_(ss, attempt) {
+  try {
+    const sheet = ensureSheet_(
+      ss || getDb_(),
+      CONFIG.SHEETS.ATTEMPTS,
+      SUBMISSION_ATTEMPT_HEADERS
+    );
+
+    const row = [
+      new Date(),
+      makeId_('ATT'),
+      cleanSingleLine_(attempt && attempt.studentName),
+      cleanSingleLine_(attempt && attempt.studentEmail),
+      normalizeEmail_(attempt && attempt.normalizedEmail),
+      cleanSingleLine_(attempt && attempt.clientToken),
+      cleanSingleLine_(attempt && attempt.outcome),
+      cleanSingleLine_(attempt && attempt.reason),
+      cleanSingleLine_(attempt && attempt.existingSubmissionId),
+      cleanSingleLine_(attempt && attempt.existingSubmissionStatus)
+    ];
+
+    appendRows_(sheet, [row]);
+  } catch (err) {
+    // Audit logging must never change whether a legitimate submission is
+    // accepted or rejected. Keep any logging failure organizer-only.
+    console.error('Could not log submission attempt: ' + err);
+  }
 }
 
 function setCellByHeader_(sheet, rowNumber, header, value) {
