@@ -4610,7 +4610,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-directory-alignment-81";
+const BUILD_VERSION = "2026-10-24-topic-filter-pronouns-82";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -5436,7 +5436,7 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
     };
     optionLabel.appendChild(checkbox);
     let displayVal = val;
-    if(key === 'topics') displayVal = topicShortLabel(val);
+    if(key === 'topics') displayVal = filterTopicShortLabel(val);
     else if(key === 'brandAgency') displayVal = brandAgencyFilterDisplayLabel(val);
     else if(key === 'marketingAreas') displayVal = marketingAreaDisplayLabel(val);
     else if(key === 'format') displayVal = formatDisplayLabel(val);
@@ -6211,6 +6211,17 @@ const TOPIC_SHORT_LABELS = {
 
 function topicShortLabel(value){
   return TOPIC_SHORT_LABELS[topicDisplayLabel(value)] || topicDisplayLabel(value);
+}
+
+// Conversation Topics FILTER only: the short profile-tag language is
+// written from the alum's perspective ("My company", "my field"). In
+// the filter, students are choosing topics about the alumni, so switch
+// only that pronoun to third person while preserving the underlying raw
+// filter value and leaving profile tags unchanged.
+function filterTopicShortLabel(value){
+  return topicShortLabel(value).replace(/\bmy\b/gi, match =>
+    match[0] === match[0].toUpperCase() ? 'Their' : 'their'
+  );
 }
 
 // Write-in topics dropped from the "Ask me about" pills entirely, per
