@@ -1162,7 +1162,17 @@ function refreshCapacityLimitsFromSourceIfDue_() {
       sourceCapacityByKey[makeAlumniKey_(timestamp, name, company)] = startingCapacity;
     });
 
-    return withScriptLock_(function () {
+    const lock = LockService.getScriptLock();
+
+    // This is a background freshness check for GET /capacity, not a student
+    // transaction. Never wait behind an active submit/cancel operation long
+    // enough to slow the website. A later poll will retry if the lock is busy.
+    if (!lock.tryLock(1200)) {
+      try { cache.remove(gateKey); } catch (cacheErr) {}
+      return false;
+    }
+
+    try {
       const ss = getDb_();
       const capacitySheet = ss.getSheetByName(CONFIG.SHEETS.CAPACITY);
       if (!capacitySheet || capacitySheet.getLastRow() < 2) return false;
@@ -1206,7 +1216,9 @@ function refreshCapacityLimitsFromSourceIfDue_() {
       }
 
       return changed;
-    });
+    } finally {
+      lock.releaseLock();
+    }
   } catch (err) {
     console.error('Could not auto-refresh source capacity: ' + err);
     try { cache.remove(gateKey); } catch (cacheErr) {}
