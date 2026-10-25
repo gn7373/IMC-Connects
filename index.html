@@ -4602,7 +4602,7 @@ window.scrollTo(0, 0);
 // pushed since this tab loaded, so it shows a small "refresh to update"
 // banner instead of leaving someone stuck on stale cached code with no
 // way to know a change even happened.
-const BUILD_VERSION = "2026-10-24-fresh-roster-load-77";
+const BUILD_VERSION = "2026-10-24-fresh-roster-retry-78";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -8720,26 +8720,22 @@ function loadData(){
       setStatus(null);
     },
     error: (err) => {
-      // The live sheet above is unreachable from here - most likely this
-      // page is running somewhere that can't make outside network
-      // requests at all (e.g. a published Artifact's sandbox only allows
-      // a short domain allowlist, and Google Sheets isn't on it). Fall
-      // back to ALUMNI_SNAPSHOT_CSV_URL, a bundled copy of the same
-      // public sheet saved alongside this file, so the directory still
-      // has real data to work with. The real deployed site and this
-      // repo's own local preview can always reach the live sheet and
-      // never hit this path.
-      Papa.parse(ALUMNI_SNAPSHOT_CSV_URL, {
+      // Retry the live roster once with a second unique cache-buster.
+      // Do not fall back to a bundled snapshot: an old snapshot can make
+      // newer alumni disappear on only one device, which is worse than
+      // showing a clear load error.
+      const retryUrl = SHEET_CSV_URL + (SHEET_CSV_URL.includes('?') ? '&' : '?') + '_retry=' + Date.now();
+      Papa.parse(retryUrl, {
         download: true,
         header: true,
         skipEmptyLines: true,
         transformHeader: headerFix,
         complete: (results) => {
           finishLoad(results.data);
-          setStatus(null); // banner removed per request - fallback still happens silently
+          setStatus(null);
         },
         error: () => {
-          setStatus(`Couldn't load the alumni list (${err.message}). If you're the organizer: check that SHEET_CSV_URL is correct and the sheet is published to web.`, "error");
+          setStatus(`Couldn't load the alumni list (${err.message}). Please refresh and try again.`, "error");
         }
       });
     }
