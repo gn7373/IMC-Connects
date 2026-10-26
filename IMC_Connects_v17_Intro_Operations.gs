@@ -2159,11 +2159,13 @@ function readStatusOverrides_() {
   return out;
 }
 
-function writeStatusOverride_(matchKey, status) {
+function writeStatusOverride_(matchKey, status, spreadsheet) {
   matchKey = cleanSingleLine_(matchKey);
   if (!matchKey) return;
 
-  const ss = getDb_();
+  // onEdit is a simple bound-sheet trigger, so prefer the event's own
+  // spreadsheet instead of reopening the file by ID.
+  const ss = spreadsheet || SpreadsheetApp.getActiveSpreadsheet() || getDb_();
   const sheet = ensureSheet_(ss, CONFIG.SHEETS.STATUS_OVERRIDES, STATUS_OVERRIDE_HEADERS);
   const rows = readObjectsWithRow_(sheet);
   const existing = rows.find(function (item) {
@@ -2200,7 +2202,7 @@ function handleFulfillmentStatusEdit_(e) {
       if (!matchKey) continue;
 
       const status = cleanSingleLine_(sheet.getRange(row, col).getValue());
-      writeStatusOverride_(matchKey, status);
+      writeStatusOverride_(matchKey, status, sheet.getParent());
     }
 
     updateFulfillmentSummaryForBlock_(sheet, blockTop);
