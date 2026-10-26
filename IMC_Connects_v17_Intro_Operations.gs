@@ -294,7 +294,7 @@ function setupSheets() {
 
   SpreadsheetApp.getUi().alert(
     'IMC Connects setup complete.\n\n' +
-    'Created/verified: Submissions, Test Submissions Archive, Feedback, Submission Attempts, Alumni Capacity, Reservations, and Guaranteed Matches.'
+    'Created/verified: Submissions, Test Submissions Archive, Feedback, Submission Attempts, Alumni Capacity, Reservations, Guaranteed Matches, Student Fulfillment, Intro Batches, and Intro Status Overrides.'
   );
 }
 
@@ -1909,7 +1909,16 @@ function draftForAlum_(alum, triggerName, options) {
   if (!matches.length) return summary;
 
   const effectiveStatus = effectiveMatchStatusMap_();
+  const alreadyBatched = handledMatchKeysFromBatches_();
   const open = matches.filter(function (match) {
+    // A real draft/sent batch is a hard dedupe guard even if someone later
+    // clears the visible tracker status manually. Manual status edits can
+    // control the tracker, but they cannot accidentally create duplicate drafts.
+    if (alreadyBatched[match.matchKey]) {
+      summary.skippedMatches += 1;
+      return false;
+    }
+
     const status = cleanSingleLine_(effectiveStatus[match.matchKey]);
     if (status) {
       summary.skippedMatches += 1;
@@ -2066,11 +2075,47 @@ function logIntroBatch_(batch) {
     students.length,
     students.map(function (s) { return s.studentName; }).join(' | '),
     students.map(function (s) { return s.studentEmail; }).join(' | '),
-    students.map(function (s) { return s.matchKey; }).join(' | '),
+    JSON.stringify(students.map(function (s) { return s.matchKey; })),
     batch.gmailDraftId || '',
     batch.status || '',
     batch.error || ''
   ]]);
+}
+
+
+function parseBatchMatchKeys_(value) {
+  const raw = String(value == null ? '' : value).trim();
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed.map(function (x) { return cleanSingleLine_(x); }).filter(Boolean);
+    }
+  } catch (err) {}
+
+  // Compatibility fallback for any hand-entered/legacy rows.
+  return raw
+    .split(/\n|;;/)
+    .map(function (x) { return cleanSingleLine_(x); })
+    .filter(Boolean);
+}
+
+function handledMatchKeysFromBatches_() {
+  const ss = getDb_();
+  const sheet = ss.getSheetByName(CONFIG.SHEETS.INTRO_BATCHES);
+  const out = {};
+  if (!sheet || sheet.getLastRow() < 2) return out;
+
+  readObjects_(sheet).forEach(function (r) {
+    const status = cleanSingleLine_(r.Status).toUpperCase();
+    if (status !== 'DRAFTED' && status !== 'SENT') return;
+    parseBatchMatchKeys_(r['Match Keys']).forEach(function (matchKey) {
+      out[matchKey] = true;
+    });
+  });
+
+  return out;
 }
 
 function effectiveMatchStatusMap_() {
@@ -2083,15 +2128,11 @@ function effectiveMatchStatusMap_() {
       const status = cleanSingleLine_(r.Status).toUpperCase();
       if (status !== 'DRAFTED' && status !== 'SENT') return;
 
-      String(r['Match Keys'] || '')
-        .split('|')
-        .map(function (x) { return cleanSingleLine_(x); })
-        .filter(Boolean)
-        .forEach(function (matchKey) {
-          if (!out[matchKey]) {
-            out[matchKey] = status === 'SENT' ? INTRO_STATUS_SENT : INTRO_STATUS_DRAFTED;
-          }
-        });
+      parseBatchMatchKeys_(r['Match Keys']).forEach(function (matchKey) {
+        if (!out[matchKey]) {
+          out[matchKey] = status === 'SENT' ? INTRO_STATUS_SENT : INTRO_STATUS_DRAFTED;
+        }
+      });
     });
   }
 
