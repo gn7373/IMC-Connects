@@ -1836,7 +1836,9 @@ function draftForAlum_(alum, triggerName, options) {
 
 function createIntroDraft_(alum, contact, students) {
   const alumFirstName = firstName_(alum.name);
-  const studentNames = students.map(function (s) { return s.studentName; });
+  const studentFirstNames = students
+    .map(function (s) { return firstName_(s.studentName); })
+    .filter(Boolean);
   const studentEmails = students.map(function (s) { return s.studentEmail; }).filter(Boolean);
 
   if (!studentEmails.length) {
@@ -1844,45 +1846,47 @@ function createIntroDraft_(alum, contact, students) {
   }
 
   const plural = students.length !== 1;
-  const subject = 'IMC Connects: Coffee Chat Introduction';
+  const subject = 'Medill IMC Alumni-Student Connections';
 
-  const studentLines = students.map(function (s) {
-    return '- ' + s.studentName + ' (' + s.studentEmail + ')';
-  }).join('\\n');
+  const studentNamesText =
+    studentFirstNames.length <= 1
+      ? (studentFirstNames[0] || 'a student')
+      : studentFirstNames.slice(0, -1).join(', ') + ' and ' + studentFirstNames[studentFirstNames.length - 1];
 
   const body =
-    'Hi ' + alumFirstName + ',\\n\\n' +
-    'Thank you again for volunteering to connect with IMC students through IMC Connects. ' +
-    'I am introducing you to ' + (plural ? 'the students below' : 'the student below') +
-    ' for separate 1:1 coffee chats:\\n\\n' +
-    studentLines + '\\n\\n' +
-    (plural
-      ? 'These are separate 1:1 conversations, not a group session. '
-      : '') +
-    'When you have a chance, please reply all with a few times that generally work for you. ' +
-    'Students, once you hear back, please coordinate your individual chat directly and move me and the other students to BCC.\\n\\n' +
-    'Thank you again for sharing your time and perspective.\\n\\n' +
-    'Cheers,\\n' +
-    'Gaby\\n' +
-    'IMC Connects';
-
-  const htmlStudentLines = students.map(function (s) {
-    return '<li><strong>' + escapeHtml_(s.studentName) + '</strong> (' +
-      escapeHtml_(s.studentEmail) + ')</li>';
-  }).join('');
+    'Hi ' + alumFirstName + ',\n\n' +
+    'Thank you for filling out the IMC Connects interest form and offering to chat with some IMC students! ' +
+    'Your support means a lot as we gear up to graduate and enter a new chapter in our careers.\n\n' +
+    'Per the capacity you shared on the interest form, I\'m pleased to introduce you to ' +
+    studentNamesText +
+    ', who' + (plural ? ' have' : ' has') +
+    ' requested to chat with you 1:1 this quarter. If you could please share your availability with ' +
+    (plural ? 'them' : 'them') +
+    ', they can go ahead and set up a time to meet. To make things easier, consider sharing a calendar where ' +
+    (plural ? 'they can' : 'they can') +
+    ' book a time.\n\n' +
+    'Fellow students, once you hear back, please coordinate your individual chat directly with ' +
+    alumFirstName +
+    ' and move me and the other students to BCC.\n\n' +
+    'Cheers,\n' +
+    'Gaby Nyambura\n' +
+    'on behalf of the CMI 2026 E-board';
 
   const htmlBody =
     '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.55;color:#202124;">' +
       '<p>Hi ' + escapeHtml_(alumFirstName) + ',</p>' +
-      '<p>Thank you again for volunteering to connect with IMC students through IMC Connects. ' +
-      'I am introducing you to ' + (plural ? 'the students below' : 'the student below') +
-      ' for separate 1:1 coffee chats:</p>' +
-      '<ul>' + htmlStudentLines + '</ul>' +
-      (plural ? '<p>These are separate 1:1 conversations, not a group session.</p>' : '') +
-      '<p>When you have a chance, please reply all with a few times that generally work for you. ' +
-      'Students, once you hear back, please coordinate your individual chat directly and move me and the other students to BCC.</p>' +
-      '<p>Thank you again for sharing your time and perspective.</p>' +
-      '<p>Cheers,<br>Gaby<br><span style="color:#777;">IMC Connects</span></p>' +
+      '<p>Thank you for filling out the IMC Connects interest form and offering to chat with some IMC students! ' +
+      'Your support means a lot as we gear up to graduate and enter a new chapter in our careers.</p>' +
+      '<p>Per the capacity you shared on the interest form, I\'m pleased to introduce you to ' +
+      escapeHtml_(studentNamesText) +
+      ', who' + (plural ? ' have' : ' has') +
+      ' requested to chat with you 1:1 this quarter. If you could please share your availability with them, ' +
+      'they can go ahead and set up a time to meet. To make things easier, consider sharing a calendar where they can book a time.</p>' +
+      '<p>Fellow students, once you hear back, please coordinate your individual chat directly with ' +
+      escapeHtml_(alumFirstName) +
+      ' and move me and the other students to BCC.</p>' +
+      '<p>Cheers,<br><strong>Gaby Nyambura</strong><br>' +
+      '<strong>on behalf of the CMI 2026 E-board</strong></p>' +
     '</div>';
 
   return GmailApp.createDraft(contact.email, subject, body, {
@@ -1891,6 +1895,7 @@ function createIntroDraft_(alum, contact, students) {
     name: 'IMC Connects'
   });
 }
+
 
 function currentOpenMatchesForAlum_(alumniKey) {
   const ss = getDb_();
