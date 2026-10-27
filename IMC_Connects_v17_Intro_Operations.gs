@@ -1,5 +1,5 @@
 /**
- * IMC Connects — live-capacity submission backend (v16 auto source-capacity refresh + admin attempt audit)
+ * IMC Connects — live-capacity submission backend (v15 self-sync + admin attempt audit)
  *
  * Paste this entire file into Code.gs in a BOUND Apps Script project
  * attached to a blank Google Sheet.
@@ -52,11 +52,10 @@
  * - Organizer-cancelled submissions are moved to Test Submissions Archive.
  * - Missing guaranteed alumni trigger one automatic roster sync before rejection.
  * - Blocked duplicate-email attempts are recorded in Submission Attempts for organizer follow-up.
- * - Source-sheet capacity edits are automatically reconciled into Alumni Capacity on live capacity reads.
  */
 
 const CONFIG = Object.freeze({
-  BACKEND_VERSION: 17,
+  BACKEND_VERSION: 15,
   ALUMNI_CSV_URL:
     'https://docs.google.com/spreadsheets/d/e/2PACX-1vQzxeSvTj4rQrR9zgUJHcR6iWvXidfCJUTRhSdD2NfiyUj_gfH3uVr331McW6CJwWfgobE8WRvEO1Ws/pub?gid=1834383749&single=true&output=csv',
 
@@ -65,7 +64,6 @@ const CONFIG = Object.freeze({
   ASSUMED_CAPACITY_IF_BLANK: 2,
   INITIAL_WISHLIST_COLUMNS: 7,
   CAPACITY_CACHE_SECONDS: 120,
-  SOURCE_CAPACITY_REFRESH_SECONDS: 30,
 
   SHEETS: {
     SUBMISSIONS: 'Submissions',
@@ -74,11 +72,7 @@ const CONFIG = Object.freeze({
     ATTEMPTS: 'Submission Attempts',
     CAPACITY: 'Alumni Capacity',
     RESERVATIONS: 'Reservations',
-    MATCHES: 'Guaranteed Matches',
-    FULFILLMENT: 'Student Fulfillment',
-    INTRO_BATCHES: 'Intro Batches',
-    STATUS_OVERRIDES: 'Intro Status Overrides',
-    ALUMNI_CORE: 'For Launch Core'
+    MATCHES: 'Guaranteed Matches'
   },
 
   PROP_SPREADSHEET_ID: 'CMI_CONNECTS_SPREADSHEET_ID'
@@ -155,6 +149,17 @@ const MATCH_HEADERS = Object.freeze([
   'Reserved At'
 ]);
 
+const INTRO_OPS_CONFIG = Object.freeze({
+  VERSION: 1,
+  AUTO_MAX_STUDENTS: 6,
+  SHEETS: {
+    FULFILLMENT: 'Student Fulfillment',
+    INTRO_BATCHES: 'Intro Batches',
+    STATUS_OVERRIDES: 'Intro Status Overrides',
+    ALUMNI_CORE: 'For Launch Core'
+  }
+});
+
 const INTRO_BATCH_HEADERS = Object.freeze([
   'Batch ID',
   'Drafted At',
@@ -203,7 +208,7 @@ const FULFILLMENT_TECH_HEADERS = Object.freeze([
 
 const INTRO_STATUS_DRAFTED = 'Drafted';
 const INTRO_STATUS_SENT = '✅';
-const INTRO_AUTO_MAX_STUDENTS = 6;
+const INTRO_OPS_CONFIG.AUTO_MAX_STUDENTS = 6;
 
 
 const FEEDBACK_HEADERS = Object.freeze([
@@ -281,9 +286,6 @@ function setupSheets() {
   ensureSheet_(ss, CONFIG.SHEETS.CAPACITY, CAPACITY_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.RESERVATIONS, RESERVATION_HEADERS);
   ensureSheet_(ss, CONFIG.SHEETS.MATCHES, MATCH_HEADERS);
-  ensureSheet_(ss, CONFIG.SHEETS.INTRO_BATCHES, INTRO_BATCH_HEADERS);
-  ensureSheet_(ss, CONFIG.SHEETS.STATUS_OVERRIDES, STATUS_OVERRIDE_HEADERS);
-  ensureFulfillmentSheet_(ss);
 
   formatSheets_(ss);
   syncAlumni_();
@@ -294,7 +296,7 @@ function setupSheets() {
 
   SpreadsheetApp.getUi().alert(
     'IMC Connects setup complete.\n\n' +
-    'Created/verified: Submissions, Test Submissions Archive, Feedback, Submission Attempts, Alumni Capacity, Reservations, Guaranteed Matches, Student Fulfillment, Intro Batches, and Intro Status Overrides.'
+    'Created/verified: Submissions, Test Submissions Archive, Feedback, Submission Attempts, Alumni Capacity, Reservations, and Guaranteed Matches.'
   );
 }
 
@@ -319,7 +321,6 @@ function syncAlumniOnly() {
   syncAlumni_();
   recalculateSpots_();
   rebuildGuaranteedMatches_();
-  refreshStudentFulfillment_();
   SpreadsheetApp.getUi().alert('Alumni sync complete.');
 }
 
@@ -334,7 +335,6 @@ function recalculateSpots() {
 
 function rebuildGuaranteedMatches() {
   rebuildGuaranteedMatches_();
-  refreshStudentFulfillment_();
   SpreadsheetApp.getUi().alert('Guaranteed Matches rebuilt.');
 }
 
@@ -1170,132 +1170,6 @@ function reserveSelectedCapacityRows_(capacitySheet, guaranteed) {
   });
 }
 
-function sourceCapacityRefreshGateKey_() {
-  return 'imc-source-capacity-refresh-v1';
-}
-
-function refreshCapacityLimitsFromSourceIfDue_() {
-  const cache = CacheService.getScriptCache();
-  const gateKey = sourceCapacityRefreshGateKey_();
-
-  try {
-    if (cache.get(gateKey)) return false;
-
-    // Set the gate before doing network I/O so normal site polling cannot
-    // trigger a source fetch on every request. A failed refresh removes the
-    // gate below so a later poll can retry.
-    cache.put(
-      gateKey,
-      '1',
-      CONFIG.SOURCE_CAPACITY_REFRESH_SECONDS
-    );
-  } catch (err) {
-    console.error('Could not read/set source-capacity refresh gate: ' + err);
-  }
-
-  try {
-    const response = UrlFetchApp.fetch(CONFIG.ALUMNI_CSV_URL, {
-      muteHttpExceptions: true,
-      followRedirects: true
-    });
-
-    const status = response.getResponseCode();
-    if (status < 200 || status >= 300) {
-      throw new Error('Could not fetch alumni CSV for capacity refresh. HTTP ' + status);
-    }
-
-    const rows = Utilities.parseCsv(response.getContentText());
-    if (!rows.length) return false;
-
-    const headers = rows[0].map(String);
-    const timestampCol = headers.indexOf(SOURCE_HEADERS.TIMESTAMP);
-    const nameCol = headers.indexOf(SOURCE_HEADERS.NAME);
-    const companyCol = headers.indexOf(SOURCE_HEADERS.COMPANY);
-    const capacityCol = headers.indexOf(SOURCE_HEADERS.CAPACITY);
-
-    if (timestampCol === -1 || nameCol === -1 || companyCol === -1 || capacityCol === -1) {
-      throw new Error('Source CSV is missing one or more required capacity fields.');
-    }
-
-    const sourceCapacityByKey = {};
-    rows.slice(1).forEach(function (row) {
-      const timestamp = cleanSingleLine_(row[timestampCol]);
-      const name = cleanSingleLine_(row[nameCol]);
-      const company = cleanSingleLine_(row[companyCol]);
-      if (!name) return;
-
-      const parsed = parseInt(String(row[capacityCol] || '').trim(), 10);
-      const startingCapacity = Number.isFinite(parsed)
-        ? Math.max(0, parsed)
-        : CONFIG.ASSUMED_CAPACITY_IF_BLANK;
-
-      sourceCapacityByKey[makeAlumniKey_(timestamp, name, company)] = startingCapacity;
-    });
-
-    const lock = LockService.getScriptLock();
-
-    // This is a background freshness check for GET /capacity, not a student
-    // transaction. Never wait behind an active submit/cancel operation long
-    // enough to slow the website. A later poll will retry if the lock is busy.
-    if (!lock.tryLock(1200)) {
-      try { cache.remove(gateKey); } catch (cacheErr) {}
-      return false;
-    }
-
-    try {
-      const ss = getDb_();
-      const capacitySheet = ss.getSheetByName(CONFIG.SHEETS.CAPACITY);
-      if (!capacitySheet || capacitySheet.getLastRow() < 2) return false;
-
-      const headersMap = headerMap_(capacitySheet);
-      const startCol = headersMap['Starting Capacity'];
-      const limitCol = headersMap['Capacity Limit'];
-      const lastSyncedCol = headersMap['Last Synced'];
-      if (!startCol || !limitCol) return false;
-
-      const ledger = readCapacityLedger_(capacitySheet);
-      let changed = false;
-      const now = new Date();
-
-      ledger.rows.forEach(function (alum) {
-        if (!Object.prototype.hasOwnProperty.call(sourceCapacityByKey, alum.alumniKey)) return;
-
-        const nextStarting = sourceCapacityByKey[alum.alumniKey];
-        const oldStarting = Math.max(0, Number(alum.startingCapacity) || 0);
-        const oldLimitRaw = Number(alum.capacityLimit);
-        const oldLimit = Number.isFinite(oldLimitRaw) ? Math.max(0, oldLimitRaw) : oldStarting;
-
-        if (nextStarting === oldStarting) return;
-
-        // Preserve a deliberate organizer override in Capacity Limit. If the
-        // limit still matched the old source value, treat it as source-driven
-        // and move it with the edited source capacity.
-        const nextLimit = oldLimit !== oldStarting ? oldLimit : nextStarting;
-
-        capacitySheet.getRange(alum.rowNumber, startCol).setValue(nextStarting);
-        capacitySheet.getRange(alum.rowNumber, limitCol).setValue(nextLimit);
-        if (lastSyncedCol) capacitySheet.getRange(alum.rowNumber, lastSyncedCol).setValue(now);
-        changed = true;
-      });
-
-      if (changed) {
-        // Recompute remaining spots from the authoritative ACTIVE reservation
-        // ledger immediately, then force the next payload to be rebuilt.
-        recalculateSpots_();
-        invalidateCapacityCache_();
-      }
-
-      return changed;
-    } finally {
-      lock.releaseLock();
-    }
-  } catch (err) {
-    console.error('Could not auto-refresh source capacity: ' + err);
-    try { cache.remove(gateKey); } catch (cacheErr) {}
-    return false;
-  }
-}
-
 function capacityCacheKey_() {
   return 'imc-capacity-snapshot-v1';
 }
@@ -1346,12 +1220,6 @@ function invalidateCapacityCache_() {
 }
 
 function capacityResponse_() {
-  // Source capacity edits (e.g. organizer changes an alum from 2 chats to 1)
-  // must flow into the live ledger without a manual "Sync alumni only" step.
-  // This check is globally throttled, so normal 15-20s browser polling does
-  // not repeatedly fetch the source CSV.
-  refreshCapacityLimitsFromSourceIfDue_();
-
   try {
     const cached = CacheService.getScriptCache().get(capacityCacheKey_());
     if (cached) return JSON.parse(cached);
@@ -1706,7 +1574,6 @@ function updateReceiptStatus_(submissionId, status, sentAt) {
 }
 
 
-
 /* ========================================================================== */
 /* INTRODUCTION OPERATIONS + STUDENT FULFILLMENT                              */
 /* ========================================================================== */
@@ -1770,23 +1637,18 @@ function installIntroAutoDraftTrigger_() {
 
 function runIntroAutoDraftCycle() {
   try {
-    withScriptLock_(function () {
-      refreshStudentFulfillment_();
-      draftEligibleFullAlumni_('AUTO_FULL');
-      refreshStudentFulfillment_();
-    });
+    refreshStudentFulfillment_();
+    draftEligibleFullAlumni_('AUTO_FULL');
+    refreshStudentFulfillment_();
   } catch (err) {
     console.error('Intro auto-draft cycle failed: ' + err);
   }
 }
 
 function draftAllFullAlumniNow() {
-  const result = withScriptLock_(function () {
-    refreshStudentFulfillment_();
-    const summary = draftEligibleFullAlumni_('MANUAL_FULL');
-    refreshStudentFulfillment_();
-    return summary;
-  });
+  refreshStudentFulfillment_();
+  const result = draftEligibleFullAlumni_('MANUAL_FULL');
+  refreshStudentFulfillment_();
 
   SpreadsheetApp.getUi().alert(formatDraftSummary_(result, 'Full-alumni draft run'));
 }
@@ -1803,28 +1665,26 @@ function draftSelectedAlum() {
     return;
   }
 
-  const result = withScriptLock_(function () {
-    refreshStudentFulfillment_();
-    const ss = getDb_();
-    const capacitySheet = ss.getSheetByName(CONFIG.SHEETS.CAPACITY);
-    const ledger = readCapacityLedger_(capacitySheet);
-    const alum = ledger.byKey[selectedKey];
+  refreshStudentFulfillment_();
+  const ss = getDb_();
+  const capacitySheet = ss.getSheetByName(CONFIG.SHEETS.CAPACITY);
+  const ledger = readCapacityLedger_(capacitySheet);
+  const alum = ledger.byKey[selectedKey];
 
-    if (!alum) {
-      return {
-        draftedBatches: 0,
-        draftedMatches: 0,
-        skippedMatches: 0,
-        errors: ['Selected alum was not found in Alumni Capacity.']
-      };
-    }
-
-    const summary = draftForAlum_(alum, 'MANUAL_SELECTED', {
+  let result;
+  if (!alum) {
+    result = {
+      draftedBatches: 0,
+      draftedMatches: 0,
+      skippedMatches: 0,
+      errors: ['Selected alum was not found in Alumni Capacity.']
+    };
+  } else {
+    result = draftForAlum_(alum, 'MANUAL_SELECTED', {
       allowAboveSixCapacity: true
     });
-    refreshStudentFulfillment_();
-    return summary;
-  });
+  }
+  refreshStudentFulfillment_();
 
   ui.alert(formatDraftSummary_(result, 'Selected-alum draft run'));
 }
@@ -1862,7 +1722,7 @@ function draftEligibleFullAlumni_(triggerName) {
     const remaining = Math.max(0, Number(alum.spotsRemaining) || 0);
 
     // Auto-draft only full alumni with configured capacity 1-6.
-    if (!alum.sourceActive || limit < 1 || limit > INTRO_AUTO_MAX_STUDENTS || remaining !== 0) {
+    if (!alum.sourceActive || limit < 1 || limit > INTRO_OPS_CONFIG.AUTO_MAX_STUDENTS || remaining !== 0) {
       return;
     }
 
@@ -1894,7 +1754,7 @@ function draftForAlum_(alum, triggerName, options) {
   }
 
   const limit = Math.max(0, Number(alum.capacityLimit) || 0);
-  if (limit > INTRO_AUTO_MAX_STUDENTS && !options.allowAboveSixCapacity) {
+  if (limit > INTRO_OPS_CONFIG.AUTO_MAX_STUDENTS && !options.allowAboveSixCapacity) {
     summary.skippedMatches += 1;
     return summary;
   }
@@ -1932,7 +1792,7 @@ function draftForAlum_(alum, triggerName, options) {
   // Manual selected drafting may create several drafts, but each draft is
   // deliberately capped at six students. Automatic full-alumni drafting
   // never reaches this branch with capacity > 6.
-  const groups = chunk_(open, INTRO_AUTO_MAX_STUDENTS);
+  const groups = chunk_(open, INTRO_OPS_CONFIG.AUTO_MAX_STUDENTS);
 
   groups.forEach(function (group) {
     try {
@@ -2585,6 +2445,8 @@ function chunk_(items, size) {
 }
 
 
+
+
 /* ========================================================================== */
 /* SHEET WRITE HELPERS                                                        */
 /* ========================================================================== */
@@ -2973,14 +2835,15 @@ function onEdit(e) {
     if (!e || !e.range) return;
 
     const sheet = e.range.getSheet();
-    const sheetName = sheet.getName();
 
-    if (sheetName === CONFIG.SHEETS.FULFILLMENT) {
+    // New private operations behavior only. It exits before touching any
+    // website-facing capacity/reservation logic.
+    if (sheet.getName() === INTRO_OPS_CONFIG.SHEETS.FULFILLMENT) {
       handleFulfillmentStatusEdit_(e);
       return;
     }
 
-    if (sheetName !== CONFIG.SHEETS.CAPACITY) return;
+    if (sheet.getName() !== CONFIG.SHEETS.CAPACITY) return;
     if (e.range.getRow() < 2) return;
 
     const headers = headerMap_(sheet);
@@ -3004,7 +2867,6 @@ function onEdit(e) {
       recalculateSpots_();
       invalidateCapacityCache_();
       rebuildGuaranteedMatches_();
-      refreshStudentFulfillment_();
     } finally {
       lock.releaseLock();
     }
@@ -3012,6 +2874,7 @@ function onEdit(e) {
     console.error(err);
   }
 }
+
 
 /* ========================================================================== */
 /* FORMATTING                                                                 */
@@ -3024,10 +2887,7 @@ function formatSheets_(ss) {
     CONFIG.SHEETS.FEEDBACK,
     CONFIG.SHEETS.CAPACITY,
     CONFIG.SHEETS.RESERVATIONS,
-    CONFIG.SHEETS.MATCHES,
-    CONFIG.SHEETS.INTRO_BATCHES,
-    CONFIG.SHEETS.STATUS_OVERRIDES,
-    CONFIG.SHEETS.FULFILLMENT
+    CONFIG.SHEETS.MATCHES
   ].forEach(function (name) {
     const sheet = ss.getSheetByName(name);
     if (!sheet) return;
