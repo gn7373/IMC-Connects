@@ -243,6 +243,7 @@ function onOpen() {
   const introMenu = ui.createMenu('Introductions')
     .addItem('Setup / refresh student tracker', 'setupIntroductionOperations')
     .addItem('Refresh student fulfillment', 'refreshStudentFulfillment')
+    .addItem('Authorize Gmail drafting', 'authorizeIntroGmail')
     .addSeparator()
     .addItem('Draft all full alumni now', 'draftAllFullAlumniNow')
     .addItem('Draft selected alum', 'draftSelectedAlum')
@@ -1609,6 +1610,17 @@ function refreshStudentFulfillment() {
   SpreadsheetApp.getUi().alert('Student Fulfillment refreshed.');
 }
 
+function authorizeIntroGmail() {
+  // Reading draft metadata is enough to make Apps Script request Gmail
+  // authorization. This function does not create, send, edit, or delete email.
+  GmailApp.getDrafts();
+
+  SpreadsheetApp.getUi().alert(
+    'Gmail drafting access is authorized. No email was created or sent.\n\n' +
+    'You can now use Draft all full alumni now or wait for the 15-minute draft trigger.'
+  );
+}
+
 function installIntroAutoDraftTrigger() {
   installIntroAutoDraftTrigger_();
   SpreadsheetApp.getUi().alert(
@@ -1636,6 +1648,15 @@ function installIntroAutoDraftTrigger_() {
 
 function runIntroAutoDraftCycle() {
   try {
+    // If Gmail authorization is missing, exit quietly. This prevents the
+    // time-based trigger from appending an ERROR row for every eligible alum
+    // every 15 minutes while the organizer is still authorizing the project.
+    const authInfo = ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL);
+    if (authInfo.getAuthorizationStatus() !== ScriptApp.AuthorizationStatus.NOT_REQUIRED) {
+      console.warn('Intro auto-draft skipped: Gmail authorization is still required.');
+      return;
+    }
+
     refreshStudentFulfillment_();
     draftEligibleFullAlumni_('AUTO_FULL');
     refreshStudentFulfillment_();
