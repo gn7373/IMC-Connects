@@ -208,7 +208,6 @@ const FULFILLMENT_TECH_HEADERS = Object.freeze([
 
 const INTRO_STATUS_DRAFTED = 'Drafted';
 const INTRO_STATUS_SENT = '✅';
-const INTRO_OPS_CONFIG.AUTO_MAX_STUDENTS = 6;
 
 
 const FEEDBACK_HEADERS = Object.freeze([
@@ -1592,8 +1591,8 @@ function updateReceiptStatus_(submissionId, status, sentAt) {
  */
 function setupIntroductionOperations() {
   const ss = getDb_();
-  ensureSheet_(ss, CONFIG.SHEETS.INTRO_BATCHES, INTRO_BATCH_HEADERS);
-  ensureSheet_(ss, CONFIG.SHEETS.STATUS_OVERRIDES, STATUS_OVERRIDE_HEADERS);
+  ensureSheet_(ss, INTRO_OPS_CONFIG.SHEETS.INTRO_BATCHES, INTRO_BATCH_HEADERS);
+  ensureSheet_(ss, INTRO_OPS_CONFIG.SHEETS.STATUS_OVERRIDES, STATUS_OVERRIDE_HEADERS);
   ensureFulfillmentSheet_(ss);
   refreshStudentFulfillment_();
   installIntroAutoDraftTrigger_();
@@ -1761,7 +1760,7 @@ function draftForAlum_(alum, triggerName, options) {
 
   const contact = resolveAlumniContact_(alum);
   if (!contact || !contact.email) {
-    summary.errors.push(alum.name + ': no alumni email found in ' + CONFIG.SHEETS.ALUMNI_CORE + '.');
+    summary.errors.push(alum.name + ': no alumni email found in ' + INTRO_OPS_CONFIG.SHEETS.ALUMNI_CORE + '.');
     return summary;
   }
 
@@ -1921,7 +1920,7 @@ function currentOpenMatchesForAlum_(alumniKey) {
 
 function logIntroBatch_(batch) {
   const ss = getDb_();
-  const sheet = ensureSheet_(ss, CONFIG.SHEETS.INTRO_BATCHES, INTRO_BATCH_HEADERS);
+  const sheet = ensureSheet_(ss, INTRO_OPS_CONFIG.SHEETS.INTRO_BATCHES, INTRO_BATCH_HEADERS);
   const students = batch.students || [];
 
   appendRows_(sheet, [[
@@ -1963,7 +1962,7 @@ function parseBatchMatchKeys_(value) {
 
 function handledMatchKeysFromBatches_() {
   const ss = getDb_();
-  const sheet = ss.getSheetByName(CONFIG.SHEETS.INTRO_BATCHES);
+  const sheet = ss.getSheetByName(INTRO_OPS_CONFIG.SHEETS.INTRO_BATCHES);
   const out = {};
   if (!sheet || sheet.getLastRow() < 2) return out;
 
@@ -1981,7 +1980,7 @@ function handledMatchKeysFromBatches_() {
 function effectiveMatchStatusMap_() {
   const ss = getDb_();
   const out = {};
-  const batchSheet = ss.getSheetByName(CONFIG.SHEETS.INTRO_BATCHES);
+  const batchSheet = ss.getSheetByName(INTRO_OPS_CONFIG.SHEETS.INTRO_BATCHES);
 
   if (batchSheet && batchSheet.getLastRow() >= 2) {
     readObjects_(batchSheet).forEach(function (r) {
@@ -2007,7 +2006,7 @@ function effectiveMatchStatusMap_() {
 
 function readStatusOverrides_() {
   const ss = getDb_();
-  const sheet = ss.getSheetByName(CONFIG.SHEETS.STATUS_OVERRIDES);
+  const sheet = ss.getSheetByName(INTRO_OPS_CONFIG.SHEETS.STATUS_OVERRIDES);
   const out = {};
   if (!sheet || sheet.getLastRow() < 2) return out;
 
@@ -2026,7 +2025,7 @@ function writeStatusOverride_(matchKey, status, spreadsheet) {
   // onEdit is a simple bound-sheet trigger, so prefer the event's own
   // spreadsheet instead of reopening the file by ID.
   const ss = spreadsheet || SpreadsheetApp.getActiveSpreadsheet() || getDb_();
-  const sheet = ensureSheet_(ss, CONFIG.SHEETS.STATUS_OVERRIDES, STATUS_OVERRIDE_HEADERS);
+  const sheet = ensureSheet_(ss, INTRO_OPS_CONFIG.SHEETS.STATUS_OVERRIDES, STATUS_OVERRIDE_HEADERS);
   const rows = readObjectsWithRow_(sheet);
   const existing = rows.find(function (item) {
     return cleanSingleLine_(item.data['Match Key']) === matchKey;
@@ -2093,7 +2092,7 @@ function isFulfilledStatus_(value) {
 
 function ensureFulfillmentSheet_(ss) {
   const headers = FULFILLMENT_VISIBLE_HEADERS.concat(FULFILLMENT_TECH_HEADERS);
-  const sheet = ensureSheet_(ss, CONFIG.SHEETS.FULFILLMENT, headers);
+  const sheet = ensureSheet_(ss, INTRO_OPS_CONFIG.SHEETS.FULFILLMENT, headers);
 
   // Keep the intended visible hierarchy stable.
   sheet.setFrozenRows(1);
@@ -2280,7 +2279,7 @@ function selectedAlumniKey_() {
     return cleanSingleLine_(sheet.getRange(row, headers['Alumni Key']).getValue());
   }
 
-  if (sheet.getName() === CONFIG.SHEETS.FULFILLMENT && row >= 2 && col >= 4 && col <= 6) {
+  if (sheet.getName() === INTRO_OPS_CONFIG.SHEETS.FULFILLMENT && row >= 2 && col >= 4 && col <= 6) {
     const blockTop = row - ((row - 2) % 3);
     const techCol = 14 + (col - 3);
     const matchKey = cleanSingleLine_(sheet.getRange(blockTop, techCol).getValue());
@@ -2302,10 +2301,10 @@ function makeMatchKey_(studentEmail, alumniKey) {
 
 function alumniContactLookup_() {
   const ss = getDb_();
-  const sheet = ss.getSheetByName(CONFIG.SHEETS.ALUMNI_CORE);
+  const sheet = ss.getSheetByName(INTRO_OPS_CONFIG.SHEETS.ALUMNI_CORE);
   if (!sheet) {
     throw new Error(
-      'Private alumni source sheet "' + CONFIG.SHEETS.ALUMNI_CORE + '" was not found.'
+      'Private alumni source sheet "' + INTRO_OPS_CONFIG.SHEETS.ALUMNI_CORE + '" was not found.'
     );
   }
 
@@ -2341,7 +2340,7 @@ function alumniContactLookup_() {
 
   if (!nameHeader || !emailHeader) {
     throw new Error(
-      'Could not identify Name and Email columns in ' + CONFIG.SHEETS.ALUMNI_CORE + '.'
+      'Could not identify Name and Email columns in ' + INTRO_OPS_CONFIG.SHEETS.ALUMNI_CORE + '.'
     );
   }
 
@@ -2838,7 +2837,7 @@ function onEdit(e) {
 
     // New private operations behavior only. It exits before touching any
     // website-facing capacity/reservation logic.
-    if (sheet.getName() === INTRO_OPS_CONFIG.SHEETS.FULFILLMENT) {
+    if (sheet.getName() === INTRO_OPS_INTRO_OPS_CONFIG.SHEETS.FULFILLMENT) {
       handleFulfillmentStatusEdit_(e);
       return;
     }
