@@ -1886,14 +1886,14 @@ function createIntroDraft_(alum, contact, students) {
       'I built this tool to make it easier for our cohort to connect with professionals like you, and your support means a lot as we prepare to graduate this December.\n\n' +
       'Per the capacity you shared on the interest form, I\'m pleased to introduce you to ' +
       studentNamesText +
-      ', who have requested to chat with you 1:1 this quarter. If you could please share your availability with them, ' +
-      'they can go ahead and set up a time to meet. To make things easier, consider sharing a calendar where they can book a time.\n\n' +
+      ', who have requested to connect with you 1:1 this quarter. Juggling everyone\'s availability could make for a messy email chain, ' +
+      'so to make things easier, please consider sharing a calendar link where they can each book a time.\n\n' +
       'Fellow students, once you hear back, please coordinate your individual chat directly with ' +
       alumFirstName +
       ' and move me and the other students to BCC.\n\n' +
+      'Thank you and have a wonderful conversation!\n\n' +
       'Cheers,\n' +
-      'Gaby Nyambura\n' +
-      'on behalf of the CMI 2026 E-board';
+      'Gaby';
 
     htmlBody =
       '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.55;color:#202124;">' +
@@ -1902,13 +1902,13 @@ function createIntroDraft_(alum, contact, students) {
         'I built this tool to make it easier for our cohort to connect with professionals like you, and your support means a lot as we prepare to graduate this December.</p>' +
         '<p>Per the capacity you shared on the interest form, I\'m pleased to introduce you to ' +
         escapeHtml_(studentNamesText) +
-        ', who have requested to chat with you 1:1 this quarter. If you could please share your availability with them, ' +
-        'they can go ahead and set up a time to meet. To make things easier, consider sharing a calendar where they can book a time.</p>' +
+        ', who have requested to connect with you 1:1 this quarter. Juggling everyone\'s availability could make for a messy email chain, ' +
+        'so to make things easier, please consider sharing a calendar link where they can each book a time.</p>' +
         '<p>Fellow students, once you hear back, please coordinate your individual chat directly with ' +
         escapeHtml_(alumFirstName) +
         ' and move me and the other students to BCC.</p>' +
-        '<p>Cheers,<br><strong>Gaby Nyambura</strong><br>' +
-        '<strong>on behalf of the CMI 2026 E-board</strong></p>' +
+        '<p>Thank you and have a wonderful conversation!</p>' +
+        '<p>Cheers,<br>Gaby</p>' +
       '</div>';
   }
 
