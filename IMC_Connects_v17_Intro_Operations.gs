@@ -1863,7 +1863,7 @@ function createIntroDraft_(alum, contact, students) {
       'I built this tool to make it easier for our cohort to connect with professionals like you, and your support means a lot as we prepare to graduate this December.\n\n' +
       'Per the capacity you shared on the interest form, I\'m pleased to introduce you to ' +
       studentNamesText +
-      ', who has requested to meet with you 1:1 this quarter.\n\n' +
+      ', who has requested to meet with you this quarter.\n\n' +
       'I\'ll let you both take it from here to find a time that works. Thank you and have a wonderful conversation!\n\n' +
       'Cheers,\n' +
       'Gaby';
@@ -1875,7 +1875,7 @@ function createIntroDraft_(alum, contact, students) {
         'I built this tool to make it easier for our cohort to connect with professionals like you, and your support means a lot as we prepare to graduate this December.</p>' +
         '<p>Per the capacity you shared on the interest form, I\'m pleased to introduce you to ' +
         escapeHtml_(studentNamesText) +
-        ', who has requested to meet with you 1:1 this quarter.</p>' +
+        ', who has requested to meet with you this quarter.</p>' +
         '<p>I\'ll let you both take it from here to find a time that works. Thank you and have a wonderful conversation!</p>' +
         '<p>Cheers,<br>Gaby</p>' +
       '</div>';
