@@ -2837,7 +2837,7 @@ function onEdit(e) {
 
     // New private operations behavior only. It exits before touching any
     // website-facing capacity/reservation logic.
-    if (sheet.getName() === INTRO_OPS_INTRO_OPS_CONFIG.SHEETS.FULFILLMENT) {
+    if (sheet.getName() === INTRO_OPS_CONFIG.SHEETS.FULFILLMENT) {
       handleFulfillmentStatusEdit_(e);
       return;
     }
