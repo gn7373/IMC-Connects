@@ -1598,7 +1598,7 @@ function setupIntroductionOperations() {
   installIntroAutoDraftTrigger_();
 
   SpreadsheetApp.getUi().alert(
-    'Introduction operations are ready.\\n\\n' +
+    'Introduction operations are ready.\n\n' +
     'Created/verified Student Fulfillment and Intro Batches, refreshed the tracker, ' +
     'and installed a 15-minute draft-only trigger. Nothing will be sent automatically.'
   );
@@ -1612,7 +1612,7 @@ function refreshStudentFulfillment() {
 function installIntroAutoDraftTrigger() {
   installIntroAutoDraftTrigger_();
   SpreadsheetApp.getUi().alert(
-    '15-minute auto-draft trigger installed/repaired.\\n\\n' +
+    '15-minute auto-draft trigger installed/repaired.\n\n' +
     'It only creates Gmail drafts for alumni who are full and whose Capacity Limit is 6 or fewer. ' +
     'It never sends email.'
   );
