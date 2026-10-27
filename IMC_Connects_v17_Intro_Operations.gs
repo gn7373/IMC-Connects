@@ -1859,8 +1859,8 @@ function createIntroDraft_(alum, contact, students) {
   if (!plural) {
     body =
       'Hi ' + alumFirstName + ',\n\n' +
-      'Thank you for filling out the IMC Connects interest form and offering to chat with some IMC students! ' +
-      'Your support means a lot as we gear up to graduate and enter a new chapter in our careers.\n\n' +
+      'I\'m Gaby. Thank you for filling out the IMC Connects interest form and offering to chat with some IMC students! ' +
+      'I built this tool to make it easier for our cohort to connect with professionals like you, and your support means a lot as we prepare to graduate this December.\n\n' +
       'Per the capacity you shared on the interest form, I\'m pleased to introduce you to ' +
       studentNamesText +
       ', who has requested to meet with you 1:1 this quarter.\n\n' +
@@ -1871,8 +1871,8 @@ function createIntroDraft_(alum, contact, students) {
     htmlBody =
       '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.55;color:#202124;">' +
         '<p>Hi ' + escapeHtml_(alumFirstName) + ',</p>' +
-        '<p>Thank you for filling out the IMC Connects interest form and offering to chat with some IMC students! ' +
-        'Your support means a lot as we gear up to graduate and enter a new chapter in our careers.</p>' +
+        '<p>I\'m Gaby. Thank you for filling out the IMC Connects interest form and offering to chat with some IMC students! ' +
+        'I built this tool to make it easier for our cohort to connect with professionals like you, and your support means a lot as we prepare to graduate this December.</p>' +
         '<p>Per the capacity you shared on the interest form, I\'m pleased to introduce you to ' +
         escapeHtml_(studentNamesText) +
         ', who has requested to meet with you 1:1 this quarter.</p>' +
@@ -1882,8 +1882,8 @@ function createIntroDraft_(alum, contact, students) {
   } else {
     body =
       'Hi ' + alumFirstName + ',\n\n' +
-      'Thank you for filling out the IMC Connects interest form and offering to chat with some IMC students! ' +
-      'Your support means a lot as we gear up to graduate and enter a new chapter in our careers.\n\n' +
+      'I\'m Gaby. Thank you for filling out the IMC Connects interest form and offering to chat with some IMC students! ' +
+      'I built this tool to make it easier for our cohort to connect with professionals like you, and your support means a lot as we prepare to graduate this December.\n\n' +
       'Per the capacity you shared on the interest form, I\'m pleased to introduce you to ' +
       studentNamesText +
       ', who have requested to chat with you 1:1 this quarter. If you could please share your availability with them, ' +
@@ -1898,8 +1898,8 @@ function createIntroDraft_(alum, contact, students) {
     htmlBody =
       '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.55;color:#202124;">' +
         '<p>Hi ' + escapeHtml_(alumFirstName) + ',</p>' +
-        '<p>Thank you for filling out the IMC Connects interest form and offering to chat with some IMC students! ' +
-        'Your support means a lot as we gear up to graduate and enter a new chapter in our careers.</p>' +
+        '<p>I\'m Gaby. Thank you for filling out the IMC Connects interest form and offering to chat with some IMC students! ' +
+        'I built this tool to make it easier for our cohort to connect with professionals like you, and your support means a lot as we prepare to graduate this December.</p>' +
         '<p>Per the capacity you shared on the interest form, I\'m pleased to introduce you to ' +
         escapeHtml_(studentNamesText) +
         ', who have requested to chat with you 1:1 this quarter. If you could please share your availability with them, ' +
