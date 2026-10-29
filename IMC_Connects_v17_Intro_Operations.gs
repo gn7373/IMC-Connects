@@ -249,6 +249,8 @@ function onOpen() {
     .addItem('Draft all full alumni now', 'draftAllFullAlumniNow')
     .addItem('Draft selected alum', 'draftSelectedAlum')
     .addSeparator()
+    .addItem('Mark all Drafted as sent', 'markAllDraftedAsSent')
+    .addSeparator()
     .addItem('Install / repair 15-min auto-draft trigger', 'installIntroAutoDraftTrigger');
 
   ui.createMenu('IMC Connects')
@@ -1747,6 +1749,45 @@ function draftSelectedAlum() {
   refreshStudentFulfillment_();
 
   ui.alert(formatDraftSummary_(result, 'Selected-alum draft run'));
+}
+
+function markAllDraftedAsSent() {
+  const ss = getDb_();
+  const sheet = ss.getSheetByName(INTRO_OPS_CONFIG.SHEETS.FULFILLMENT);
+  if (!sheet || sheet.getLastRow() < 4) {
+    SpreadsheetApp.getUi().alert('No drafted introductions were found.');
+    return;
+  }
+
+  let updated = 0;
+
+  // Each student occupies three rows:
+  // row 1 = alum names, row 2 = alum emails, row 3 = editable statuses.
+  // Only D-F on each status row are eligible.
+  for (let statusRow = 4; statusRow <= sheet.getLastRow(); statusRow += 3) {
+    const blockTop = statusRow - 2;
+    const statusValues = sheet.getRange(statusRow, 4, 1, 3).getDisplayValues()[0];
+    const matchKeys = sheet.getRange(blockTop, 15, 1, 3).getDisplayValues()[0];
+
+    for (let i = 0; i < 3; i++) {
+      if (cleanSingleLine_(statusValues[i]).toLowerCase() !== INTRO_STATUS_DRAFTED.toLowerCase()) continue;
+
+      const matchKey = cleanSingleLine_(matchKeys[i]);
+      if (!matchKey) continue;
+
+      writeStatusOverride_(matchKey, INTRO_STATUS_SENT, ss);
+      sheet.getRange(statusRow, 4 + i).setValue(INTRO_STATUS_SENT);
+      updated += 1;
+    }
+
+    updateFulfillmentSummaryForBlock_(sheet, blockTop);
+  }
+
+  SpreadsheetApp.getUi().alert(
+    updated
+      ? 'Marked ' + updated + ' drafted student-alum intro(s) as sent.'
+      : 'No Drafted statuses were found.'
+  );
 }
 
 function formatDraftSummary_(result, title) {
