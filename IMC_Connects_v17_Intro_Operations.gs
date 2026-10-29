@@ -1759,34 +1759,78 @@ function markAllDraftedAsSent() {
     return;
   }
 
-  let updated = 0;
+  const lastRow = sheet.getLastRow();
+  const visible = sheet.getRange(2, 4, lastRow - 1, 3).getDisplayValues();
+  const tech = sheet.getRange(2, 15, lastRow - 1, 3).getDisplayValues();
+  const targets = [];
 
-  // Each student occupies three rows:
-  // row 1 = alum names, row 2 = alum emails, row 3 = editable statuses.
-  // Only D-F on each status row are eligible.
-  for (let statusRow = 4; statusRow <= sheet.getLastRow(); statusRow += 3) {
-    const blockTop = statusRow - 2;
-    const statusValues = sheet.getRange(statusRow, 4, 1, 3).getDisplayValues()[0];
-    const matchKeys = sheet.getRange(blockTop, 15, 1, 3).getDisplayValues()[0];
-
+  // Student blocks start at sheet row 2. Within each three-row block,
+  // the third row is the editable status row.
+  for (let sheetRow = 4; sheetRow <= lastRow; sheetRow += 3) {
+    const arrayIndex = sheetRow - 2;
     for (let i = 0; i < 3; i++) {
-      if (cleanSingleLine_(statusValues[i]).toLowerCase() !== INTRO_STATUS_DRAFTED.toLowerCase()) continue;
+      if (cleanSingleLine_(visible[arrayIndex][i]).toLowerCase() !== INTRO_STATUS_DRAFTED.toLowerCase()) continue;
 
-      const matchKey = cleanSingleLine_(matchKeys[i]);
+      // Match keys live on the first row of the same three-row block.
+      const blockTopArrayIndex = arrayIndex - 2;
+      const matchKey = cleanSingleLine_(tech[blockTopArrayIndex][i]);
       if (!matchKey) continue;
 
-      writeStatusOverride_(matchKey, INTRO_STATUS_SENT, ss);
-      sheet.getRange(statusRow, 4 + i).setValue(INTRO_STATUS_SENT);
-      updated += 1;
+      targets.push({
+        matchKey: matchKey,
+        statusRow: sheetRow,
+        statusCol: 4 + i
+      });
     }
+  }
 
+  if (!targets.length) {
+    SpreadsheetApp.getUi().alert('No Drafted statuses were found.');
+    return;
+  }
+
+  // Persist every change in one write so a future tracker refresh cannot
+  // turn these checkmarks back into Drafted.
+  const overrideSheet = ensureSheet_(
+    ss,
+    INTRO_OPS_CONFIG.SHEETS.STATUS_OVERRIDES,
+    STATUS_OVERRIDE_HEADERS
+  );
+  const existingValues = overrideSheet.getLastRow() >= 2
+    ? overrideSheet.getRange(2, 1, overrideSheet.getLastRow() - 1, STATUS_OVERRIDE_HEADERS.length).getValues()
+    : [];
+  const rowByKey = {};
+
+  existingValues.forEach(function (row, index) {
+    const key = cleanSingleLine_(row[0]);
+    if (key) rowByKey[key] = index;
+  });
+
+  const now = new Date();
+  targets.forEach(function (target) {
+    if (Object.prototype.hasOwnProperty.call(rowByKey, target.matchKey)) {
+      const index = rowByKey[target.matchKey];
+      existingValues[index][1] = INTRO_STATUS_SENT;
+      existingValues[index][2] = now;
+    } else {
+      rowByKey[target.matchKey] = existingValues.length;
+      existingValues.push([target.matchKey, INTRO_STATUS_SENT, now]);
+    }
+  });
+
+  replaceDataRows_(overrideSheet, existingValues, STATUS_OVERRIDE_HEADERS.length);
+
+  // Update the visible tracker and its per-student completion summaries.
+  targets.forEach(function (target) {
+    sheet.getRange(target.statusRow, target.statusCol).setValue(INTRO_STATUS_SENT);
+  });
+
+  for (let blockTop = 2; blockTop <= lastRow; blockTop += 3) {
     updateFulfillmentSummaryForBlock_(sheet, blockTop);
   }
 
   SpreadsheetApp.getUi().alert(
-    updated
-      ? 'Marked ' + updated + ' drafted student-alum intro(s) as sent.'
-      : 'No Drafted statuses were found.'
+    'Marked ' + targets.length + ' drafted student-alum intro(s) as sent.'
   );
 }
 
