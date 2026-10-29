@@ -245,6 +245,7 @@ function onOpen() {
     .addItem('Refresh student fulfillment', 'refreshStudentFulfillment')
     .addItem('Authorize Gmail drafting', 'authorizeIntroGmail')
     .addSeparator()
+    .addItem('Draft all remaining alumni now', 'draftAllRemainingAlumniNow')
     .addItem('Draft all full alumni now', 'draftAllFullAlumniNow')
     .addItem('Draft selected alum', 'draftSelectedAlum')
     .addSeparator()
@@ -1663,6 +1664,45 @@ function runIntroAutoDraftCycle() {
   } catch (err) {
     console.error('Intro auto-draft cycle failed: ' + err);
   }
+}
+
+function draftAllRemainingAlumniNow() {
+  refreshStudentFulfillment_();
+
+  const ss = getDb_();
+  const capacitySheet = ss.getSheetByName(CONFIG.SHEETS.CAPACITY);
+  if (!capacitySheet) throw new Error('Alumni Capacity sheet not found.');
+
+  const ledger = readCapacityLedger_(capacitySheet);
+  const result = {
+    draftedBatches: 0,
+    draftedMatches: 0,
+    skippedMatches: 0,
+    errors: []
+  };
+
+  ledger.rows.forEach(function (alum) {
+    // Final post-deadline run: draft every remaining active alum with an
+    // undrafted match, regardless of whether their capacity is full.
+    // draftForAlum_ keeps the hard batch dedupe and caps each draft at six
+    // students, splitting larger groups into multiple drafts when needed.
+    if (!alum.sourceActive) return;
+
+    const one = draftForAlum_(alum, 'MANUAL_REMAINING', {
+      allowAboveSixCapacity: true
+    });
+
+    result.draftedBatches += one.draftedBatches || 0;
+    result.draftedMatches += one.draftedMatches || 0;
+    result.skippedMatches += one.skippedMatches || 0;
+    (one.errors || []).forEach(function (x) { result.errors.push(x); });
+  });
+
+  refreshStudentFulfillment_();
+
+  SpreadsheetApp.getUi().alert(
+    formatDraftSummary_(result, 'All-remaining-alumni draft run')
+  );
 }
 
 function draftAllFullAlumniNow() {
