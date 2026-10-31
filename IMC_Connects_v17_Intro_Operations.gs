@@ -209,6 +209,15 @@ const FULFILLMENT_TECH_HEADERS = Object.freeze([
 const INTRO_STATUS_DRAFTED = 'Drafted';
 const INTRO_STATUS_SENT = '✅';
 
+const FULFILLMENT_BLOCK_HEIGHT = 4; // 3 working rows + 1 white spacer row
+const FULFILLMENT_WORK_ROWS = 3;
+const FULFILLMENT_FIRST_BLOCK_ROW = 2;
+const FULFILLMENT_STATUS_OFFSET = 2;
+const FULFILLMENT_VISIBLE_COLS = FULFILLMENT_VISIBLE_HEADERS.length;
+const FULFILLMENT_COMPLETE_COLOR = '#EAF4EA';
+const FULFILLMENT_WISHLIST_COLOR = '#F8F6FB';
+
+
 
 const FEEDBACK_HEADERS = Object.freeze([
   'Timestamp',
@@ -1754,7 +1763,7 @@ function draftSelectedAlum() {
 function markAllDraftedAsSent() {
   const ss = getDb_();
   const sheet = ss.getSheetByName(INTRO_OPS_CONFIG.SHEETS.FULFILLMENT);
-  if (!sheet || sheet.getLastRow() < 4) {
+  if (!sheet || sheet.getLastRow() < FULFILLMENT_FIRST_BLOCK_ROW + FULFILLMENT_STATUS_OFFSET) {
     SpreadsheetApp.getUi().alert('No drafted introductions were found.');
     return;
   }
@@ -1764,21 +1773,23 @@ function markAllDraftedAsSent() {
   const tech = sheet.getRange(2, 15, lastRow - 1, 3).getDisplayValues();
   const targets = [];
 
-  // Student blocks start at sheet row 2. Within each three-row block,
-  // the third row is the editable status row.
-  for (let sheetRow = 4; sheetRow <= lastRow; sheetRow += 3) {
-    const arrayIndex = sheetRow - 2;
-    for (let i = 0; i < 3; i++) {
-      if (cleanSingleLine_(visible[arrayIndex][i]).toLowerCase() !== INTRO_STATUS_DRAFTED.toLowerCase()) continue;
+  for (
+    let statusRow = FULFILLMENT_FIRST_BLOCK_ROW + FULFILLMENT_STATUS_OFFSET;
+    statusRow <= lastRow;
+    statusRow += FULFILLMENT_BLOCK_HEIGHT
+  ) {
+    const statusIndex = statusRow - 2;
+    const blockTopIndex = statusIndex - FULFILLMENT_STATUS_OFFSET;
 
-      // Match keys live on the first row of the same three-row block.
-      const blockTopArrayIndex = arrayIndex - 2;
-      const matchKey = cleanSingleLine_(tech[blockTopArrayIndex][i]);
+    for (let i = 0; i < 3; i++) {
+      if (cleanSingleLine_(visible[statusIndex][i]).toLowerCase() !== INTRO_STATUS_DRAFTED.toLowerCase()) continue;
+
+      const matchKey = cleanSingleLine_(tech[blockTopIndex][i]);
       if (!matchKey) continue;
 
       targets.push({
         matchKey: matchKey,
-        statusRow: sheetRow,
+        statusRow: statusRow,
         statusCol: 4 + i
       });
     }
@@ -1789,8 +1800,6 @@ function markAllDraftedAsSent() {
     return;
   }
 
-  // Persist every change in one write so a future tracker refresh cannot
-  // turn these checkmarks back into Drafted.
   const overrideSheet = ensureSheet_(
     ss,
     INTRO_OPS_CONFIG.SHEETS.STATUS_OVERRIDES,
@@ -1820,12 +1829,15 @@ function markAllDraftedAsSent() {
 
   replaceDataRows_(overrideSheet, existingValues, STATUS_OVERRIDE_HEADERS.length);
 
-  // Update the visible tracker and its per-student completion summaries.
   targets.forEach(function (target) {
     sheet.getRange(target.statusRow, target.statusCol).setValue(INTRO_STATUS_SENT);
   });
 
-  for (let blockTop = 2; blockTop <= lastRow; blockTop += 3) {
+  for (
+    let blockTop = FULFILLMENT_FIRST_BLOCK_ROW;
+    blockTop <= lastRow;
+    blockTop += FULFILLMENT_BLOCK_HEIGHT
+  ) {
     updateFulfillmentSummaryForBlock_(sheet, blockTop);
   }
 
@@ -1915,11 +1927,13 @@ function draftForAlum_(alum, triggerName, options) {
 
   const effectiveStatus = effectiveMatchStatusMap_();
   const alreadyBatched = handledMatchKeysFromBatches_();
+  const alreadyBatchedByIdentity = handledStudentAlumIdentitiesFromBatches_();
   const open = matches.filter(function (match) {
     // A real draft/sent batch is a hard dedupe guard even if someone later
     // clears the visible tracker status manually. Manual status edits can
     // control the tracker, but they cannot accidentally create duplicate drafts.
-    if (alreadyBatched[match.matchKey]) {
+    const identityKey = makeStudentAlumIdentityKey_(match.studentName, match.alumniKey);
+    if (alreadyBatched[match.matchKey] || (identityKey && alreadyBatchedByIdentity[identityKey])) {
       summary.skippedMatches += 1;
       return false;
     }
@@ -2134,6 +2148,51 @@ function parseBatchMatchKeys_(value) {
     .filter(Boolean);
 }
 
+function batchStatusByStudentAlum_() {
+  const ss = getDb_();
+  const sheet = ss.getSheetByName(INTRO_OPS_CONFIG.SHEETS.INTRO_BATCHES);
+  const out = {};
+  if (!sheet || sheet.getLastRow() < 2) return out;
+
+  readObjects_(sheet).forEach(function (r) {
+    const status = cleanSingleLine_(r.Status).toUpperCase();
+    if (status !== 'DRAFTED' && status !== 'SENT') return;
+
+    const alumniKey = cleanSingleLine_(r['Alumni Key']);
+    if (!alumniKey) return;
+
+    const names = String(r['Student Names'] || '')
+      .split(' | ')
+      .map(function (x) { return cleanSingleLine_(x); })
+      .filter(Boolean);
+
+    names.forEach(function (studentName) {
+      const identityKey = makeStudentAlumIdentityKey_(studentName, alumniKey);
+      if (!identityKey) return;
+      if (!out[identityKey] || status === 'SENT') {
+        out[identityKey] = status === 'SENT' ? INTRO_STATUS_SENT : INTRO_STATUS_DRAFTED;
+      }
+    });
+  });
+
+  return out;
+}
+
+function handledStudentAlumIdentitiesFromBatches_() {
+  const statuses = batchStatusByStudentAlum_();
+  const out = {};
+  Object.keys(statuses).forEach(function (key) {
+    out[key] = true;
+  });
+  return out;
+}
+
+function makeStudentAlumIdentityKey_(studentName, alumniKey) {
+  const name = normalizeIdentityText_(studentName);
+  const key = cleanSingleLine_(alumniKey);
+  return name && key ? name + '|' + key : '';
+}
+
 function handledMatchKeysFromBatches_() {
   const ss = getDb_();
   const sheet = ss.getSheetByName(INTRO_OPS_CONFIG.SHEETS.INTRO_BATCHES);
@@ -2215,22 +2274,22 @@ function writeStatusOverride_(matchKey, status, spreadsheet) {
 
 function handleFulfillmentStatusEdit_(e) {
   const sheet = e.range.getSheet();
-  if (e.range.getRow() < 2) return;
+  if (e.range.getRow() < FULFILLMENT_FIRST_BLOCK_ROW) return;
 
-  const firstStatusRow = 4; // first student block = rows 2 name, 3 email, 4 status
+  const firstStatusRow = FULFILLMENT_FIRST_BLOCK_ROW + FULFILLMENT_STATUS_OFFSET;
   const rowStart = e.range.getRow();
   const rowEnd = rowStart + e.range.getNumRows() - 1;
   const colStart = e.range.getColumn();
   const colEnd = colStart + e.range.getNumColumns() - 1;
 
-  // Pick columns D-F only.
+  // Pick columns D-F only, and only on each block's status row.
   for (let row = rowStart; row <= rowEnd; row++) {
-    if (row < firstStatusRow || (row - firstStatusRow) % 3 !== 0) continue;
-    const blockTop = row - 2;
+    if (row < firstStatusRow || (row - firstStatusRow) % FULFILLMENT_BLOCK_HEIGHT !== 0) continue;
+    const blockTop = row - FULFILLMENT_STATUS_OFFSET;
 
     for (let col = Math.max(4, colStart); col <= Math.min(6, colEnd); col++) {
       const pickIndex = col - 3;
-      const techCol = 14 + pickIndex; // O/Q mapping: pick1=15, pick2=16, pick3=17
+      const techCol = 14 + pickIndex; // pick1=15, pick2=16, pick3=17
       const matchKey = cleanSingleLine_(sheet.getRange(blockTop, techCol).getValue());
       if (!matchKey) continue;
 
@@ -2243,20 +2302,28 @@ function handleFulfillmentStatusEdit_(e) {
 }
 
 function updateFulfillmentSummaryForBlock_(sheet, blockTop) {
-  if (!sheet || blockTop < 2) return;
+  if (!sheet || blockTop < FULFILLMENT_FIRST_BLOCK_ROW) return;
 
-  const statuses = sheet.getRange(blockTop + 2, 4, 1, 3).getDisplayValues()[0];
+  const statusRow = blockTop + FULFILLMENT_STATUS_OFFSET;
+  const statuses = sheet.getRange(statusRow, 4, 1, 3).getDisplayValues()[0];
   const pickKeys = sheet.getRange(blockTop, 15, 1, 3).getDisplayValues()[0];
   const total = pickKeys.filter(function (x) { return cleanSingleLine_(x); }).length;
   const sent = statuses.filter(isFulfilledStatus_).length;
   const hasAnyProgress = statuses.some(function (x) { return cleanSingleLine_(x); });
+  const complete = total > 0 && sent === total;
 
   sheet.getRange(blockTop, 3).setValue(total ? sent + ' / ' + total : '');
-  sheet.getRange(blockTop + 2, 3).setValue(
+  sheet.getRange(statusRow, 3).setValue(
     !total ? '' :
-    sent === total ? 'Complete' :
+    complete ? 'Complete' :
     (sent > 0 || hasAnyProgress ? 'In progress' : 'Not started')
   );
+
+  // Only the student's identity / fulfillment / Pick 1-3 area changes color.
+  // Wishlist columns G-M keep their normal lavender treatment.
+  sheet
+    .getRange(blockTop, 1, FULFILLMENT_WORK_ROWS, 6)
+    .setBackground(complete ? FULFILLMENT_COMPLETE_COLOR : '#FFFFFF');
 }
 
 function isFulfilledStatus_(value) {
@@ -2293,12 +2360,14 @@ function refreshStudentFulfillment_() {
   const sheet = ensureFulfillmentSheet_(ss);
   const contacts = alumniContactLookup_();
   const statuses = effectiveMatchStatusMap_();
+  const batchStatusByIdentity = batchStatusByStudentAlum_();
 
   const submissions = readObjects_(submissionSheet).filter(function (r) {
     return String(r.Status || '').trim().toUpperCase() === 'ACTIVE';
   });
 
   const rows = [];
+  const width = FULFILLMENT_VISIBLE_HEADERS.length + FULFILLMENT_TECH_HEADERS.length;
 
   submissions.forEach(function (r) {
     const studentName = cleanSingleLine_(r['Student Name']);
@@ -2315,6 +2384,7 @@ function refreshStudentFulfillment_() {
       const alumniName = cleanSingleLine_(r['Alum ' + i]);
       const company = cleanSingleLine_(r['Alum ' + i + ' Company']);
       const matchKey = alumniKey ? makeMatchKey_(studentEmail, alumniKey) : '';
+      const identityKey = alumniKey ? makeStudentAlumIdentityKey_(studentName, alumniKey) : '';
 
       pickNames.push(alumniName);
       pickEmails.push(
@@ -2322,7 +2392,14 @@ function refreshStudentFulfillment_() {
           ? resolveAlumniEmailFromLookup_(contacts, alumniKey, alumniName, company)
           : ''
       );
-      pickStatuses.push(matchKey ? cleanSingleLine_(statuses[matchKey]) : '');
+
+      // Exact match-key status remains primary. The name+alum fallback repairs
+      // historical drafts whose student email was corrected after drafting.
+      let status = matchKey ? cleanSingleLine_(statuses[matchKey]) : '';
+      if (!status && identityKey && batchStatusByIdentity[identityKey]) {
+        status = cleanSingleLine_(batchStatusByIdentity[identityKey]);
+      }
+      pickStatuses.push(status);
       pickMatchKeys.push(matchKey);
     }
 
@@ -2363,9 +2440,7 @@ function refreshStudentFulfillment_() {
 
     // Row 2: alum emails.
     rows.push([
-      '',
-      '',
-      '',
+      '', '', '',
       pickEmails[0] || '',
       pickEmails[1] || '',
       pickEmails[2] || '',
@@ -2373,10 +2448,9 @@ function refreshStudentFulfillment_() {
       '', '', '', ''
     ]);
 
-    // Row 3: editable status under each alum.
+    // Row 3: editable statuses.
     rows.push([
-      '',
-      '',
+      '', '',
       summaryState,
       pickStatuses[0] || '',
       pickStatuses[1] || '',
@@ -2384,9 +2458,18 @@ function refreshStudentFulfillment_() {
       '', '', '', '', '', '', '',
       '', '', '', ''
     ]);
+
+    // Row 4: visual spacer between students.
+    rows.push(new Array(width).fill(''));
   });
 
-  const width = FULFILLMENT_VISIBLE_HEADERS.length + FULFILLMENT_TECH_HEADERS.length;
+  // Existing merged ranges must be broken apart before replacing the table.
+  if (sheet.getLastRow() > 1) {
+    const oldRows = sheet.getLastRow() - 1;
+    sheet.getRange(2, 1, oldRows, FULFILLMENT_VISIBLE_COLS).breakApart();
+    sheet.getRange(2, 1, oldRows, FULFILLMENT_VISIBLE_COLS).clearFormat().clearDataValidations();
+  }
+
   replaceDataRows_(sheet, rows, width);
   formatFulfillmentSheet_(sheet, rows.length);
 }
@@ -2403,18 +2486,31 @@ function formatFulfillmentSheet_(sheet, dataRowCount) {
 
   if (dataRowCount < 1) return;
 
-  const range = sheet.getRange(2, 1, dataRowCount, FULFILLMENT_VISIBLE_HEADERS.length);
-  range.setVerticalAlignment('middle');
-  range.setWrap(true);
+  const range = sheet.getRange(2, 1, dataRowCount, FULFILLMENT_VISIBLE_COLS);
+  range
+    .setVerticalAlignment('middle')
+    .setWrap(true)
+    .setBackground('#FFFFFF');
 
   const statusValidation = SpreadsheetApp.newDataValidation()
     .requireValueInList([INTRO_STATUS_DRAFTED, INTRO_STATUS_SENT], true)
     .setAllowInvalid(true)
     .build();
 
-  for (let blockTop = 2; blockTop <= dataRowCount + 1; blockTop += 3) {
+  for (
+    let blockTop = FULFILLMENT_FIRST_BLOCK_ROW;
+    blockTop <= dataRowCount + 1;
+    blockTop += FULFILLMENT_BLOCK_HEIGHT
+  ) {
     const emailRow = blockTop + 1;
-    const statusRow = blockTop + 2;
+    const statusRow = blockTop + FULFILLMENT_STATUS_OFFSET;
+    const spacerRow = blockTop + FULFILLMENT_WORK_ROWS;
+
+    // Student identity spans the same three working rows as fulfillment/picks.
+    sheet.getRange(blockTop, 1, FULFILLMENT_WORK_ROWS, 1).merge();
+    sheet.getRange(blockTop, 2, FULFILLMENT_WORK_ROWS, 1).merge();
+    sheet.getRange(blockTop, 1, FULFILLMENT_WORK_ROWS, 2)
+      .setVerticalAlignment('middle');
 
     sheet.getRange(blockTop, 1, 1, 13).setFontWeight('bold');
     sheet.getRange(emailRow, 4, 1, 3)
@@ -2425,12 +2521,19 @@ function formatFulfillmentSheet_(sheet, dataRowCount) {
       .setDataValidation(statusValidation)
       .setFontWeight('normal');
 
-    sheet.getRange(blockTop, 7, 3, 7)
-      .setBackground('#F8F6FB')
+    // Wishlist keeps its existing background regardless of completion.
+    sheet.getRange(blockTop, 7, FULFILLMENT_WORK_ROWS, 7)
+      .setBackground(FULFILLMENT_WISHLIST_COLOR)
       .setFontWeight('normal');
 
-    sheet.getRange(statusRow, 1, 1, 13)
-      .setBorder(null, null, true, null, null, null, '#D9D4E2', SpreadsheetApp.BorderStyle.SOLID);
+    updateFulfillmentSummaryForBlock_(sheet, blockTop);
+
+    // One empty white merged row separates students visually.
+    sheet.getRange(spacerRow, 1, 1, FULFILLMENT_VISIBLE_COLS)
+      .merge()
+      .setBackground('#FFFFFF')
+      .setBorder(false, false, false, false, false, false);
+    sheet.setRowHeight(spacerRow, 10);
   }
 
   const techStart = FULFILLMENT_VISIBLE_HEADERS.length + 1;
@@ -2454,7 +2557,10 @@ function selectedAlumniKey_() {
   }
 
   if (sheet.getName() === INTRO_OPS_CONFIG.SHEETS.FULFILLMENT && row >= 2 && col >= 4 && col <= 6) {
-    const blockTop = row - ((row - 2) % 3);
+    const offset = (row - FULFILLMENT_FIRST_BLOCK_ROW) % FULFILLMENT_BLOCK_HEIGHT;
+    if (offset >= FULFILLMENT_WORK_ROWS) return ''; // spacer row
+
+    const blockTop = row - offset;
     const techCol = 14 + (col - 3);
     const matchKey = cleanSingleLine_(sheet.getRange(blockTop, techCol).getValue());
 
