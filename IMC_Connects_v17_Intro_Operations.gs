@@ -2528,8 +2528,16 @@ function formatFulfillmentSheet_(sheet, dataRowCount) {
 
     updateFulfillmentSummaryForBlock_(sheet, blockTop);
 
-    // One empty white merged row separates students visually.
-    sheet.getRange(spacerRow, 1, 1, FULFILLMENT_VISIBLE_COLS)
+    // One empty white spacer row separates students visually.
+    // Columns A:C are frozen, so Google Sheets will not allow a single
+    // merged range to cross from frozen into non-frozen columns. Merge
+    // the frozen and non-frozen portions separately so the row still
+    // reads as one continuous white spacer.
+    sheet.getRange(spacerRow, 1, 1, 3)
+      .merge()
+      .setBackground('#FFFFFF')
+      .setBorder(false, false, false, false, false, false);
+    sheet.getRange(spacerRow, 4, 1, FULFILLMENT_VISIBLE_COLS - 3)
       .merge()
       .setBackground('#FFFFFF')
       .setBorder(false, false, false, false, false, false);
