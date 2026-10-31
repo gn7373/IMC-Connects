@@ -252,6 +252,7 @@ function onOpen() {
   const introMenu = ui.createMenu('Introductions')
     .addItem('Setup / refresh student tracker', 'setupIntroductionOperations')
     .addItem('Refresh student fulfillment', 'refreshStudentFulfillment')
+    .addItem('Add manual student entry', 'addManualFulfillmentEntry')
     .addItem('Authorize Gmail drafting', 'authorizeIntroGmail')
     .addSeparator()
     .addItem('Draft all remaining alumni now', 'draftAllRemainingAlumniNow')
@@ -1614,6 +1615,51 @@ function setupIntroductionOperations() {
     'Introduction operations are ready.\n\n' +
     'Created/verified Student Fulfillment and Intro Batches, refreshed the tracker, ' +
     'and installed a 15-minute draft-only trigger. Nothing will be sent automatically.'
+  );
+}
+
+function addManualFulfillmentEntry() {
+  const ui = SpreadsheetApp.getUi();
+
+  const nameResponse = ui.prompt(
+    'Add manual student entry',
+    'Enter the student name. This entry will be tracked only in Student Fulfillment and will not affect website reservations or capacity.',
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (nameResponse.getSelectedButton() !== ui.Button.OK) return;
+
+  const studentName = cleanSingleLine_(nameResponse.getResponseText());
+  if (!studentName) {
+    ui.alert('Student name is required.');
+    return;
+  }
+
+  const emailResponse = ui.prompt(
+    'Add manual student entry',
+    'Enter the student email address. You can leave this blank if you only need a name-based manual record.',
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (emailResponse.getSelectedButton() !== ui.Button.OK) return;
+
+  const studentEmail = cleanSingleLine_(emailResponse.getResponseText());
+  const ss = getDb_();
+  const sheet = ensureFulfillmentSheet_(ss);
+
+  const lastRow = Math.max(1, sheet.getLastRow());
+  const existingBlockCount = Math.ceil(Math.max(0, lastRow - 1) / FULFILLMENT_BLOCK_HEIGHT);
+  const blockTop = FULFILLMENT_FIRST_BLOCK_ROW + existingBlockCount * FULFILLMENT_BLOCK_HEIGHT;
+
+  sheet.getRange(blockTop, 1).setValue(studentName);
+  sheet.getRange(blockTop, 2).setValue(studentEmail);
+
+  // Rebuild once so the new manual entry receives the same merges,
+  // validations, spacer row and completion formatting as every other block.
+  refreshStudentFulfillment_();
+
+  ui.alert(
+    'Manual student entry added.\n\n' +
+    'You can now fill Pick 1-3, alumni emails, statuses and wishlist fields directly in Student Fulfillment. ' +
+    'Future refreshes will preserve this manual block.'
   );
 }
 
