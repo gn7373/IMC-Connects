@@ -1784,11 +1784,8 @@ function markAllDraftedAsSent() {
     for (let i = 0; i < 3; i++) {
       if (cleanSingleLine_(visible[statusIndex][i]).toLowerCase() !== INTRO_STATUS_DRAFTED.toLowerCase()) continue;
 
-      const matchKey = cleanSingleLine_(tech[blockTopIndex][i]);
-      if (!matchKey) continue;
-
       targets.push({
-        matchKey: matchKey,
+        matchKey: cleanSingleLine_(tech[blockTopIndex][i]),
         statusRow: statusRow,
         statusCol: 4 + i
       });
@@ -1800,35 +1797,40 @@ function markAllDraftedAsSent() {
     return;
   }
 
-  const overrideSheet = ensureSheet_(
-    ss,
-    INTRO_OPS_CONFIG.SHEETS.STATUS_OVERRIDES,
-    STATUS_OVERRIDE_HEADERS
-  );
-  const existingValues = overrideSheet.getLastRow() >= 2
-    ? overrideSheet.getRange(2, 1, overrideSheet.getLastRow() - 1, STATUS_OVERRIDE_HEADERS.length).getValues()
-    : [];
-  const rowByKey = {};
+  // Only backend-generated matches need persistent status overrides.
+  const keyedTargets = targets.filter(function (target) { return !!target.matchKey; });
+  if (keyedTargets.length) {
+    const overrideSheet = ensureSheet_(
+      ss,
+      INTRO_OPS_CONFIG.SHEETS.STATUS_OVERRIDES,
+      STATUS_OVERRIDE_HEADERS
+    );
+    const existingValues = overrideSheet.getLastRow() >= 2
+      ? overrideSheet.getRange(2, 1, overrideSheet.getLastRow() - 1, STATUS_OVERRIDE_HEADERS.length).getValues()
+      : [];
+    const rowByKey = {};
 
-  existingValues.forEach(function (row, index) {
-    const key = cleanSingleLine_(row[0]);
-    if (key) rowByKey[key] = index;
-  });
+    existingValues.forEach(function (row, index) {
+      const key = cleanSingleLine_(row[0]);
+      if (key) rowByKey[key] = index;
+    });
 
-  const now = new Date();
-  targets.forEach(function (target) {
-    if (Object.prototype.hasOwnProperty.call(rowByKey, target.matchKey)) {
-      const index = rowByKey[target.matchKey];
-      existingValues[index][1] = INTRO_STATUS_SENT;
-      existingValues[index][2] = now;
-    } else {
-      rowByKey[target.matchKey] = existingValues.length;
-      existingValues.push([target.matchKey, INTRO_STATUS_SENT, now]);
-    }
-  });
+    const now = new Date();
+    keyedTargets.forEach(function (target) {
+      if (Object.prototype.hasOwnProperty.call(rowByKey, target.matchKey)) {
+        const index = rowByKey[target.matchKey];
+        existingValues[index][1] = INTRO_STATUS_SENT;
+        existingValues[index][2] = now;
+      } else {
+        rowByKey[target.matchKey] = existingValues.length;
+        existingValues.push([target.matchKey, INTRO_STATUS_SENT, now]);
+      }
+    });
 
-  replaceDataRows_(overrideSheet, existingValues, STATUS_OVERRIDE_HEADERS.length);
+    replaceDataRows_(overrideSheet, existingValues, STATUS_OVERRIDE_HEADERS.length);
+  }
 
+  // Both system and manual rows get the visible checkmark.
   targets.forEach(function (target) {
     sheet.getRange(target.statusRow, target.statusCol).setValue(INTRO_STATUS_SENT);
   });
@@ -2307,20 +2309,26 @@ function updateFulfillmentSummaryForBlock_(sheet, blockTop) {
   const statusRow = blockTop + FULFILLMENT_STATUS_OFFSET;
   const statuses = sheet.getRange(statusRow, 4, 1, 3).getDisplayValues()[0];
   const pickKeys = sheet.getRange(blockTop, 15, 1, 3).getDisplayValues()[0];
-  const total = pickKeys.filter(function (x) { return cleanSingleLine_(x); }).length;
+  const pickNames = sheet.getRange(blockTop, 4, 1, 3).getDisplayValues()[0];
+
+  let total = pickKeys.filter(function (x) { return cleanSingleLine_(x); }).length;
+  if (!total) {
+    // Manual entries do not have hidden match keys, so their visible Pick
+    // names define how many introductions are being tracked.
+    total = pickNames.filter(function (x) { return cleanSingleLine_(x); }).length;
+  }
+
   const sent = statuses.filter(isFulfilledStatus_).length;
   const hasAnyProgress = statuses.some(function (x) { return cleanSingleLine_(x); });
-  const complete = total > 0 && sent === total;
+  const complete = total > 0 && sent >= total;
 
-  sheet.getRange(blockTop, 3).setValue(total ? sent + ' / ' + total : '');
+  sheet.getRange(blockTop, 3).setValue(total ? Math.min(sent, total) + ' / ' + total : '');
   sheet.getRange(statusRow, 3).setValue(
     !total ? '' :
     complete ? 'Complete' :
     (sent > 0 || hasAnyProgress ? 'In progress' : 'Not started')
   );
 
-  // Only the student's identity / fulfillment / Pick 1-3 area changes color.
-  // Wishlist columns G-M keep their normal lavender treatment.
   sheet
     .getRange(blockTop, 1, FULFILLMENT_WORK_ROWS, 6)
     .setBackground(complete ? FULFILLMENT_COMPLETE_COLOR : '#FFFFFF');
@@ -2335,14 +2343,10 @@ function ensureFulfillmentSheet_(ss) {
   const headers = FULFILLMENT_VISIBLE_HEADERS.concat(FULFILLMENT_TECH_HEADERS);
   const sheet = ensureSheet_(ss, INTRO_OPS_CONFIG.SHEETS.FULFILLMENT, headers);
 
-  // Keep the intended visible hierarchy stable.
+  // Keep only the structural settings under script control. Column widths
+  // are intentionally NOT reset here so organizer resizing survives refreshes.
   sheet.setFrozenRows(1);
   sheet.setFrozenColumns(3);
-  sheet.setColumnWidth(1, 180);
-  sheet.setColumnWidth(2, 220);
-  sheet.setColumnWidth(3, 105);
-  sheet.setColumnWidths(4, 3, 185);
-  sheet.setColumnWidths(7, 7, 135);
 
   const techStart = FULFILLMENT_VISIBLE_HEADERS.length + 1;
   try {
@@ -2352,12 +2356,72 @@ function ensureFulfillmentSheet_(ss) {
   return sheet;
 }
 
+function captureFulfillmentLayout_(sheet, width) {
+  const layout = [];
+  if (!sheet || sheet.getLastRow() < FULFILLMENT_FIRST_BLOCK_ROW) return layout;
+
+  const lastRow = sheet.getLastRow();
+  const safeWidth = Math.max(width || 0, FULFILLMENT_VISIBLE_COLS + FULFILLMENT_TECH_HEADERS.length);
+
+  for (
+    let blockTop = FULFILLMENT_FIRST_BLOCK_ROW;
+    blockTop <= lastRow;
+    blockTop += FULFILLMENT_BLOCK_HEIGHT
+  ) {
+    const availableRows = Math.min(FULFILLMENT_BLOCK_HEIGHT, lastRow - blockTop + 1);
+    if (availableRows < FULFILLMENT_WORK_ROWS) break;
+
+    const raw = sheet.getRange(blockTop, 1, availableRows, safeWidth).getValues();
+    while (raw.length < FULFILLMENT_BLOCK_HEIGHT) {
+      raw.push(new Array(safeWidth).fill(''));
+    }
+
+    const submissionId = cleanSingleLine_(raw[0][13]);
+    if (submissionId) {
+      layout.push({ type: 'system', submissionId: submissionId });
+      continue;
+    }
+
+    const hasVisibleContent = raw
+      .slice(0, FULFILLMENT_WORK_ROWS)
+      .some(function (row) {
+        return row
+          .slice(0, FULFILLMENT_VISIBLE_COLS)
+          .some(function (value) { return cleanSingleLine_(value); });
+      });
+
+    if (!hasVisibleContent) continue;
+
+    // Manual blocks must remain operationally isolated from the backend.
+    // Preserve visible content only; hidden system identifiers stay blank.
+    const manualRows = raw.map(function (row) {
+      const copy = row.slice(0, safeWidth);
+      for (let col = FULFILLMENT_VISIBLE_COLS; col < safeWidth; col++) {
+        copy[col] = '';
+      }
+      return copy;
+    });
+    manualRows[FULFILLMENT_WORK_ROWS] = new Array(safeWidth).fill('');
+
+    layout.push({ type: 'manual', rows: manualRows });
+  }
+
+  return layout;
+}
+
 function refreshStudentFulfillment_() {
   const ss = getDb_();
   const submissionSheet = ss.getSheetByName(CONFIG.SHEETS.SUBMISSIONS);
   if (!submissionSheet) return;
 
   const sheet = ensureFulfillmentSheet_(ss);
+  const width = FULFILLMENT_VISIBLE_HEADERS.length + FULFILLMENT_TECH_HEADERS.length;
+
+  // Preserve the organizer's current layout order and any manually added
+  // student blocks. A system-generated block has a hidden Submission ID in
+  // column N; a manual block has visible content but no Submission ID.
+  const existingLayout = captureFulfillmentLayout_(sheet, width);
+
   const contacts = alumniContactLookup_();
   const statuses = effectiveMatchStatusMap_();
   const batchStatusByIdentity = batchStatusByStudentAlum_();
@@ -2366,8 +2430,8 @@ function refreshStudentFulfillment_() {
     return String(r.Status || '').trim().toUpperCase() === 'ACTIVE';
   });
 
-  const rows = [];
-  const width = FULFILLMENT_VISIBLE_HEADERS.length + FULFILLMENT_TECH_HEADERS.length;
+  const generatedBySubmissionId = {};
+  const generatedOrder = [];
 
   submissions.forEach(function (r) {
     const studentName = cleanSingleLine_(r['Student Name']);
@@ -2393,8 +2457,6 @@ function refreshStudentFulfillment_() {
           : ''
       );
 
-      // Exact match-key status remains primary. The name+alum fallback repairs
-      // historical drafts whose student email was corrected after drafting.
       let status = matchKey ? cleanSingleLine_(statuses[matchKey]) : '';
       if (!status && identityKey && batchStatusByIdentity[identityKey]) {
         status = cleanSingleLine_(batchStatusByIdentity[identityKey]);
@@ -2417,8 +2479,9 @@ function refreshStudentFulfillment_() {
       sent === total ? 'Complete' :
       (sent > 0 || anyProgress ? 'In progress' : 'Not started');
 
-    // Row 1: alum names + student identity + wishlist.
-    rows.push([
+    const block = [];
+
+    block.push([
       studentName,
       studentEmail,
       summary,
@@ -2438,8 +2501,7 @@ function refreshStudentFulfillment_() {
       pickMatchKeys[2] || ''
     ]);
 
-    // Row 2: alum emails.
-    rows.push([
+    block.push([
       '', '', '',
       pickEmails[0] || '',
       pickEmails[1] || '',
@@ -2448,8 +2510,7 @@ function refreshStudentFulfillment_() {
       '', '', '', ''
     ]);
 
-    // Row 3: editable statuses.
-    rows.push([
+    block.push([
       '', '',
       summaryState,
       pickStatuses[0] || '',
@@ -2459,11 +2520,40 @@ function refreshStudentFulfillment_() {
       '', '', '', ''
     ]);
 
-    // Row 4: visual spacer between students.
-    rows.push(new Array(width).fill(''));
+    block.push(new Array(width).fill(''));
+
+    generatedBySubmissionId[submissionId] = block;
+    generatedOrder.push(submissionId);
   });
 
-  // Existing merged ranges must be broken apart before replacing the table.
+  const rows = [];
+  const usedSystemIds = {};
+
+  // Rebuild system rows in their existing positions while leaving manual
+  // entries exactly where the organizer placed them relative to those rows.
+  existingLayout.forEach(function (entry) {
+    if (entry.type === 'system') {
+      const block = generatedBySubmissionId[entry.submissionId];
+      if (!block || usedSystemIds[entry.submissionId]) return;
+      block.forEach(function (row) { rows.push(row); });
+      usedSystemIds[entry.submissionId] = true;
+      return;
+    }
+
+    if (entry.type === 'manual') {
+      entry.rows.forEach(function (row) { rows.push(row.slice()); });
+    }
+  });
+
+  // Newly submitted students that did not exist on the previous tracker are
+  // appended after the preserved layout.
+  generatedOrder.forEach(function (submissionId) {
+    if (usedSystemIds[submissionId]) return;
+    const block = generatedBySubmissionId[submissionId];
+    if (!block) return;
+    block.forEach(function (row) { rows.push(row); });
+  });
+
   if (sheet.getLastRow() > 1) {
     const oldRows = sheet.getLastRow() - 1;
     sheet.getRange(2, 1, oldRows, FULFILLMENT_VISIBLE_COLS).breakApart();
