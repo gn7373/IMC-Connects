@@ -261,7 +261,8 @@ function onOpen() {
     .addSeparator()
     .addItem('Mark all Drafted as sent', 'markAllDraftedAsSent')
     .addSeparator()
-    .addItem('Install / repair 15-min auto-draft trigger', 'installIntroAutoDraftTrigger');
+    .addItem('Install / repair 15-min auto-draft trigger', 'installIntroAutoDraftTrigger')
+    .addItem('Disable 15-min auto-draft trigger', 'disableIntroAutoDraftTrigger');
 
   ui.createMenu('IMC Connects')
     .addItem('Setup / sync alumni', 'setupSheets')
@@ -1609,12 +1610,11 @@ function setupIntroductionOperations() {
   ensureSheet_(ss, INTRO_OPS_CONFIG.SHEETS.STATUS_OVERRIDES, STATUS_OVERRIDE_HEADERS);
   ensureFulfillmentSheet_(ss);
   refreshStudentFulfillment_();
-  installIntroAutoDraftTrigger_();
 
   SpreadsheetApp.getUi().alert(
     'Introduction operations are ready.\n\n' +
-    'Created/verified Student Fulfillment and Intro Batches, refreshed the tracker, ' +
-    'and installed a 15-minute draft-only trigger. Nothing will be sent automatically.'
+    'Created/verified Student Fulfillment and Intro Batches and refreshed the tracker. ' +
+    'No background auto-draft trigger was installed.'
   );
 }
 
@@ -1704,20 +1704,41 @@ function installIntroAutoDraftTrigger_() {
     .create();
 }
 
+function disableIntroAutoDraftTrigger() {
+  const removed = removeIntroAutoDraftTriggers_();
+
+  SpreadsheetApp.getUi().alert(
+    removed
+      ? '15-minute auto-draft trigger disabled. Student Fulfillment will no longer be touched by background intro operations.'
+      : 'No 15-minute auto-draft trigger was installed.'
+  );
+}
+
+function removeIntroAutoDraftTriggers_() {
+  const handler = 'runIntroAutoDraftCycle';
+  const triggers = ScriptApp.getProjectTriggers().filter(function (trigger) {
+    return trigger.getHandlerFunction() === handler;
+  });
+
+  triggers.forEach(function (trigger) {
+    ScriptApp.deleteTrigger(trigger);
+  });
+
+  return triggers.length;
+}
+
 function runIntroAutoDraftCycle() {
   try {
-    // If Gmail authorization is missing, exit quietly. This prevents the
-    // time-based trigger from appending an ERROR row for every eligible alum
-    // every 15 minutes while the organizer is still authorizing the project.
+    // Background drafting must never rebuild Student Fulfillment. The tracker
+    // is an organizer workspace and may contain manual edits that should only
+    // change when the organizer explicitly chooses Refresh student fulfillment.
     const authInfo = ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL);
     if (authInfo.getAuthorizationStatus() !== ScriptApp.AuthorizationStatus.NOT_REQUIRED) {
       console.warn('Intro auto-draft skipped: Gmail authorization is still required.');
       return;
     }
 
-    refreshStudentFulfillment_();
     draftEligibleFullAlumni_('AUTO_FULL');
-    refreshStudentFulfillment_();
   } catch (err) {
     console.error('Intro auto-draft cycle failed: ' + err);
   }
