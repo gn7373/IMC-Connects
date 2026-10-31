@@ -1683,8 +1683,8 @@ function installIntroAutoDraftTrigger() {
   installIntroAutoDraftTrigger_();
   SpreadsheetApp.getUi().alert(
     '15-minute auto-draft trigger installed/repaired.\n\n' +
-    'It only creates Gmail drafts for alumni who are full and whose Capacity Limit is 6 or fewer. ' +
-    'It never sends email.'
+    'It checks for newly submitted, not-yet-drafted student-alum matches and creates Gmail drafts for them. ' +
+    'It never sends email and never refreshes or rewrites Student Fulfillment.'
   );
 }
 
@@ -1729,16 +1729,16 @@ function removeIntroAutoDraftTriggers_() {
 
 function runIntroAutoDraftCycle() {
   try {
-    // Background drafting must never rebuild Student Fulfillment. The tracker
-    // is an organizer workspace and may contain manual edits that should only
-    // change when the organizer explicitly chooses Refresh student fulfillment.
+    // Background drafting is intentionally isolated from Student Fulfillment.
+    // It reads authoritative match/capacity data and writes only Gmail drafts
+    // + Intro Batches. The organizer tracker is never rebuilt here.
     const authInfo = ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL);
     if (authInfo.getAuthorizationStatus() !== ScriptApp.AuthorizationStatus.NOT_REQUIRED) {
       console.warn('Intro auto-draft skipped: Gmail authorization is still required.');
       return;
     }
 
-    draftEligibleFullAlumni_('AUTO_FULL');
+    draftAllRemainingAlumni_('AUTO_NEW_MATCHES');
   } catch (err) {
     console.error('Intro auto-draft cycle failed: ' + err);
   }
@@ -1746,36 +1746,7 @@ function runIntroAutoDraftCycle() {
 
 function draftAllRemainingAlumniNow() {
   refreshStudentFulfillment_();
-
-  const ss = getDb_();
-  const capacitySheet = ss.getSheetByName(CONFIG.SHEETS.CAPACITY);
-  if (!capacitySheet) throw new Error('Alumni Capacity sheet not found.');
-
-  const ledger = readCapacityLedger_(capacitySheet);
-  const result = {
-    draftedBatches: 0,
-    draftedMatches: 0,
-    skippedMatches: 0,
-    errors: []
-  };
-
-  ledger.rows.forEach(function (alum) {
-    // Final post-deadline run: draft every remaining active alum with an
-    // undrafted match, regardless of whether their capacity is full.
-    // draftForAlum_ keeps the hard batch dedupe and caps each draft at six
-    // students, splitting larger groups into multiple drafts when needed.
-    if (!alum.sourceActive) return;
-
-    const one = draftForAlum_(alum, 'MANUAL_REMAINING', {
-      allowAboveSixCapacity: true
-    });
-
-    result.draftedBatches += one.draftedBatches || 0;
-    result.draftedMatches += one.draftedMatches || 0;
-    result.skippedMatches += one.skippedMatches || 0;
-    (one.errors || []).forEach(function (x) { result.errors.push(x); });
-  });
-
+  const result = draftAllRemainingAlumni_('MANUAL_REMAINING');
   refreshStudentFulfillment_();
 
   SpreadsheetApp.getUi().alert(
@@ -1928,6 +1899,37 @@ function formatDraftSummary_(result, title) {
     message += '\\n\\nNeeds attention:\\n- ' + errors.join('\\n- ');
   }
   return message;
+}
+
+function draftAllRemainingAlumni_(triggerName) {
+  const ss = getDb_();
+  const capacitySheet = ss.getSheetByName(CONFIG.SHEETS.CAPACITY);
+  if (!capacitySheet) throw new Error('Alumni Capacity sheet not found.');
+
+  const ledger = readCapacityLedger_(capacitySheet);
+  const summary = {
+    draftedBatches: 0,
+    draftedMatches: 0,
+    skippedMatches: 0,
+    errors: []
+  };
+
+  ledger.rows.forEach(function (alum) {
+    if (!alum.sourceActive) return;
+
+    // Post-deadline behavior: any new undrafted student-alum match is eligible
+    // immediately. We no longer wait for the alum to become full.
+    const one = draftForAlum_(alum, triggerName || 'AUTO_NEW_MATCHES', {
+      allowAboveSixCapacity: true
+    });
+
+    summary.draftedBatches += one.draftedBatches || 0;
+    summary.draftedMatches += one.draftedMatches || 0;
+    summary.skippedMatches += one.skippedMatches || 0;
+    (one.errors || []).forEach(function (x) { summary.errors.push(x); });
+  });
+
+  return summary;
 }
 
 function draftEligibleFullAlumni_(triggerName) {
