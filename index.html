@@ -341,6 +341,15 @@ header.site{
   justify-content: space-between;
   gap: 28px;
 }
+/* Ultrawide safety: above ~1680px the centered 1480px gutter grows
+   faster than the landing copy's 6vw inset, which can push the IMC
+   Connects logo implausibly far toward the center of a wide monitor.
+   The two formulas are effectively equal at this breakpoint, so this
+   switches smoothly without changing any tested laptop/tablet/mobile
+   widths. Landing only; the directory masthead keeps its own layout. */
+@media (min-width: 1682px){
+  .hero-nav-inner{ padding-left:6vw; padding-right:6vw; }
+}
 .hero-logo{
   font-family: 'Libre Baskerville', serif;
   /* 700, not 600 (per request - consistent webfont rendering across
