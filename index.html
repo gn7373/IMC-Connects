@@ -4240,6 +4240,32 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
 }
 
+/* Compact laptop/tablet landing safeguard (2026-11-02):
+   a later max-width:1199px block contains mobile-only landing overrides
+   with !important, so they were also catching 768-1199px browser widths
+   and pulling the Arch toward the middle of the page. Restore the
+   intended right-anchored compact-laptop composition here. True mobile
+   (<768px) keeps its existing centered/mobile treatment unchanged. */
+@media (min-width: 768px) and (max-width: 1199px){
+  .hero-illustration{
+    position:absolute !important;
+    left:auto !important;
+    right:-2vw !important;
+    bottom:0 !important;
+    translate:0 0 !important;
+    width:min(860px, 74vw) !important;
+    max-width:none !important;
+    margin:0 !important;
+    padding:0 !important;
+    justify-content:flex-end !important;
+  }
+  .hero-illustration img{
+    width:100% !important;
+    max-width:100% !important;
+    transform-origin:right bottom !important;
+  }
+}
+
 </style>
 </head>
 <body>
