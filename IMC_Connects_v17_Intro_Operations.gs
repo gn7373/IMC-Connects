@@ -1747,9 +1747,7 @@ function runIntroAutoDraftCycle() {
 }
 
 function draftAllRemainingAlumniNow() {
-  refreshStudentFulfillment_();
   const result = draftAllRemainingAlumni_('MANUAL_REMAINING');
-  refreshStudentFulfillment_();
 
   SpreadsheetApp.getUi().alert(
     formatDraftSummary_(result, 'All-remaining-alumni draft run')
@@ -1757,10 +1755,7 @@ function draftAllRemainingAlumniNow() {
 }
 
 function draftAllFullAlumniNow() {
-  refreshStudentFulfillment_();
   const result = draftEligibleFullAlumni_('MANUAL_FULL');
-  refreshStudentFulfillment_();
-
   SpreadsheetApp.getUi().alert(formatDraftSummary_(result, 'Full-alumni draft run'));
 }
 
@@ -1770,13 +1765,12 @@ function draftSelectedAlum() {
 
   if (!selectedKey) {
     ui.alert(
-      'Select an alum first.\\n\\n' +
+      'Select an alum first.\n\n' +
       'Use either a row in Alumni Capacity or a Pick 1-3 cell in Student Fulfillment, then run this command again.'
     );
     return;
   }
 
-  refreshStudentFulfillment_();
   const ss = getDb_();
   const capacitySheet = ss.getSheetByName(CONFIG.SHEETS.CAPACITY);
   const ledger = readCapacityLedger_(capacitySheet);
@@ -1795,7 +1789,6 @@ function draftSelectedAlum() {
       allowAboveSixCapacity: true
     });
   }
-  refreshStudentFulfillment_();
 
   ui.alert(formatDraftSummary_(result, 'Selected-alum draft run'));
 }
