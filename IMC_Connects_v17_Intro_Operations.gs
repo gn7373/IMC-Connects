@@ -208,6 +208,8 @@ const FULFILLMENT_TECH_HEADERS = Object.freeze([
 
 const INTRO_STATUS_DRAFTED = 'Drafted';
 const INTRO_STATUS_SENT = '✅';
+const INTRO_DRAFT_CLAIM_TTL_MS = 30 * 60 * 1000; // stale CLAIMED rows may retry after 30 minutes
+
 
 const FULFILLMENT_BLOCK_HEIGHT = 4; // 3 working rows + 1 white spacer row
 const FULFILLMENT_WORK_ROWS = 3;
@@ -2000,9 +2002,6 @@ function draftForAlum_(alum, triggerName, options) {
   const alreadyBatched = handledMatchKeysFromBatches_();
   const alreadyBatchedByIdentity = handledStudentAlumIdentitiesFromBatches_();
   const open = matches.filter(function (match) {
-    // A real draft/sent batch is a hard dedupe guard even if someone later
-    // clears the visible tracker status manually. Manual status edits can
-    // control the tracker, but they cannot accidentally create duplicate drafts.
     const identityKey = makeStudentAlumIdentityKey_(match.studentName, match.alumniKey);
     if (alreadyBatched[match.matchKey] || (identityKey && alreadyBatchedByIdentity[identityKey])) {
       summary.skippedMatches += 1;
@@ -2019,42 +2018,37 @@ function draftForAlum_(alum, triggerName, options) {
 
   if (!open.length) return summary;
 
-  // Manual selected drafting may create several drafts, but each draft is
-  // deliberately capped at six students. Automatic full-alumni drafting
-  // never reaches this branch with capacity > 6.
   const groups = chunk_(open, INTRO_OPS_CONFIG.AUTO_MAX_STUDENTS);
 
   groups.forEach(function (group) {
+    // Atomically reserve only the still-unclaimed matches. The script lock is
+    // held for the sheet check+append only; Gmail work happens after release.
+    const claim = claimIntroBatch_(alum, contact, group, triggerName || 'MANUAL', limit);
+
+    if (!claim || !claim.students.length) {
+      summary.skippedMatches += group.length;
+      return;
+    }
+
+    summary.skippedMatches += Math.max(0, group.length - claim.students.length);
+
     try {
-      const draft = createIntroDraft_(alum, contact, group);
-      logIntroBatch_({
-        batchId: makeId_('INTRO'),
-        draftedAt: new Date(),
-        alumniKey: alum.alumniKey,
-        alumniName: alum.name,
-        alumniEmail: contact.email,
-        capacityLimit: limit,
-        trigger: triggerName || 'MANUAL',
-        students: group,
+      const draft = createIntroDraft_(alum, contact, claim.students);
+      finalizeIntroBatchClaim_(claim.batchId, {
         gmailDraftId: draft.getId(),
         status: 'DRAFTED',
         error: ''
       });
 
       summary.draftedBatches += 1;
-      summary.draftedMatches += group.length;
+      summary.draftedMatches += claim.students.length;
     } catch (err) {
       const message = alum.name + ': ' + String(err && err.message || err);
       summary.errors.push(message);
-      logIntroBatch_({
-        batchId: makeId_('INTRO'),
-        draftedAt: new Date(),
-        alumniKey: alum.alumniKey,
-        alumniName: alum.name,
-        alumniEmail: contact.email,
-        capacityLimit: limit,
-        trigger: triggerName || 'MANUAL',
-        students: group,
+
+      // ERROR rows do not block retry. The claim row is reused rather than
+      // appending a second batch record.
+      finalizeIntroBatchClaim_(claim.batchId, {
         gmailDraftId: '',
         status: 'ERROR',
         error: message
@@ -2177,6 +2171,97 @@ function currentOpenMatchesForAlum_(alumniKey) {
     });
 }
 
+function claimIntroBatch_(alum, contact, students, triggerName, capacityLimit) {
+  const lock = LockService.getScriptLock();
+
+  // Never hold the shared script lock while talking to Gmail. If website
+  // capacity work is using it, skip this drafting pass and let the next
+  // 15-minute run retry instead of delaying submissions.
+  if (!lock.tryLock(5000)) return null;
+
+  try {
+    const ss = getDb_();
+    const sheet = ensureSheet_(ss, INTRO_OPS_CONFIG.SHEETS.INTRO_BATCHES, INTRO_BATCH_HEADERS);
+    const handledKeys = handledMatchKeysFromBatches_();
+    const handledIdentities = handledStudentAlumIdentitiesFromBatches_();
+
+    const claimable = (students || []).filter(function (student) {
+      const matchKey = cleanSingleLine_(student.matchKey);
+      const identityKey = makeStudentAlumIdentityKey_(student.studentName, student.alumniKey);
+      if (!matchKey) return false;
+      if (handledKeys[matchKey]) return false;
+      if (identityKey && handledIdentities[identityKey]) return false;
+      return true;
+    });
+
+    if (!claimable.length) return null;
+
+    const batchId = makeId_('INTRO');
+    const claimedAt = new Date();
+
+    appendRows_(sheet, [[
+      batchId,
+      claimedAt,
+      alum.alumniKey || '',
+      alum.name || '',
+      contact.email || '',
+      Number(capacityLimit) || 0,
+      triggerName || '',
+      claimable.length,
+      claimable.map(function (s) { return s.studentName; }).join(' | '),
+      claimable.map(function (s) { return s.studentEmail; }).join(' | '),
+      JSON.stringify(claimable.map(function (s) { return s.matchKey; })),
+      '',
+      'CLAIMED',
+      ''
+    ]]);
+
+    return {
+      batchId: batchId,
+      students: claimable
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function finalizeIntroBatchClaim_(batchId, updates) {
+  batchId = cleanSingleLine_(batchId);
+  if (!batchId) return;
+
+  const ss = getDb_();
+  const sheet = ss.getSheetByName(INTRO_OPS_CONFIG.SHEETS.INTRO_BATCHES);
+  if (!sheet || sheet.getLastRow() < 2) return;
+
+  const rows = readObjectsWithRow_(sheet);
+  const found = rows.find(function (item) {
+    return cleanSingleLine_(item.data['Batch ID']) === batchId;
+  });
+  if (!found) return;
+
+  if (updates && Object.prototype.hasOwnProperty.call(updates, 'gmailDraftId')) {
+    setCellByHeader_(sheet, found.rowNumber, 'Gmail Draft ID', cleanSingleLine_(updates.gmailDraftId));
+  }
+  if (updates && Object.prototype.hasOwnProperty.call(updates, 'status')) {
+    setCellByHeader_(sheet, found.rowNumber, 'Status', cleanSingleLine_(updates.status));
+  }
+  if (updates && Object.prototype.hasOwnProperty.call(updates, 'error')) {
+    setCellByHeader_(sheet, found.rowNumber, 'Error', cleanSingleLine_(updates.error));
+  }
+  setCellByHeader_(sheet, found.rowNumber, 'Drafted At', new Date());
+}
+
+function isActiveIntroClaim_(row) {
+  const status = cleanSingleLine_(row && row.Status).toUpperCase();
+  if (status !== 'CLAIMED') return false;
+
+  const raw = row && row['Drafted At'];
+  const when = raw instanceof Date ? raw.getTime() : new Date(raw).getTime();
+  if (!Number.isFinite(when)) return false;
+
+  return (Date.now() - when) < INTRO_DRAFT_CLAIM_TTL_MS;
+}
+
 function logIntroBatch_(batch) {
   const ss = getDb_();
   const sheet = ensureSheet_(ss, INTRO_OPS_CONFIG.SHEETS.INTRO_BATCHES, INTRO_BATCH_HEADERS);
@@ -2250,11 +2335,33 @@ function batchStatusByStudentAlum_() {
 }
 
 function handledStudentAlumIdentitiesFromBatches_() {
-  const statuses = batchStatusByStudentAlum_();
+  const ss = getDb_();
+  const sheet = ss.getSheetByName(INTRO_OPS_CONFIG.SHEETS.INTRO_BATCHES);
   const out = {};
-  Object.keys(statuses).forEach(function (key) {
-    out[key] = true;
+  if (!sheet || sheet.getLastRow() < 2) return out;
+
+  readObjects_(sheet).forEach(function (r) {
+    const status = cleanSingleLine_(r.Status).toUpperCase();
+    const blocksRetry =
+      status === 'DRAFTED' ||
+      status === 'SENT' ||
+      isActiveIntroClaim_(r);
+
+    if (!blocksRetry) return;
+
+    const alumniKey = cleanSingleLine_(r['Alumni Key']);
+    if (!alumniKey) return;
+
+    String(r['Student Names'] || '')
+      .split(' | ')
+      .map(function (x) { return cleanSingleLine_(x); })
+      .filter(Boolean)
+      .forEach(function (studentName) {
+        const identityKey = makeStudentAlumIdentityKey_(studentName, alumniKey);
+        if (identityKey) out[identityKey] = true;
+      });
   });
+
   return out;
 }
 
@@ -2272,7 +2379,13 @@ function handledMatchKeysFromBatches_() {
 
   readObjects_(sheet).forEach(function (r) {
     const status = cleanSingleLine_(r.Status).toUpperCase();
-    if (status !== 'DRAFTED' && status !== 'SENT') return;
+    const blocksRetry =
+      status === 'DRAFTED' ||
+      status === 'SENT' ||
+      isActiveIntroClaim_(r);
+
+    if (!blocksRetry) return;
+
     parseBatchMatchKeys_(r['Match Keys']).forEach(function (matchKey) {
       out[matchKey] = true;
     });
